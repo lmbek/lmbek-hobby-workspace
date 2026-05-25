@@ -5,7 +5,7 @@ type SystemDefinition struct {
 	Hooks          Hooks              `yaml:"hooks,omitempty"` // Added hooks
 	Services       map[string]Service `yaml:"services"`
 	Infrastructure map[string]Infra   `yaml:"infrastructure"`
-	Tools          map[string]Tool    `yaml:"tools,omitempty"` // Added tools
+	Tools          *Tool              `yaml:"tools,omitempty"` // Updated tools to single object
 }
 
 type Hooks struct {
@@ -22,10 +22,8 @@ type Service struct {
 }
 
 type Infra struct {
-	Repository  string            `yaml:"repository,omitempty"` // Added repository field
-	Version     string            `yaml:"version"`
-	Environment map[string]string `yaml:"environment,omitempty"`
-	HealthCheck string            `yaml:"health-check,omitempty"` // Added health-check field
+	Repository string `yaml:"repository"`
+	Version    string `yaml:"version"`
 }
 
 type Tool struct {

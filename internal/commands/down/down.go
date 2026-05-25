@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 )
 
 func Run() {
@@ -18,7 +19,10 @@ func Run() {
 
 	fmt.Println("Running: docker-compose down")
 	cmd := exec.Command("docker-compose", "down")
-	cmd.Dir = infraDir
+	cmd.Dir = filepath.Join(infraDir, "workspace-infrastructure")
+	if _, err := os.Stat(cmd.Dir); os.IsNotExist(err) {
+		cmd.Dir = infraDir
+	}
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 

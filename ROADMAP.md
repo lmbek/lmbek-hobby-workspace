@@ -1,57 +1,33 @@
 # Project Roadmap
 
-## Phase 0: Foundations & Project Setup ✅
-- [x] Vision and project definition (`PROJECT.md`).
-- [x] Initial repository structure.
-- [x] Go module initialization (`go mod init`).
-- [x] Git configuration and initial project cleanup.
+## Phase 1: Foundation & Architecture ✅
+- [x] Initial project setup and vision definition.
+- [x] Establishment of the `internal/` shared logic structure.
+- [x] Unified CLI entrypoint (`main.go`) to replace scattered scripts.
+- [x] Core data model for system definition (YAML parsing).
 
-## Phase 1: Basic Structure & Refactoring ✅
-- [x] Unification of CLI under one binary.
-- [x] Establishment of `internal/` package structure.
-- [x] Centralization of `system-definition.yaml` parsing.
-- [x] Rename project to `workspace-controller`.
+## Phase 2: Materialization & Sync ✅
+- [x] Automated workspace directory management.
+- [x] Git orchestration for cloning and versioning services.
+- [x] Version control for infrastructure and tools repositories.
+- [x] Security: Protection against placeholder URLs.
 
-## Phase 2: Materialization (`sync`) ✅
-- [x] Automatic creation of `workspace/` and `infrastructure/` directories.
-- [x] Implementation of Git-cloning logic for services.
-- [x] Logic to handle versions/tags (checkout).
-- [x] Security check: Skip if Git URL is a placeholder (e.g., `git@company/...`).
+## Phase 3: Validation & Health ✅
+- [x] Static validation: directory existence and Git state (dirty check, version match).
+- [x] Runtime validation: Integrated HTTP and TCP health checks.
+- [x] Consistent reporting of environment integrity.
 
-## Phase 3: Validation & Consistency (`validate`) ✅
-- [x] Check if local files match the definition.
-- [x] Verification of Git versions on disk.
-- [x] Identification of "dirty" repositories (local changes).
+## Phase 4: Lifecycle & Orchestration ✅
+- [x] Implementation of `up` and `down` commands for environment control.
+- [x] Support for environment variables in system definitions.
+- [x] Hook system for post-sync and post-startup automation.
+- [x] Dependency management between services (startup order).
 
-## Phase 4: Infrastructure & Orchestration (`start` v2) ✅
-- [x] Automatic generation of `docker-compose.yaml` for infrastructure (Postgres, etc.).
-- [x] Support for environment variables configuration.
-- [x] Integration of local services into Docker Compose (running apps from `workspace/`).
-- [x] Implementation of `up` / `down` life-cycle commands.
-
-## Phase 5: Advanced Features & Polish ✅
-- [x] Documentation and CLI polish (help commands).
-- [x] Health checks for synchronized services (HTTP and TCP support).
-- [x] Dependency management between services and infrastructure.
-- [x] Plugin/Hook system for custom setup steps (e.g. database migrations).
-
-## Phase 6: Ecosystem & Developer Experience ✅
-- [x] Interactive CLI mode (menus for service selection).
-- [x] Status dashboard (view logs and health of all services).
-- [x] Template system for new services.
-- [x] Integration with common CI/CD pipelines for validation.
-- [x] Multi-platform support verification (Windows, macOS, Linux).
+## Phase 5: Decoupling & Specialization (Current State) ✅
+- [x] Infrastructure decoupling: Move configuration to specialized repositories.
+- [x] Reorganization: Centralized `services/` directory within the workspace.
+- [x] Introduction of the `tools/` ecosystem (e.g., Terraform-based `deployer`).
+- [x] Modernized demo and documentation (Phase 5 Alignment).
 
 ---
-## Phase 7: Clean-up and Organization ✅
-- [x] Reorganize `workspace/` structure (Move services to `services/` directory).
-- [x] Update controller paths and Docker Compose generation for the new structure.
-- [x] Update documentation to reflect the centralized service layout.
-
-## Phase 8: Component Versioning ✅
-- [x] Initialize Git repositories for `infrastructure/` and `tools/`.
-- [x] Update `system-definition.yaml` to support versioning for all workspace components.
-- [x] Refactor `sync` and `validate` to handle infrastructure and tools versioning.
-
----
-*Status and usage are also tracked in [README.md](README.md). Keep both documents in sync.*
+*This roadmap reflects the actual journey taken to build the workspace-controller. All phases are currently completed and verified.*

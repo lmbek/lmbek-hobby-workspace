@@ -12,26 +12,16 @@ services:
         repository: ../workspace/services/authentication-service
         version: 0.0.1
         health-check: http://localhost:8081/health
-        depends-on:
-            - postgres
     user-service:
         repository: ../workspace/services/user-service
         version: 0.0.1
         health-check: http://localhost:8082/health
-        depends-on:
-            - postgres
 
 infrastructure:
-    postgres:
+    workspace-infrastructure:
         repository: ../workspace/infrastructure
         version: 0.0.1
-        health-check: tcp://localhost:5432
-        environment:
-            POSTGRES_DB: workspace_db
-            POSTGRES_USER: user
-            POSTGRES_PASSWORD: password
 
 tools:
-    development-tools:
-        repository: ../workspace/tools
-        version: 0.0.1
+    repository: ../workspace/tools
+    version: 0.0.1

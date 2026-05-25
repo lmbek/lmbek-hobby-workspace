@@ -51,36 +51,27 @@ func Run() {
 	infraDir := "../workspace/infrastructure"
 	for name, infra := range sys.Infrastructure {
 		fmt.Printf("\n- Component: %s\n", name)
+		targetPath := filepath.Join(infraDir, name)
 
-		// Static checks if repository is defined
-		if infra.Repository != "" {
-			targetPath := infraDir // For infrastructure, the path is workspace/infrastructure
-			if err := performStaticGitChecks(targetPath, infra.Version); err != nil {
-				fmt.Printf("  [GIT ERROR] %v\n", err)
-				hasErrors = true
-			}
-		}
-
-		if infra.HealthCheck != "" {
-			if err := performHealthCheck(infra.HealthCheck); err != nil {
-				fmt.Printf("  [UNHEALTHY] %v\n", err)
-				fmt.Printf("  [HINT] Is the infrastructure running? Use 'workspace-controller up' to start it.\n")
-			} else {
-				fmt.Printf("  [HEALTHY] Component is reachable and responding correctly.\n")
-			}
+		// Infrastructure now only has Git versioning validation
+		if err := performStaticGitChecks(targetPath, infra.Version); err != nil {
+			fmt.Printf("  [GIT ERROR] %v\n", err)
+			hasErrors = true
 		} else {
-			fmt.Printf("  [SKIP] No health check defined.\n")
+			fmt.Printf("  [OK] Infrastructure repository is consistent.\n")
 		}
 	}
 
 	fmt.Println("\nChecking Tools:")
-	for name, tool := range sys.Tools {
-		fmt.Printf("\n- Tool: %s\n", name)
-		targetPath := filepath.Join("../workspace/tools", name)
-		if err := performStaticGitChecks(targetPath, tool.Version); err != nil {
+	if sys.Tools != nil {
+		fmt.Printf("\n- Tool: tools\n")
+		targetPath := "../workspace/tools"
+		if err := performStaticGitChecks(targetPath, sys.Tools.Version); err != nil {
 			fmt.Printf("  [GIT ERROR] %v\n", err)
 			hasErrors = true
 		}
+	} else {
+		fmt.Println("  [SKIP] No tools defined.")
 	}
 
 	fmt.Println("\nValidation summary:")

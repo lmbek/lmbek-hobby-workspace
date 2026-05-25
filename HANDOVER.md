@@ -47,7 +47,8 @@ Each command is implemented in its own package:
 #### validate/
 - Validates system consistency
 - Checks for missing or invalid configuration
-- Verifies local Git state
+- Verifies local Git state (for Services, Infrastructure, and Tools)
+- Performs real-time Health Checks (HTTP/TCP)
 - Ensures system integrity
 
 ---
@@ -63,7 +64,8 @@ It contains:
 - YAML parsing logic
 - System model definitions
 - Git orchestration logic
-- Validation rules
+- Validation helpers
+- Health Check logic
 
 This enforces a strict boundary:
 commands must not duplicate logic.
@@ -81,9 +83,11 @@ Given the same system-definition.yaml, the result must always be identical.
 ### 3. Command-Based Interface
 All interactions happen through explicit commands:
 
-- workspace-controller start
-- workspace-controller sync
-- workspace-controller validate
+- go run main.go start
+- go run main.go sync
+- go run main.go validate
+- go run main.go up
+- go run main.go down
 
 ### 4. No Hidden Behavior
 No implicit scripts or side effects outside commands.
@@ -94,12 +98,14 @@ No implicit scripts or side effects outside commands.
 
 Completed:
 
-- system-definition.yaml created
+- system-definition.yaml created (supporting Services, Infrastructure, and Tools)
 - start command implemented (execution planning + docker-compose generation)
-- sync command implemented (repository cloning)
-- validate command implemented (basic structure + git state validation)
+- sync command implemented (repository cloning + versioning for all components)
+- validate command implemented (Git state + health checks)
+- up/down commands implemented (Docker lifecycle)
 - Unified CLI entrypoint established
 - Renamed project to workspace-controller
+- Workspace reorganization (centralized services directory)
 
 ---
 
@@ -108,8 +114,8 @@ Completed:
 To evolve this system into a fully reproducible local development environment where:
 
 - Any developer can clone one repo
-- Run a single command
-- Get a fully running distributed system locally
+- Run a single command (`sync`)
+- Get a fully running distributed system locally (`up`)
 - With identical behavior across machines
 
 ---

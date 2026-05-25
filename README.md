@@ -8,7 +8,8 @@ Move away from brittle bash scripts and manual setup. Use a single source of tru
 ## Key Features
 - **Declarative Definition:** System state is described in YAML.
 - **Automated Sync:** Clones and manages Git repositories automatically.
-- **Infrastructure as Code:** Automatically generates Docker Compose configurations.
+- **Infrastructure as Code:** Manages version-controlled infrastructure repositories.
+- **Deployer Tool:** Initial support for Terraform-based deployments in `tools/deployer`.
 - **Dependency Management:** Define service dependencies (e.g., waiting for database).
 - **Hook System:** Run custom commands after sync or startup.
 - **Consistency Checks:** Validates that your local environment matches the definition.
@@ -40,7 +41,7 @@ cd workspace-controller
 The controller is operated through a set of explicit commands:
 
 ### 1. `start`
-Generates an execution plan based on `system/system-definition.yaml`. It also creates the `infrastructure/docker-compose.yaml` file.
+Generates an execution plan based on `system/system-definition.yaml`.
 ```bash
 go run main.go start
 ```
@@ -88,7 +89,7 @@ The project is organized to keep everything related to the workspace together:
 The system is defined in `system/system-definition.yaml`. You can specify:
 - **Services:** Git repository URLs, versions (tags/branches), and environment variables.
 - **Infrastructure:** Docker images, versions, and now **version-controlled configuration** (Git).
-- **Tools:** Development utilities managed via Git.
+- **Tools:** A single version-controlled development tools repository.
 
 ---
 
@@ -97,6 +98,7 @@ For more detailed information, see:
 - [ARCHITECTURE.md](ARCHITECTURE.md) - Internal structure and design principles.
 - [PROJECT.md](PROJECT.md) - Project vision and core concepts.
 - [ROADMAP.md](ROADMAP.md) - Current progress and future plans.
+- [DEMO.md](DEMO.md) - Hands-on guide to the controller's features.
 - [HANDOVER.md](HANDOVER.md) - Context for developers taking over the project.
 
 *Note: Always ensure that this README is updated when major features or changes are implemented.*

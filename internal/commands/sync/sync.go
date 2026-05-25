@@ -31,16 +31,14 @@ func Run() {
 		processGitComponent(workspaceDir, name, svc.Repository, svc.Version)
 	}
 
-	// 3. Process infrastructure (if repository is defined)
+	// 3. Process infrastructure
 	for name, infra := range sys.Infrastructure {
-		if infra.Repository != "" {
-			processGitComponent(infraDir, name, infra.Repository, infra.Version)
-		}
+		processGitComponent(infraDir, name, infra.Repository, infra.Version)
 	}
 
 	// 4. Process tools
-	for name, tool := range sys.Tools {
-		processGitComponent("../workspace/tools", name, tool.Repository, tool.Version)
+	if sys.Tools != nil {
+		processGitComponent("../workspace/tools", "tools", sys.Tools.Repository, sys.Tools.Version)
 	}
 
 	// 5. Post-Sync Hooks
