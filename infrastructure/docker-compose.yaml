@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  authentication-service:
+    build: ../workspace/authentication-service
+    networks:
+      - workspace-net
+  user-service:
+    build: ../workspace/user-service
+    networks:
+      - workspace-net
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: workspace_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    networks:
+      - workspace-net
+
+networks:
+  workspace-net:
+    driver: bridge

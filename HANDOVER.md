@@ -1,8 +1,8 @@
-# System Controller - Handover Document
+# Workspace Controller - Handover Document
 
 ## Context
 
-This repository is a locally executable system controller designed to manage a multi-service development environment.
+This repository is a locally executable workspace controller designed to manage a multi-service development environment.
 
 The goal is to provide a deterministic, reproducible way to:
 
@@ -31,11 +31,12 @@ It is declarative and does NOT execute anything.
 
 ### 2. commands/ (User Interface Layer)
 
-Each folder represents a command:
+Each command is implemented in its own package:
 
 #### start/
 - Reads system-definition.yaml
 - Produces an execution plan
+- Generates infrastructure configuration (Docker Compose)
 - Does NOT modify system state
 
 #### sync/
@@ -46,6 +47,7 @@ Each folder represents a command:
 #### validate/
 - Validates system consistency
 - Checks for missing or invalid configuration
+- Verifies local Git state
 - Ensures system integrity
 
 ---
@@ -79,9 +81,9 @@ Given the same system-definition.yaml, the result must always be identical.
 ### 3. Command-Based Interface
 All interactions happen through explicit commands:
 
-- system-controller start
-- system-controller sync
-- system-controller validate
+- workspace-controller start
+- workspace-controller sync
+- workspace-controller validate
 
 ### 4. No Hidden Behavior
 No implicit scripts or side effects outside commands.
@@ -93,26 +95,11 @@ No implicit scripts or side effects outside commands.
 Completed:
 
 - system-definition.yaml created
-- start command implemented (execution planning)
+- start command implemented (execution planning + docker-compose generation)
 - sync command implemented (repository cloning)
-- validate command implemented (basic structure validation)
-
-Partially completed:
-
-- internal/ architecture introduced (shared logic layer not fully extracted yet)
-- consistent CLI interface not yet unified (still folder-based entrypoints)
-
----
-
-## Next Intended Step
-
-The next architectural step is to:
-
-1. Extract shared logic into internal/ properly
-2. Remove duplicated YAML parsing across commands
-3. Introduce consistent command entrypoint pattern
-4. Improve deterministic execution guarantees
-5. Strengthen validation rules
+- validate command implemented (basic structure + git state validation)
+- Unified CLI entrypoint established
+- Renamed project to workspace-controller
 
 ---
 
@@ -127,24 +114,13 @@ To evolve this system into a fully reproducible local development environment wh
 
 ---
 
-## Key Constraint
+## Key Constraints
 
-Avoid over-abstraction.
+1. **Language**: All code (variables, functions, comments) and documentation must be in **English**.
+2. **No Refactor Without Request**: Do not refactor unless explicitly asked.
+3. **No Hidden Optimization**: Keep logic explicit.
+4. **Diff-Only Change Policy**: Prefer minimal changes.
+5. **Avoid Over-Abstraction**: Keep the system explicit and readable.
 
-Keep the system:
-
-- explicit
-- readable
-- command-driven
-- deterministic
-
-## Documentation
-
-For detailed documentation on each command and internal architecture, refer to the respective files in the repository.
-
-
-
-ALSO:
-“no refactor without request”
-“no hidden optimization”
-“diff-only change policy”
+---
+**Important**: The [README.md](README.md) serves as the primary entry point for new users and developers. Ensure it remains synchronized with the system's capabilities.

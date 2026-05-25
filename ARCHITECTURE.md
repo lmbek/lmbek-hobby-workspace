@@ -1,15 +1,15 @@
-# System Controller Architecture
+# Workspace Controller Architecture
 
 ## Overview
 
-This repository is structured as a command-based system controller for local development environments.
+This repository is structured as a command-based workspace controller for local development environments.
 
 ## Structure
 
 ### commands/
 User-facing operations. Each folder represents a command that can be executed.
 
-- start → shows execution plan
+- start → shows execution plan and generates infrastructure
 - sync → materializes system locally
 - validate → checks system consistency
 
@@ -35,3 +35,16 @@ It enforces that:
 ## Rule
 
 If logic is reused by more than one command, it belongs in internal/.
+
+---
+
+### Command Interface
+
+All interactions happen through the `workspace-controller` binary:
+
+- `workspace-controller start`
+- `workspace-controller sync`
+- `workspace-controller validate`
+- `workspace-controller help`
+
+*Note: For a general overview and getting started guide, see [README.md](README.md). Always keep the README updated.*
