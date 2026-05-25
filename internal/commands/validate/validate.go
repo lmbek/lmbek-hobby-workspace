@@ -2,6 +2,7 @@ package validate
 
 import (
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -22,73 +23,69 @@ func getEnv(key, fallback string) string {
 func Run() {
 	sys, err := system.LoadDefinition("system/system-definition.yaml")
 	if err != nil {
-		fmt.Printf("Error: Could not read system definition: %v\n", err)
+		slog.Error("Could not read system definition", "error", err)
 		os.Exit(1)
 	}
 
-	fmt.Println("VALIDATE SYSTEM")
-	fmt.Println("===============")
+	slog.Info("Validating system...")
 
 	workspaceDir := getEnv("SERVICES_DIR", "../workspace/services")
 	hasErrors := false
 
-	fmt.Println("\nChecking Services:")
 	for name, svc := range sys.Services {
-		fmt.Printf("\n- Service: %s\n", name)
+		slog.Info("Checking service", "name", name)
 		targetPath := filepath.Join(workspaceDir, name)
 
 		if err := performStaticGitChecks(targetPath, svc.Version); err != nil {
-			fmt.Printf("  [GIT ERROR] %v\n", err)
+			slog.Error("Git validation failed", "service", name, "error", err)
 			hasErrors = true
 		}
 
 		// Health Check
 		if svc.HealthCheck != "" {
 			if err := performHealthCheck(svc.HealthCheck); err != nil {
-				fmt.Printf("  [UNHEALTHY] %v\n", err)
-				// We don't set hasErrors = true here because it might just not be running yet
-				fmt.Printf("  [HINT] Is the service running? Use 'workspace-controller up' to start it.\n")
+				slog.Warn("Health check failed", "service", name, "url", svc.HealthCheck, "error", err)
+				slog.Info("Hint: Is the service running? Use 'workspace-controller up' to start it.", "service", name)
 			} else {
-				fmt.Printf("  [HEALTHY] Service is reachable and responding correctly.\n")
+				slog.Info("Service is healthy", "service", name)
 			}
 		}
 	}
 
-	fmt.Println("\nChecking Infrastructure:")
 	infraDir := getEnv("INFRA_DIR", "../workspace/infrastructure")
 	if sys.Infrastructure != nil {
-		fmt.Printf("\n- Component: infrastructure\n")
+		slog.Info("Checking infrastructure component")
 		targetPath := infraDir
 
 		// Infrastructure now only has Git versioning validation
 		if err := performStaticGitChecks(targetPath, sys.Infrastructure.Version); err != nil {
-			fmt.Printf("  [GIT ERROR] %v\n", err)
+			slog.Error("Git validation failed", "component", "infrastructure", "error", err)
 			hasErrors = true
 		} else {
-			fmt.Printf("  [OK] Infrastructure repository is consistent.\n")
+			slog.Info("Infrastructure repository is consistent")
 		}
 	} else {
-		fmt.Println("  [SKIP] No infrastructure defined.")
+		slog.Info("No infrastructure defined, skipping")
 	}
 
-	fmt.Println("\nChecking Tools:")
 	if sys.Tools != nil {
-		fmt.Printf("\n- Tool: tools\n")
+		slog.Info("Checking tools component")
 		targetPath := getEnv("TOOLS_DIR", "../workspace/tools")
 		if err := performStaticGitChecks(targetPath, sys.Tools.Version); err != nil {
-			fmt.Printf("  [GIT ERROR] %v\n", err)
+			slog.Error("Git validation failed", "component", "tools", "error", err)
 			hasErrors = true
+		} else {
+			slog.Info("Tools repository is consistent")
 		}
 	} else {
-		fmt.Println("  [SKIP] No tools defined.")
+		slog.Info("No tools defined, skipping")
 	}
 
-	fmt.Println("\nValidation summary:")
 	if hasErrors {
-		fmt.Println("Status: FAILED (Check the issues above)")
+		slog.Error("Validation status: FAILED")
 		os.Exit(1)
 	} else {
-		fmt.Println("Status: PASSED (Static checks okay)")
+		slog.Info("Validation status: PASSED")
 	}
 }
 
@@ -105,11 +102,11 @@ func performStaticGitChecks(targetPath string, expectedVersion string) error {
 	}
 
 	if currentVersion != expectedVersion {
-		fmt.Printf("  [WARNING] Version mismatch! Expected: %s, Found: %s\n", expectedVersion, currentVersion)
-		fmt.Printf("  [HINT] The controller is configured to stay on the current branch (main).\n")
+		slog.Warn("Version mismatch", "path", targetPath, "expected", expectedVersion, "found", currentVersion)
+		slog.Info("Hint: The controller is configured to stay on the current branch (main).", "path", targetPath)
 		return nil
 	}
-	fmt.Printf("  [OK] Version matches: %s\n", currentVersion)
+	slog.Info("Version matches", "path", targetPath, "version", currentVersion)
 
 	// 3. Check for local changes
 	isDirty, err := isGitDirty(targetPath)
@@ -117,9 +114,9 @@ func performStaticGitChecks(targetPath string, expectedVersion string) error {
 		return fmt.Errorf("could not check git status: %v", err)
 	}
 	if isDirty {
-		return fmt.Errorf("local changes detected! Please commit or stash them")
+		return fmt.Errorf("local changes detected in %s! Please commit or stash them", targetPath)
 	}
-	fmt.Printf("  [CLEAN] No local changes detected.\n")
+	slog.Info("No local changes detected", "path", targetPath)
 
 	return nil
 }

@@ -2,6 +2,7 @@ package start
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"workspace-controller/internal/system"
 )
@@ -9,7 +10,7 @@ import (
 func Run() {
 	sys, err := system.LoadDefinition("system/system-definition.yaml")
 	if err != nil {
-		fmt.Printf("Error loading system definition: %v\n", err)
+		slog.Error("Error loading system definition", "error", err)
 		os.Exit(1)
 	}
 
@@ -18,14 +19,14 @@ func Run() {
 
 	fmt.Println("\nServices:")
 	for name, svc := range sys.Services {
-		fmt.Printf("- %s @ %s (%s)\n", name, svc.Version, svc.Repository)
+		slog.Info("Service planned", "name", name, "version", svc.Version, "repository", svc.Repository)
 	}
 
 	fmt.Println("\nInfrastructure:")
 	if sys.Infrastructure != nil {
-		fmt.Printf("- infrastructure @ %s (%s)\n", sys.Infrastructure.Version, sys.Infrastructure.Repository)
+		slog.Info("Infrastructure planned", "version", sys.Infrastructure.Version, "repository", sys.Infrastructure.Repository)
 	} else {
-		fmt.Println("  [SKIP] No infrastructure defined.")
+		slog.Warn("No infrastructure defined")
 	}
 
 	fmt.Println("\n[OK] Infrastructure plan is managed within the infrastructure repository.")

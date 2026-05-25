@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"workspace-controller/internal/commands/down"
 	"workspace-controller/internal/commands/start"
@@ -11,6 +12,13 @@ import (
 )
 
 func main() {
+	// Initialize structured logger
+	handler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	})
+	logger := slog.New(handler)
+	slog.SetDefault(logger)
+
 	if len(os.Args) < 2 {
 		showHelp()
 		os.Exit(1)
@@ -32,7 +40,7 @@ func main() {
 	case "help":
 		showHelp()
 	default:
-		fmt.Printf("Unknown command: %s\n", command)
+		slog.Error("Unknown command", "command", command)
 		showHelp()
 		os.Exit(1)
 	}

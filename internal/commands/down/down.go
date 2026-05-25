@@ -1,7 +1,7 @@
 package down
 
 import (
-	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
 )
@@ -14,25 +14,24 @@ func getEnv(key, fallback string) string {
 }
 
 func Run() {
-	fmt.Println("STOPPING WORKSPACE")
-	fmt.Println("==================")
+	slog.Info("Stopping workspace...")
 
 	infraDir := getEnv("INFRA_DIR", "../workspace/infrastructure")
 	if _, err := os.Stat(infraDir); os.IsNotExist(err) {
-		fmt.Println("Error: infrastructure directory not found.")
+		slog.Error("Infrastructure directory not found", "path", infraDir)
 		os.Exit(1)
 	}
 
-	fmt.Println("Running: docker-compose down")
+	slog.Info("Running docker-compose down", "path", infraDir)
 	cmd := exec.Command("docker-compose", "down")
 	cmd.Dir = infraDir
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Run(); err != nil {
-		fmt.Printf("Error stopping docker-compose: %v\n", err)
+		slog.Error("Error stopping docker-compose", "error", err)
 		os.Exit(1)
 	}
 
-	fmt.Println("\nWorkspace has been stopped.")
+	slog.Info("Workspace has been stopped")
 }

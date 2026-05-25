@@ -1,7 +1,7 @@
 package sync
 
 import (
-	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -19,7 +19,7 @@ func getEnv(key, fallback string) string {
 func Run() {
 	sys, err := system.LoadDefinition("system/system-definition.yaml")
 	if err != nil {
-		fmt.Printf("Error: Could not read system definition: %v\n", err)
+		slog.Error("Could not read system definition", "error", err)
 		os.Exit(1)
 	}
 
@@ -31,8 +31,7 @@ func Run() {
 	ensureDir(workspaceDir)
 	ensureDir(infraDir)
 
-	fmt.Println("SYNC SYSTEM")
-	fmt.Println("===========")
+	slog.Info("Syncing system...")
 
 	// 2. Process services
 	for name, svc := range sys.Services {
@@ -51,16 +50,16 @@ func Run() {
 
 	// 5. Post-Sync Hooks
 	if len(sys.Hooks.PostSync) > 0 {
-		fmt.Println("\nRunning Post-Sync Hooks:")
+		slog.Info("Running Post-Sync Hooks...")
 		for _, hook := range sys.Hooks.PostSync {
-			fmt.Printf("  [HOOK] %s\n", hook)
+			slog.Info("Executing hook", "command", hook)
 			if err := runHook(hook); err != nil {
-				fmt.Printf("  [ERROR] Hook failed: %v\n", err)
+				slog.Error("Hook failed", "command", hook, "error", err)
 			}
 		}
 	}
 
-	fmt.Println("\nSync finished.")
+	slog.Info("Sync finished")
 }
 
 func runHook(command string) error {
@@ -83,42 +82,42 @@ func processGitComponent(baseDir, name, repo, version string) {
 		targetPath = baseDir
 	}
 
-	fmt.Printf("\nComponent: %s\n", name)
+	slog.Info("Processing component", "name", name)
 
 	// Check for placeholder URL
 	if strings.Contains(repo, "@company") || repo == "" {
-		fmt.Printf("  [SKIP] Skipping '%s' - Repository URL is a placeholder (%s)\n", name, repo)
+		slog.Warn("Skipping component - Repository URL is a placeholder", "name", name, "repo", repo)
 		return
 	}
 
 	if _, err := os.Stat(targetPath); os.IsNotExist(err) {
 		// Clone if it doesn't exist
-		fmt.Printf("  [CLONE] Fetching %s...\n", repo)
+		slog.Info("Cloning repository", "repo", repo, "target", targetPath)
 		if err := runGit("clone", repo, targetPath); err != nil {
-			fmt.Printf("  [ERROR] Error cloning: %v\n", err)
+			slog.Error("Error cloning", "repo", repo, "error", err)
 			return
 		}
 	} else {
-		fmt.Printf("  [EXISTS] Directory already exists.\n")
+		slog.Debug("Directory already exists", "path", targetPath)
 	}
 
 	// Syncing logic: stay on branch, fetch and pull updates
-	fmt.Printf("  [SYNC] Fetching and pulling updates...\n")
+	slog.Info("Fetching and pulling updates", "name", name, "path", targetPath)
 	if err := runGitInDir(targetPath, "fetch", "--all"); err != nil {
-		fmt.Printf("  [ERROR] Error fetching: %v\n", err)
+		slog.Error("Error fetching", "name", name, "error", err)
 	}
 	if err := runGitInDir(targetPath, "pull"); err != nil {
-		fmt.Printf("  [ERROR] Error pulling: %v\n", err)
+		slog.Error("Error pulling", "name", name, "error", err)
 	}
 
 	// Verification: Check if we are at the expected version (tag/branch/hash)
 	// but DO NOT checkout to it if it causes a detached HEAD.
-	fmt.Printf("  [INFO] Target version: %s (managed by user on main branch)\n", version)
+	slog.Info("Target version info", "name", name, "version", version)
 }
 
 func ensureDir(path string) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		fmt.Printf("Creating directory: %s\n", path)
+		slog.Info("Creating directory", "path", path)
 		os.MkdirAll(path, 0755)
 	}
 }
