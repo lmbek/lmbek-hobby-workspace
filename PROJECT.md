@@ -10,9 +10,11 @@ The purpose of this project is to create a tool that allows defining and startin
 - **Infrastructure as Code:** Infrastructure (databases, queues, etc.) is managed centrally and automatically.
 
 ## Structure
-- `workspace/`: Contains the source code for all services (cloned from Git).
-- `infrastructure/`: Contains configuration for running shared services (Docker Compose, environment variables).
-- `workspace-controller/`: The tool itself that orchestrates everything.
+- `workspace/`: (Project root) The main container for your local environment.
+  - `services/`: Contains source code for services (e.g., `authentication-service/`, `user-service/`).
+  - `infrastructure/`: Contains configuration for running shared services (Docker Compose, environment variables).
+  - `tools/`: Additional tools and utilities.
+- `workspace-controller/`: (Project root) The tool itself that orchestrates everything.
 
 ---
 *Refer to [README.md](README.md) for usage instructions and quick start. Update the README when project goals or structure change.*

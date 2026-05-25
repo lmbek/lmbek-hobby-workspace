@@ -77,11 +77,18 @@ go run main.go help
 
 ---
 
-## Configuration
+## Structure
+The project is organized to keep everything related to the workspace together:
+- `workspace/`: (Root) The main container for your local environment.
+  - `services/`: Contains source code for services (e.g., `authentication-service/`, `user-service/`).
+  - `infrastructure/`: Configuration for shared services (Docker Compose).
+  - `tools/`: Additional development tools and utilities.
+- `workspace-controller/`: (Root) The tool itself that orchestrates everything.
 
 The system is defined in `system/system-definition.yaml`. You can specify:
 - **Services:** Git repository URLs, versions (tags/branches), and environment variables.
-- **Infrastructure:** Docker images (e.g., Postgres), versions, and environment variables.
+- **Infrastructure:** Docker images, versions, and now **version-controlled configuration** (Git).
+- **Tools:** Development utilities managed via Git.
 
 ---
 

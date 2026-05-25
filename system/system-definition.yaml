@@ -1,5 +1,5 @@
-# TODO: this is boilerplate, replace with actual repos later
-system-version: 1
+# System Definition for Workspace Controller
+system-version: 0.0.1
 
 hooks:
     post-sync:
@@ -9,23 +9,29 @@ hooks:
 
 services:
     authentication-service:
-        repository: git@company/authentication-service.git
-        version: 1.0.0
+        repository: ../workspace/services/authentication-service
+        version: 0.0.1
         health-check: http://localhost:8081/health
         depends-on:
             - postgres
     user-service:
-        repository: git@company/user-service.git
-        version: 1.0.0
+        repository: ../workspace/services/user-service
+        version: 0.0.1
         health-check: http://localhost:8082/health
         depends-on:
             - postgres
 
 infrastructure:
     postgres:
-        version: 16
+        repository: ../workspace/infrastructure
+        version: 0.0.1
         health-check: tcp://localhost:5432
         environment:
             POSTGRES_DB: workspace_db
             POSTGRES_USER: user
             POSTGRES_PASSWORD: password
+
+tools:
+    development-tools:
+        repository: ../workspace/tools
+        version: 0.0.1

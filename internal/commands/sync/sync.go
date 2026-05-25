@@ -17,8 +17,8 @@ func Run() {
 	}
 
 	// 1. Create directories
-	workspaceDir := "workspace"
-	infraDir := "infrastructure"
+	workspaceDir := "../workspace/services"
+	infraDir := "../workspace/infrastructure"
 
 	ensureDir(workspaceDir)
 	ensureDir(infraDir)
@@ -28,35 +28,22 @@ func Run() {
 
 	// 2. Process services
 	for name, svc := range sys.Services {
-		targetPath := filepath.Join(workspaceDir, name)
+		processGitComponent(workspaceDir, name, svc.Repository, svc.Version)
+	}
 
-		fmt.Printf("\nService: %s\n", name)
-
-		// Check for placeholder URL
-		if strings.Contains(svc.Repository, "@company") || svc.Repository == "" {
-			fmt.Printf("  [SKIP] Skipping '%s' - Repository URL is a placeholder (%s)\n", name, svc.Repository)
-			continue
-		}
-
-		if _, err := os.Stat(targetPath); os.IsNotExist(err) {
-			// Clone if it doesn't exist
-			fmt.Printf("  [CLONE] Fetching %s...\n", svc.Repository)
-			if err := runGit("clone", svc.Repository, targetPath); err != nil {
-				fmt.Printf("  [ERROR] Error cloning: %v\n", err)
-				continue
-			}
-		} else {
-			fmt.Printf("  [EXISTS] Directory already exists.\n")
-		}
-
-		// Checkout version
-		fmt.Printf("  [CHECKOUT] Setting version to %s...\n", svc.Version)
-		if err := runGitInDir(targetPath, "checkout", svc.Version); err != nil {
-			fmt.Printf("  [ERROR] Error checking out %s: %v\n", svc.Version, err)
+	// 3. Process infrastructure (if repository is defined)
+	for name, infra := range sys.Infrastructure {
+		if infra.Repository != "" {
+			processGitComponent(infraDir, name, infra.Repository, infra.Version)
 		}
 	}
 
-	// 3. Post-Sync Hooks
+	// 4. Process tools
+	for name, tool := range sys.Tools {
+		processGitComponent("../workspace/tools", name, tool.Repository, tool.Version)
+	}
+
+	// 5. Post-Sync Hooks
 	if len(sys.Hooks.PostSync) > 0 {
 		fmt.Println("\nRunning Post-Sync Hooks:")
 		for _, hook := range sys.Hooks.PostSync {
@@ -81,6 +68,39 @@ func runHook(command string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
+}
+
+func processGitComponent(baseDir, name, repo, version string) {
+	targetPath := filepath.Join(baseDir, name)
+	// Special case: if name matches the end of baseDir, don't join
+	if filepath.Base(baseDir) == name {
+		targetPath = baseDir
+	}
+
+	fmt.Printf("\nComponent: %s\n", name)
+
+	// Check for placeholder URL
+	if strings.Contains(repo, "@company") || repo == "" {
+		fmt.Printf("  [SKIP] Skipping '%s' - Repository URL is a placeholder (%s)\n", name, repo)
+		return
+	}
+
+	if _, err := os.Stat(targetPath); os.IsNotExist(err) {
+		// Clone if it doesn't exist
+		fmt.Printf("  [CLONE] Fetching %s...\n", repo)
+		if err := runGit("clone", repo, targetPath); err != nil {
+			fmt.Printf("  [ERROR] Error cloning: %v\n", err)
+			return
+		}
+	} else {
+		fmt.Printf("  [EXISTS] Directory already exists.\n")
+	}
+
+	// Checkout version
+	fmt.Printf("  [CHECKOUT] Setting version to %s...\n", version)
+	if err := runGitInDir(targetPath, "checkout", version); err != nil {
+		fmt.Printf("  [ERROR] Error checking out %s: %v\n", version, err)
+	}
 }
 
 func ensureDir(path string) {

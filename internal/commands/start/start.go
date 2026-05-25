@@ -41,7 +41,7 @@ func Run() {
 }
 
 func generateDockerCompose(sys *system.SystemDefinition) error {
-	infraDir := "infrastructure"
+	infraDir := "../workspace/infrastructure"
 	// Ensure infra dir exists
 	if _, err := os.Stat(infraDir); os.IsNotExist(err) {
 		err := os.MkdirAll(infraDir, 0755)
@@ -71,7 +71,9 @@ func generateDockerCompose(sys *system.SystemDefinition) error {
 
 		// Point to the service directory in workspace.
 		// Docker Compose will look for a Dockerfile there.
-		_, err = f.WriteString(fmt.Sprintf("    build: ../workspace/%s\n", name))
+		// Since docker-compose.yaml is in ../workspace/infrastructure,
+		// the relative path to services (in ../workspace/services/) is ../services/<name>
+		_, err = f.WriteString(fmt.Sprintf("    build: ../services/%s\n", name))
 		if err != nil {
 			return err
 		}

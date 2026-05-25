@@ -18,7 +18,7 @@ func Run() {
 	fmt.Println("STARTING WORKSPACE")
 	fmt.Println("==================")
 
-	infraDir := "infrastructure"
+	infraDir := "../workspace/infrastructure"
 	if _, err := os.Stat(infraDir); os.IsNotExist(err) {
 		fmt.Println("Error: infrastructure directory not found. Please run 'start' first.")
 		os.Exit(1)

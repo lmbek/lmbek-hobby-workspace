@@ -22,7 +22,7 @@ func Run() {
 	fmt.Println("VALIDATE SYSTEM")
 	fmt.Println("===============")
 
-	workspaceDir := "workspace"
+	workspaceDir := "../workspace/services"
 	hasErrors := false
 
 	fmt.Println("\nChecking Services:")
@@ -30,41 +30,12 @@ func Run() {
 		fmt.Printf("\n- Service: %s\n", name)
 		targetPath := filepath.Join(workspaceDir, name)
 
-		// 1. Check if directory exists
-		if _, err := os.Stat(targetPath); os.IsNotExist(err) {
-			fmt.Printf("  [MISSING] Directory does not exist: %s\n", targetPath)
-			fmt.Printf("  [ACTION] Please run 'workspace-controller sync' to clone this service.\n")
+		if err := performStaticGitChecks(targetPath, svc.Version); err != nil {
+			fmt.Printf("  [GIT ERROR] %v\n", err)
 			hasErrors = true
-			continue
 		}
 
-		// 2. Check current version (git tag/branch)
-		currentVersion, err := getGitCurrentVersion(targetPath)
-		if err != nil {
-			fmt.Printf("  [ERROR] Could not determine current version: %v\n", err)
-			hasErrors = true
-		} else {
-			if currentVersion == svc.Version {
-				fmt.Printf("  [OK] Version matches: %s\n", currentVersion)
-			} else {
-				fmt.Printf("  [MISMATCH] Version mismatch! Expected: %s, Found: %s\n", svc.Version, currentVersion)
-				hasErrors = true
-			}
-		}
-
-		// 3. Check for local changes
-		isDirty, err := isGitDirty(targetPath)
-		if err != nil {
-			fmt.Printf("  [ERROR] Could not check git status: %v\n", err)
-			hasErrors = true
-		} else if isDirty {
-			fmt.Printf("  [DIRTY] Local changes detected! Please commit or stash them.\n")
-			hasErrors = true
-		} else {
-			fmt.Printf("  [CLEAN] No local changes detected.\n")
-		}
-
-		// 4. Health Check
+		// Health Check
 		if svc.HealthCheck != "" {
 			if err := performHealthCheck(svc.HealthCheck); err != nil {
 				fmt.Printf("  [UNHEALTHY] %v\n", err)
@@ -77,8 +48,19 @@ func Run() {
 	}
 
 	fmt.Println("\nChecking Infrastructure:")
+	infraDir := "../workspace/infrastructure"
 	for name, infra := range sys.Infrastructure {
 		fmt.Printf("\n- Component: %s\n", name)
+
+		// Static checks if repository is defined
+		if infra.Repository != "" {
+			targetPath := infraDir // For infrastructure, the path is workspace/infrastructure
+			if err := performStaticGitChecks(targetPath, infra.Version); err != nil {
+				fmt.Printf("  [GIT ERROR] %v\n", err)
+				hasErrors = true
+			}
+		}
+
 		if infra.HealthCheck != "" {
 			if err := performHealthCheck(infra.HealthCheck); err != nil {
 				fmt.Printf("  [UNHEALTHY] %v\n", err)
@@ -91,6 +73,16 @@ func Run() {
 		}
 	}
 
+	fmt.Println("\nChecking Tools:")
+	for name, tool := range sys.Tools {
+		fmt.Printf("\n- Tool: %s\n", name)
+		targetPath := filepath.Join("../workspace/tools", name)
+		if err := performStaticGitChecks(targetPath, tool.Version); err != nil {
+			fmt.Printf("  [GIT ERROR] %v\n", err)
+			hasErrors = true
+		}
+	}
+
 	fmt.Println("\nValidation summary:")
 	if hasErrors {
 		fmt.Println("Status: FAILED (Check the issues above)")
@@ -98,6 +90,36 @@ func Run() {
 	} else {
 		fmt.Println("Status: PASSED (Static checks okay)")
 	}
+}
+
+func performStaticGitChecks(targetPath string, expectedVersion string) error {
+	// 1. Check if directory exists
+	if _, err := os.Stat(targetPath); os.IsNotExist(err) {
+		return fmt.Errorf("directory does not exist: %s. Please run 'sync'", targetPath)
+	}
+
+	// 2. Check current version (git tag/branch)
+	currentVersion, err := getGitCurrentVersion(targetPath)
+	if err != nil {
+		return fmt.Errorf("could not determine current version: %v", err)
+	}
+
+	if currentVersion != expectedVersion {
+		return fmt.Errorf("version mismatch! Expected: %s, Found: %s", expectedVersion, currentVersion)
+	}
+	fmt.Printf("  [OK] Version matches: %s\n", currentVersion)
+
+	// 3. Check for local changes
+	isDirty, err := isGitDirty(targetPath)
+	if err != nil {
+		return fmt.Errorf("could not check git status: %v", err)
+	}
+	if isDirty {
+		return fmt.Errorf("local changes detected! Please commit or stash them")
+	}
+	fmt.Printf("  [CLEAN] No local changes detected.\n")
+
+	return nil
 }
 
 func performHealthCheck(url string) error {
