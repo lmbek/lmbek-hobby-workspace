@@ -83,6 +83,13 @@ func generateDockerCompose(sys *system.SystemDefinition) error {
 			}
 		}
 
+		if len(svc.DependsOn) > 0 {
+			_, err = f.WriteString("    depends_on:\n")
+			for _, dep := range svc.DependsOn {
+				_, err = f.WriteString(fmt.Sprintf("      - %s\n", dep))
+			}
+		}
+
 		_, err = f.WriteString("    networks:\n      - workspace-net\n")
 		if err != nil {
 			return err

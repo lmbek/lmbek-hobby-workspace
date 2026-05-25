@@ -56,7 +56,31 @@ func Run() {
 		}
 	}
 
+	// 3. Post-Sync Hooks
+	if len(sys.Hooks.PostSync) > 0 {
+		fmt.Println("\nRunning Post-Sync Hooks:")
+		for _, hook := range sys.Hooks.PostSync {
+			fmt.Printf("  [HOOK] %s\n", hook)
+			if err := runHook(hook); err != nil {
+				fmt.Printf("  [ERROR] Hook failed: %v\n", err)
+			}
+		}
+	}
+
 	fmt.Println("\nSync finished.")
+}
+
+func runHook(command string) error {
+	// Simple shell execution
+	var cmd *exec.Cmd
+	if strings.Contains(os.Getenv("OS"), "Windows") {
+		cmd = exec.Command("cmd", "/C", command)
+	} else {
+		cmd = exec.Command("sh", "-c", command)
+	}
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }
 
 func ensureDir(path string) {

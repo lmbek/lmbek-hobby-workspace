@@ -2,10 +2,13 @@ package validate
 
 import (
 	"fmt"
+	"net"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 	"workspace-controller/internal/system"
 )
 
@@ -22,8 +25,9 @@ func Run() {
 	workspaceDir := "workspace"
 	hasErrors := false
 
+	fmt.Println("\nChecking Services:")
 	for name, svc := range sys.Services {
-		fmt.Printf("\nService: %s\n", name)
+		fmt.Printf("\n- Service: %s\n", name)
 		targetPath := filepath.Join(workspaceDir, name)
 
 		// 1. Check if directory exists
@@ -59,6 +63,32 @@ func Run() {
 		} else {
 			fmt.Printf("  [CLEAN] No local changes detected.\n")
 		}
+
+		// 4. Health Check
+		if svc.HealthCheck != "" {
+			if err := performHealthCheck(svc.HealthCheck); err != nil {
+				fmt.Printf("  [UNHEALTHY] %v\n", err)
+				// We don't set hasErrors = true here because it might just not be running yet
+				fmt.Printf("  [HINT] Is the service running? Use 'workspace-controller up' to start it.\n")
+			} else {
+				fmt.Printf("  [HEALTHY] Service is reachable and responding correctly.\n")
+			}
+		}
+	}
+
+	fmt.Println("\nChecking Infrastructure:")
+	for name, infra := range sys.Infrastructure {
+		fmt.Printf("\n- Component: %s\n", name)
+		if infra.HealthCheck != "" {
+			if err := performHealthCheck(infra.HealthCheck); err != nil {
+				fmt.Printf("  [UNHEALTHY] %v\n", err)
+				fmt.Printf("  [HINT] Is the infrastructure running? Use 'workspace-controller up' to start it.\n")
+			} else {
+				fmt.Printf("  [HEALTHY] Component is reachable and responding correctly.\n")
+			}
+		} else {
+			fmt.Printf("  [SKIP] No health check defined.\n")
+		}
 	}
 
 	fmt.Println("\nValidation summary:")
@@ -66,8 +96,38 @@ func Run() {
 		fmt.Println("Status: FAILED (Check the issues above)")
 		os.Exit(1)
 	} else {
-		fmt.Println("Status: PASSED")
+		fmt.Println("Status: PASSED (Static checks okay)")
 	}
+}
+
+func performHealthCheck(url string) error {
+	if strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://") {
+		client := http.Client{
+			Timeout: 2 * time.Second,
+		}
+		resp, err := client.Get(url)
+		if err != nil {
+			return fmt.Errorf("HTTP check failed: %v", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+			return fmt.Errorf("HTTP check returned status code: %d", resp.StatusCode)
+		}
+		return nil
+	}
+
+	if strings.HasPrefix(url, "tcp://") {
+		address := strings.TrimPrefix(url, "tcp://")
+		conn, err := net.DialTimeout("tcp", address, 2*time.Second)
+		if err != nil {
+			return fmt.Errorf("TCP check failed: %v", err)
+		}
+		conn.Close()
+		return nil
+	}
+
+	return fmt.Errorf("unsupported health check protocol: %s", url)
 }
 
 func getGitCurrentVersion(dir string) (string, error) {

@@ -9,13 +9,19 @@ Move away from brittle bash scripts and manual setup. Use a single source of tru
 - **Declarative Definition:** System state is described in YAML.
 - **Automated Sync:** Clones and manages Git repositories automatically.
 - **Infrastructure as Code:** Automatically generates Docker Compose configurations.
+- **Dependency Management:** Define service dependencies (e.g., waiting for database).
+- **Hook System:** Run custom commands after sync or startup.
 - **Consistency Checks:** Validates that your local environment matches the definition.
+- **Health Monitoring:** Built-in support for HTTP and TCP health checks during validation.
 
 ---
 
 ## Getting Started
 
-### Prerequisites
+### 1. Try the Demo
+For a hands-on experience of all features, follow the [DEMO.md](DEMO.md) guide.
+
+### 2. Prerequisites
 - [Go](https://golang.org/doc/install) (1.20 or later)
 - [Git](https://git-scm.com/)
 - [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/)

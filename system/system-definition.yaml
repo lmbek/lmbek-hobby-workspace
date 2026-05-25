@@ -1,18 +1,30 @@
 # TODO: this is boilerplate, replace with actual repos later
 system-version: 1
 
+hooks:
+    post-sync:
+        - echo "Sync complete! You can now run 'up' to start the system."
+    post-up:
+        - echo "System is up! Checking connectivity..."
+
 services:
     authentication-service:
         repository: git@company/authentication-service.git
         version: 1.0.0
-
+        health-check: http://localhost:8081/health
+        depends-on:
+            - postgres
     user-service:
         repository: git@company/user-service.git
         version: 1.0.0
+        health-check: http://localhost:8082/health
+        depends-on:
+            - postgres
 
 infrastructure:
     postgres:
         version: 16
+        health-check: tcp://localhost:5432
         environment:
             POSTGRES_DB: workspace_db
             POSTGRES_USER: user

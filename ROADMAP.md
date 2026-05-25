@@ -31,9 +31,9 @@
 
 ## Phase 5: Advanced Features & Polish ✅
 - [x] Documentation and CLI polish (help commands).
-- [ ] Health checks for synchronized services.
-- [ ] Dependency management between services and infrastructure.
-- [ ] Plugin/Hook system for custom setup steps (e.g. database migrations).
+- [x] Health checks for synchronized services (HTTP and TCP support).
+- [x] Dependency management between services and infrastructure.
+- [x] Plugin/Hook system for custom setup steps (e.g. database migrations).
 
 ## Phase 6: Ecosystem & Developer Experience 🚀
 - [ ] Interactive CLI mode (menus for service selection).
