@@ -1,0 +1,13 @@
+system-version: 1
+
+services:
+    authentication-service:
+        repository: git@company/authentication-service.git
+        version: 1.0.0
+
+    user-service:
+        repository: git@company/user-service.git
+        version: 1.0.0
+
+infrastructure:
+    postgres: 16
