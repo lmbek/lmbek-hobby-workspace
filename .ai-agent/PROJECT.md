@@ -18,4 +18,4 @@ The purpose of this project is to create a tool that allows defining and startin
 - `workspace-controller/`: (Project root) The tool itself that orchestrates everything.
 
 ---
-*Refer to [README.md](README.md) for usage instructions and quick start. Update the README when project goals or structure change.*
+*Refer to [../README.md](../README.md) for usage instructions and quick start. Update the README when project goals or structure change.*

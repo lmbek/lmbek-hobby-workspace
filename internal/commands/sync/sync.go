@@ -9,6 +9,13 @@ import (
 	"workspace-controller/internal/system"
 )
 
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
+}
+
 func Run() {
 	sys, err := system.LoadDefinition("system/system-definition.yaml")
 	if err != nil {
@@ -16,9 +23,10 @@ func Run() {
 		os.Exit(1)
 	}
 
-	// 1. Create directories
-	workspaceDir := "../workspace/services"
-	infraDir := "../workspace/infrastructure"
+	// 1. Create directories using environment variables or defaults
+	workspaceDir := getEnv("SERVICES_DIR", "../workspace/services")
+	infraDir := getEnv("INFRA_DIR", "../workspace/infrastructure")
+	toolsDir := getEnv("TOOLS_DIR", "../workspace/tools")
 
 	ensureDir(workspaceDir)
 	ensureDir(infraDir)
@@ -32,13 +40,13 @@ func Run() {
 	}
 
 	// 3. Process infrastructure
-	for name, infra := range sys.Infrastructure {
-		processGitComponent(infraDir, name, infra.Repository, infra.Version)
+	if sys.Infrastructure != nil {
+		processGitComponent(infraDir, "infrastructure", sys.Infrastructure.Repository, sys.Infrastructure.Version)
 	}
 
 	// 4. Process tools
 	if sys.Tools != nil {
-		processGitComponent("../workspace/tools", "tools", sys.Tools.Repository, sys.Tools.Version)
+		processGitComponent(toolsDir, "tools", sys.Tools.Repository, sys.Tools.Version)
 	}
 
 	// 5. Post-Sync Hooks

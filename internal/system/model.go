@@ -4,7 +4,7 @@ type SystemDefinition struct {
 	SystemVersion  string             `yaml:"system-version"`
 	Hooks          Hooks              `yaml:"hooks,omitempty"` // Added hooks
 	Services       map[string]Service `yaml:"services"`
-	Infrastructure map[string]Infra   `yaml:"infrastructure"`
+	Infrastructure *Infra             `yaml:"infrastructure,omitempty"`
 	Tools          *Tool              `yaml:"tools,omitempty"` // Updated tools to single object
 }
 

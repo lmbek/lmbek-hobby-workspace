@@ -88,17 +88,24 @@ The project is organized to keep everything related to the workspace together:
 
 The system is defined in `system/system-definition.yaml`. You can specify:
 - **Services:** Git repository URLs, versions (tags/branches), and environment variables.
-- **Infrastructure:** Docker images, versions, and now **version-controlled configuration** (Git).
+- **Infrastructure:** A single version-controlled infrastructure repository.
 - **Tools:** A single version-controlled development tools repository.
+
+### Environment Variables
+The controller supports environment variables to override default paths:
+- `SERVICES_DIR`: Directory for services (default: `../workspace/services`)
+- `INFRA_DIR`: Directory for infrastructure (default: `../workspace/infrastructure`)
+- `TOOLS_DIR`: Directory for tools (default: `../workspace/tools`)
 
 ---
 
 ## Documentation
 For more detailed information, see:
-- [ARCHITECTURE.md](ARCHITECTURE.md) - Internal structure and design principles.
-- [PROJECT.md](PROJECT.md) - Project vision and core concepts.
-- [ROADMAP.md](ROADMAP.md) - Current progress and future plans.
+- [.ai-agent/ARCHITECTURE.md](.ai-agent/ARCHITECTURE.md) - Internal structure and design principles.
+- [.ai-agent/PROJECT.md](.ai-agent/PROJECT.md) - Project vision and core concepts.
+- [.ai-agent/ROADMAP.md](.ai-agent/ROADMAP.md) - Current progress and future plans.
 - [DEMO.md](DEMO.md) - Hands-on guide to the controller's features.
-- [HANDOVER.md](HANDOVER.md) - Context for developers taking over the project.
+- [.ai-agent/HANDOVER.md](.ai-agent/HANDOVER.md) - Context for developers taking over the project.
+- [.ai-agent/guidelines.md](.ai-agent/guidelines.md) - The guidelines we are using in this project for ai agent
 
 *Note: Always ensure that this README is updated when major features or changes are implemented.*

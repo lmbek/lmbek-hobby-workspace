@@ -36,8 +36,8 @@ Each command is implemented in its own package:
 #### start/
 - Reads system-definition.yaml
 - Produces an execution plan
-- Generates infrastructure configuration (Docker Compose)
 - Does NOT modify system state
+- Acknowledges decoupled infrastructure repositories
 
 #### sync/
 - Materializes system locally
@@ -99,13 +99,14 @@ No implicit scripts or side effects outside commands.
 Completed:
 
 - system-definition.yaml created (supporting Services, Infrastructure, and Tools)
-- start command implemented (execution planning + docker-compose generation)
+- start command implemented (execution planning for decoupled architecture)
 - sync command implemented (repository cloning + versioning for all components)
 - validate command implemented (Git state + health checks)
-- up/down commands implemented (Docker lifecycle)
+- up/down commands implemented (Docker lifecycle orchestration)
 - Unified CLI entrypoint established
 - Renamed project to workspace-controller
 - Workspace reorganization (centralized services directory)
+- Decoupled infrastructure and tools into specialized repositories
 
 ---
 
@@ -123,10 +124,12 @@ To evolve this system into a fully reproducible local development environment wh
 ## Key Constraints
 
 1. **Language**: All code (variables, functions, comments) and documentation must be in **English**.
-2. **No Refactor Without Request**: Do not refactor unless explicitly asked.
-3. **No Hidden Optimization**: Keep logic explicit.
-4. **Diff-Only Change Policy**: Prefer minimal changes.
-5. **Avoid Over-Abstraction**: Keep the system explicit and readable.
+2. **No Git Commands**: AI agents are NOT allowed to suggest or execute Git commands.
+3. **No Refactor Without Request**: Do not refactor unless explicitly asked.
+4. **No Hidden Optimization**: Keep logic explicit.
+5. **Diff-Only Change Policy**: Prefer minimal changes.
+6. **Avoid Over-Abstraction**: Keep the system explicit and readable.
+7. **AI Guidelines**: Refer to [guidelines.md](guidelines.md) for detailed AI interaction rules.
 
 ---
-**Important**: The [README.md](README.md) serves as the primary entry point for new users and developers. Ensure it remains synchronized with the system's capabilities.
+**Important**: The [../README.md](../README.md) serves as the primary entry point for new users and developers. Ensure it remains synchronized with the system's capabilities.

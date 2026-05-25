@@ -9,7 +9,7 @@ This repository is structured as a command-based workspace controller for local 
 ### commands/
 User-facing operations. Each folder represents a command that can be executed.
 
-- start → shows execution plan and generates infrastructure
+- start → shows execution plan for services and decoupled infrastructure
 - sync → materializes system locally
 - validate → checks system consistency
 
@@ -47,4 +47,4 @@ All interactions happen through the `workspace-controller` binary:
 - `workspace-controller validate`
 - `workspace-controller help`
 
-*Note: For a general overview and getting started guide, see [README.md](README.md). Always keep the README updated.*
+*Note: For a general overview and getting started guide, see [../README.md](../README.md). Always keep the README updated.*

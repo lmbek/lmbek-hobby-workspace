@@ -12,6 +12,13 @@ import (
 	"workspace-controller/internal/system"
 )
 
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
+}
+
 func Run() {
 	sys, err := system.LoadDefinition("system/system-definition.yaml")
 	if err != nil {
@@ -22,7 +29,7 @@ func Run() {
 	fmt.Println("VALIDATE SYSTEM")
 	fmt.Println("===============")
 
-	workspaceDir := "../workspace/services"
+	workspaceDir := getEnv("SERVICES_DIR", "../workspace/services")
 	hasErrors := false
 
 	fmt.Println("\nChecking Services:")
@@ -48,24 +55,26 @@ func Run() {
 	}
 
 	fmt.Println("\nChecking Infrastructure:")
-	infraDir := "../workspace/infrastructure"
-	for name, infra := range sys.Infrastructure {
-		fmt.Printf("\n- Component: %s\n", name)
-		targetPath := filepath.Join(infraDir, name)
+	infraDir := getEnv("INFRA_DIR", "../workspace/infrastructure")
+	if sys.Infrastructure != nil {
+		fmt.Printf("\n- Component: infrastructure\n")
+		targetPath := infraDir
 
 		// Infrastructure now only has Git versioning validation
-		if err := performStaticGitChecks(targetPath, infra.Version); err != nil {
+		if err := performStaticGitChecks(targetPath, sys.Infrastructure.Version); err != nil {
 			fmt.Printf("  [GIT ERROR] %v\n", err)
 			hasErrors = true
 		} else {
 			fmt.Printf("  [OK] Infrastructure repository is consistent.\n")
 		}
+	} else {
+		fmt.Println("  [SKIP] No infrastructure defined.")
 	}
 
 	fmt.Println("\nChecking Tools:")
 	if sys.Tools != nil {
 		fmt.Printf("\n- Tool: tools\n")
-		targetPath := "../workspace/tools"
+		targetPath := getEnv("TOOLS_DIR", "../workspace/tools")
 		if err := performStaticGitChecks(targetPath, sys.Tools.Version); err != nil {
 			fmt.Printf("  [GIT ERROR] %v\n", err)
 			hasErrors = true

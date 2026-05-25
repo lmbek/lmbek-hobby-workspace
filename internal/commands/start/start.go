@@ -22,8 +22,10 @@ func Run() {
 	}
 
 	fmt.Println("\nInfrastructure:")
-	for name, infra := range sys.Infrastructure {
-		fmt.Printf("- %s (version %s)\n", name, infra.Version)
+	if sys.Infrastructure != nil {
+		fmt.Printf("- infrastructure @ %s (%s)\n", sys.Infrastructure.Version, sys.Infrastructure.Repository)
+	} else {
+		fmt.Println("  [SKIP] No infrastructure defined.")
 	}
 
 	fmt.Println("\n[OK] Infrastructure plan is managed within the infrastructure repository.")

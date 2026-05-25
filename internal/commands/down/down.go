@@ -4,14 +4,20 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 )
+
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
+}
 
 func Run() {
 	fmt.Println("STOPPING WORKSPACE")
 	fmt.Println("==================")
 
-	infraDir := "../workspace/infrastructure"
+	infraDir := getEnv("INFRA_DIR", "../workspace/infrastructure")
 	if _, err := os.Stat(infraDir); os.IsNotExist(err) {
 		fmt.Println("Error: infrastructure directory not found.")
 		os.Exit(1)
@@ -19,10 +25,7 @@ func Run() {
 
 	fmt.Println("Running: docker-compose down")
 	cmd := exec.Command("docker-compose", "down")
-	cmd.Dir = filepath.Join(infraDir, "workspace-infrastructure")
-	if _, err := os.Stat(cmd.Dir); os.IsNotExist(err) {
-		cmd.Dir = infraDir
-	}
+	cmd.Dir = infraDir
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 

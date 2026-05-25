@@ -4,10 +4,16 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 	"workspace-controller/internal/system"
 )
+
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
+}
 
 func Run() {
 	sys, err := system.LoadDefinition("system/system-definition.yaml")
@@ -19,7 +25,7 @@ func Run() {
 	fmt.Println("STARTING WORKSPACE")
 	fmt.Println("==================")
 
-	infraDir := "../workspace/infrastructure"
+	infraDir := getEnv("INFRA_DIR", "../workspace/infrastructure")
 	if _, err := os.Stat(infraDir); os.IsNotExist(err) {
 		fmt.Println("Error: infrastructure directory not found. Please run 'sync' first.")
 		os.Exit(1)
@@ -29,11 +35,7 @@ func Run() {
 	// Note: Each component in infrastructure may have its own docker-compose or deployment logic.
 	// Currently, we assume a central docker-compose.yaml exists in the infrastructure directory.
 	cmd := exec.Command("docker-compose", "up", "-d")
-	cmd.Dir = filepath.Join(infraDir, "workspace-infrastructure")
-	if _, err := os.Stat(cmd.Dir); os.IsNotExist(err) {
-		// Fallback to base infra dir if workspace-infrastructure subdirectory doesn't exist
-		cmd.Dir = infraDir
-	}
+	cmd.Dir = infraDir
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 

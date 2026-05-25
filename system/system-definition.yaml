@@ -18,9 +18,8 @@ services:
         health-check: http://localhost:8082/health
 
 infrastructure:
-    workspace-infrastructure:
-        repository: ../workspace/infrastructure
-        version: 0.0.1
+    repository: ../workspace/infrastructure
+    version: 0.0.1
 
 tools:
     repository: ../workspace/tools
