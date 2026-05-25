@@ -10,8 +10,8 @@ This repository is structured as a command-based workspace controller for local 
 User-facing operations. Each folder represents a command that can be executed.
 
 - start → shows execution plan for services and decoupled infrastructure
-- sync → materializes system locally
-- validate → checks system consistency
+- sync → materializes system locally and updates repositories (fetch/pull) while staying on the branch
+- validate → checks system consistency and health (static checks + warnings for version mismatch)
 
 ### internal/
 Shared system logic used by all commands.

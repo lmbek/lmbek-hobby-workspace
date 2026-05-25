@@ -105,7 +105,9 @@ func performStaticGitChecks(targetPath string, expectedVersion string) error {
 	}
 
 	if currentVersion != expectedVersion {
-		return fmt.Errorf("version mismatch! Expected: %s, Found: %s", expectedVersion, currentVersion)
+		fmt.Printf("  [WARNING] Version mismatch! Expected: %s, Found: %s\n", expectedVersion, currentVersion)
+		fmt.Printf("  [HINT] The controller is configured to stay on the current branch (main).\n")
+		return nil
 	}
 	fmt.Printf("  [OK] Version matches: %s\n", currentVersion)
 

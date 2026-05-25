@@ -24,7 +24,7 @@ go run main.go sync
 
 **What to look for:**
 - Creation of the `workspace/` structure with `services/`, `infrastructure/`, and `tools/`.
-- Each component being checked out to the version specified in `system-definition.yaml`.
+- Each component being updated via `git fetch` and `git pull` while staying on the `main` branch.
 - **Hooks in action:** Observe the `post-sync` hook execution (e.g., success message).
 
 ## 3. Specialized Tools: The Deployer

@@ -41,14 +41,16 @@ Each command is implemented in its own package:
 
 #### sync/
 - Materializes system locally
-- Clones service repositories
-- Creates workspace structure
+- Clones service repositories (if missing)
+- Updates repositories via `git fetch` and `git pull`
+- Stays on the current branch (e.g., `main`) and avoids "detached HEAD" state
 
 #### validate/
 - Validates system consistency
 - Checks for missing or invalid configuration
-- Verifies local Git state (for Services, Infrastructure, and Tools)
+- Verifies local Git state (dirty check)
 - Performs real-time Health Checks (HTTP/TCP)
+- Issues warnings for version mismatches (branch/tag vs definition) without blocking
 - Ensures system integrity
 
 ---

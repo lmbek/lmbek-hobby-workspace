@@ -102,11 +102,18 @@ func processGitComponent(baseDir, name, repo, version string) {
 		fmt.Printf("  [EXISTS] Directory already exists.\n")
 	}
 
-	// Checkout version
-	fmt.Printf("  [CHECKOUT] Setting version to %s...\n", version)
-	if err := runGitInDir(targetPath, "checkout", version); err != nil {
-		fmt.Printf("  [ERROR] Error checking out %s: %v\n", version, err)
+	// Syncing logic: stay on branch, fetch and pull updates
+	fmt.Printf("  [SYNC] Fetching and pulling updates...\n")
+	if err := runGitInDir(targetPath, "fetch", "--all"); err != nil {
+		fmt.Printf("  [ERROR] Error fetching: %v\n", err)
 	}
+	if err := runGitInDir(targetPath, "pull"); err != nil {
+		fmt.Printf("  [ERROR] Error pulling: %v\n", err)
+	}
+
+	// Verification: Check if we are at the expected version (tag/branch/hash)
+	// but DO NOT checkout to it if it causes a detached HEAD.
+	fmt.Printf("  [INFO] Target version: %s (managed by user on main branch)\n", version)
 }
 
 func ensureDir(path string) {

@@ -47,13 +47,13 @@ go run main.go start
 ```
 
 ### 2. `sync`
-Materializes the system. It creates the `workspace/` directory and clones all services defined in the configuration.
+Materializes the system. It creates the `workspace/` directory and updates repositories using `git fetch` and `git pull` while staying on the current branch (e.g., `main`).
 ```bash
 go run main.go sync
 ```
 
 ### 3. `validate`
-Verifies that your local workspace is consistent with the definition. It checks for missing directories, version mismatches, and uncommitted changes.
+Verifies that your local workspace is consistent. It checks for missing directories and uncommitted changes. It also checks for version mismatches but treats them as warnings to respect the "stay on branch" policy.
 ```bash
 go run main.go validate
 ```
