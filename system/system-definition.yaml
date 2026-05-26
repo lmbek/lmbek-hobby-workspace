@@ -1,5 +1,5 @@
 # System Definition for Workspace Controller
-system-version: 0.0.1
+system-version: main
 
 hooks:
     post-sync:
@@ -9,18 +9,18 @@ hooks:
 
 services:
     authentication-service:
-        repository: ../workspace/services/authentication-service
-        version: 0.0.1
+        repository: ${WORKSPACE_ROOT}/workspace/services/authentication-service
+        version: main
         health-check: http://localhost:8081/health
     user-service:
-        repository: ../workspace/services/user-service
-        version: 0.0.1
+        repository: ${WORKSPACE_ROOT}/workspace/services/user-service
+        version: main
         health-check: http://localhost:8082/health
 
 infrastructure:
-    repository: ../workspace/infrastructure
-    version: 0.0.1
+    repository: ${WORKSPACE_ROOT}/workspace/infrastructure
+    version: main
 
 tools:
-    repository: ../workspace/tools
-    version: 0.0.1
+    repository: ${WORKSPACE_ROOT}/workspace/tools
+    version: main

@@ -33,17 +33,11 @@ It is declarative and does NOT execute anything.
 
 Each command is implemented in its own package:
 
-#### start/
+#### init/
 - Reads system-definition.yaml
 - Produces an execution plan
-- Does NOT modify system state
-- Acknowledges decoupled infrastructure repositories
-
-#### sync/
-- Materializes system locally
-- Clones service repositories (if missing)
-- Updates repositories via `git fetch` and `git pull`
-- Stays on the current branch (e.g., `main`) and avoids "detached HEAD" state
+- Materializes system locally (clones/updates repos)
+- Runs post-sync hooks
 
 #### validate/
 - Validates system consistency
@@ -52,6 +46,11 @@ Each command is implemented in its own package:
 - Performs real-time Health Checks (HTTP/TCP)
 - Issues warnings for version mismatches (branch/tag vs definition) without blocking
 - Ensures system integrity
+
+#### doctor/
+- Diagnoses environmental issues (Git, SSH, Docker)
+- Provides setup guidance for SSH keys and agents
+- Tests connectivity to GitHub
 
 ---
 
@@ -85,14 +84,23 @@ Given the same system-definition.yaml, the result must always be identical.
 ### 3. Command-Based Interface
 All interactions happen through explicit commands:
 
-- go run main.go start
-- go run main.go sync
-- go run main.go validate
-- go run main.go up
-- go run main.go down
+- ./bin/workspace-controller init (OR go run main.go init)
+- ./bin/workspace-controller validate (OR go run main.go validate)
+- ./bin/workspace-controller up (OR go run main.go up)
+- ./bin/workspace-controller down (OR go run main.go down)
+- ./bin/workspace-controller doctor (OR go run main.go doctor)
 
 ### 4. No Hidden Behavior
 No implicit scripts or side effects outside commands.
+
+---
+
+## Installation & Build
+To build the project, use:
+```bash
+go build -o bin/workspace-controller.exe main.go
+```
+The binary is ignored by Git and should always reside in the `bin/` directory. However, for development and demo purposes, `go run main.go [command]` is the preferred way to execute the controller.
 
 ---
 
@@ -101,14 +109,15 @@ No implicit scripts or side effects outside commands.
 Completed:
 
 - system-definition.yaml created (supporting Services, Infrastructure, and Tools)
-- start command implemented (execution planning for decoupled architecture)
-- sync command implemented (repository cloning + versioning for all components)
+- init command implemented (unified planning + materialization)
 - validate command implemented (Git state + health checks)
 - up/down commands implemented (Docker lifecycle orchestration)
+- doctor command implemented (environmental diagnostics)
 - Unified CLI entrypoint established
 - Renamed project to workspace-controller
 - Workspace reorganization (centralized services directory)
 - Decoupled infrastructure and tools into specialized repositories
+- Environment variable support in system definition (e.g., `${WORKSPACE_ROOT}`)
 
 ---
 
@@ -117,7 +126,7 @@ Completed:
 To evolve this system into a fully reproducible local development environment where:
 
 - Any developer can clone one repo
-- Run a single command (`sync`)
+- Run a single command (`init`)
 - Get a fully running distributed system locally (`up`)
 - With identical behavior across machines
 

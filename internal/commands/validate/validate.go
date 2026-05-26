@@ -45,7 +45,8 @@ func Run() {
 		if svc.HealthCheck != "" {
 			if err := performHealthCheck(svc.HealthCheck); err != nil {
 				slog.Warn("Health check failed", "service", name, "url", svc.HealthCheck, "error", err)
-				slog.Info("Hint: Is the service running? Use 'workspace-controller up' to start it.", "service", name)
+				fmt.Printf("\nHint: Is the service running? Use '<cli> up' to start it.\n")
+				system.PrintCLINote()
 			} else {
 				slog.Info("Service is healthy", "service", name)
 			}
@@ -92,7 +93,7 @@ func Run() {
 func performStaticGitChecks(targetPath string, expectedVersion string) error {
 	// 1. Check if directory exists
 	if _, err := os.Stat(targetPath); os.IsNotExist(err) {
-		return fmt.Errorf("directory does not exist: %s. Please run 'sync'", targetPath)
+		return fmt.Errorf("directory does not exist: %s. Please run '<cli> init'", targetPath)
 	}
 
 	// 2. Check current version (git tag/branch)
@@ -114,6 +115,11 @@ func performStaticGitChecks(targetPath string, expectedVersion string) error {
 		return fmt.Errorf("could not check git status: %v", err)
 	}
 	if isDirty {
+		// Only warn about local changes in infrastructure to avoid blocking during development
+		if filepath.Base(targetPath) == "infrastructure" {
+			slog.Warn("Local changes detected in infrastructure", "path", targetPath)
+			return nil
+		}
 		return fmt.Errorf("local changes detected in %s! Please commit or stash them", targetPath)
 	}
 	slog.Info("No local changes detected", "path", targetPath)

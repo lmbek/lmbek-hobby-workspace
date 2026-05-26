@@ -9,9 +9,13 @@ This repository is structured as a command-based workspace controller for local 
 ### commands/
 User-facing operations. Each folder represents a command that can be executed.
 
-- start → shows execution plan for services and decoupled infrastructure
-- sync → materializes system locally and updates repositories (fetch/pull) while staying on the branch
+- init → initializes workspace: performs planning/analysis and materializes system locally (clones/updates repos)
 - validate → checks system consistency and health (static checks + warnings for version mismatch)
+- up → starts the system (docker-compose up)
+- down → stops the system (docker-compose down)
+- doctor → diagnoses environmental issues
+- ssh-setup → manages SSH keys interactively
+- help → shows usage instructions
 
 ### internal/
 Shared system logic used by all commands.
@@ -40,11 +44,13 @@ If logic is reused by more than one command, it belongs in internal/.
 
 ### Command Interface
 
-All interactions happen through the `workspace-controller` binary:
+All interactions happen through the `main.go` entrypoint using Go directly:
 
-- `workspace-controller start`
-- `workspace-controller sync`
-- `workspace-controller validate`
-- `workspace-controller help`
+- `go run main.go init`
+- `go run main.go validate`
+- `go run main.go up`
+- `go run main.go help`
+
+Or via the compiled binary: `./bin/workspace-controller [command]`
 
 *Note: For a general overview and getting started guide, see [../README.md](../README.md). Always keep the README updated.*

@@ -1,74 +1,77 @@
 # Workspace Controller - Demo Guide
 
-This guide will walk you through the core features of the **Workspace Controller** as of **Phase 5: Decoupling & Specialization**. We have moved from a monolithic setup to a flexible, decoupled architecture where services, infrastructure, and tools are independent, version-controlled entities.
+This guide will walk you through the core features of the **Workspace Controller**. We have moved from a monolithic setup to a flexible, decoupled architecture where services, infrastructure, and tools are independent, version-controlled entities.
 
-## 1. Planning (`start`)
-The `start` command focuses on orchestration logic. It reads your `system-definition.yaml` and acknowledges infrastructure as a decoupled, version-controlled repository.
+> **Note:** In the examples below, `<cli>` refers to the command you are using (e.g., `./bin/workspace-controller.exe`, `go run main.go`, or `make`).
+
+### Quick Start with Makefile
+For a streamlined experience, use the included `Makefile`:
+```bash
+make init      # Step 1
+make validate  # Step 2
+make up        # Step 3
+```
+
+## 1. Initialization (`init`)
+The `init` command is your primary entry point for setting up the workspace. It performs both **planning/analysis** and **materialization** (syncing repositories).
 
 **Run:**
 ```bash
-go run main.go start
+# Set the root path for your workspace
+$env:WORKSPACE_ROOT=".." 
+<cli> init
 ```
 
 **What to look for:**
-- A "SYSTEM START PLAN" listing your services and infrastructure.
-- Confirmation that infrastructure is managed within its own repository.
+- **Pre-flight checks:** Automated verification of GitHub connectivity via SSH.
+- **Planning & Analysis:** A detailed list of services and infrastructure derived from `system-definition.yaml`.
+- **Materializing Workspace:** The controller clones missing repositories and updates existing ones.
+- **Hooks in action:** Execution of the `post-sync` hook (e.g., a success message).
 
-## 2. Materializing the Workspace (`sync`)
-The `sync` command handles the materialization of services, infrastructure, and tools.
-
-**Run:**
-```bash
-go run main.go sync
-```
-
-**What to look for:**
-- Creation of the `workspace/` structure with `services/`, `infrastructure/`, and `tools/`.
-- Each component being updated via `git fetch` and `git pull` while staying on the `main` branch.
-- **Hooks in action:** Observe the `post-sync` hook execution (e.g., success message).
-
-## 3. Specialized Tools: The Deployer
-We've introduced specialized tools like the Terraform-based `deployer` in `workspace/tools/deployer`.
-
-**Explore:**
-Check out the files in `../workspace/tools/deployer/`. This shows how the system can scale to use industry-standard tools for infrastructure.
-
-## 4. Validating Consistency (`validate`)
+## 2. Validating Consistency (`validate`)
 The `validate` command performs consistency checks across all components.
 
 **Run:**
 ```bash
-go run main.go validate
+$env:WORKSPACE_ROOT=".."
+<cli> validate
 ```
 
 **What to look for:**
 - Verification that all Git components match the defined versions.
-- Local "dirty" state detection.
-- **Health Checks:** Real-time HTTP/TCP monitoring of services.
+- Detection of local "dirty" changes.
+- **Health Checks:** Real-time monitoring of services via HTTP/TCP.
 
-## 5. Lifecycle Management (`up` / `down`)
-Control your local environment via Docker Compose, targeting the decoupled infrastructure.
+## 3. Lifecycle Management (`up` / `down`)
+Control your local environment via Docker Compose through the controller.
 
 **Try starting:**
 ```bash
-go run main.go up
+$env:WORKSPACE_ROOT=".."
+<cli> up
 ```
 
 **What to look for:**
-- The controller executing `docker-compose up -d` within the infrastructure directory.
-- **Hooks in action:** Observe the `post-up` hook execution.
+- The controller executes `docker-compose up -d` within the infrastructure directory.
+- **Hooks in action:** Observe the execution of the `post-up` hook.
+
+## 4. Diagnostics (`doctor` / `ssh-setup`)
+If you encounter environmental issues (e.g., SSH permission denied), use the built-in diagnostic tools.
+
+**Run:**
+```bash
+<cli> doctor
+# OR for interactive SSH management
+<cli> ssh-setup
+```
 
 ---
 
-## Current Status (Phase 5)
-The `workspace-controller` is now a mature orchestration tool:
+## Current Status
+`workspace-controller` is now a mature orchestration tool:
 
-- **Decoupled Architecture:** Infrastructure and tools are first-class versioned citizens.
-- **Specialized Tooling:** Integration with tools like Terraform.
-- **Service-Centric:** All services are neatly organized in `workspace/services/`.
-- **Automated Lifecycle:** From materialization to health monitoring and shutdown.
-
-## Use Cases
-1. **Deterministic Environments:** Every developer runs the exact same versions of code and infra.
-2. **Simplified Onboarding:** Go from zero to a running system with `sync` and `up`.
-3. **Infrastructure as Code:** Manage local infra with the same rigor as production.
+- **Simplified Entrypoint:** The `init` command combines planning and materialization into a single action.
+- **Decoupled Architecture:** Infrastructure and tools are independent, version-controlled entities.
+- **Environment Variables:** Full support for dynamic paths via environment variables (e.g., `${WORKSPACE_ROOT}`) in the system definition.
+- **Automated Lifecycle:** From initialization to health monitoring and shutdown.
+- **Native Go Execution:** Optimized for `<cli>` for seamless development experience.

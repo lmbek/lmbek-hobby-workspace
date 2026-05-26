@@ -15,7 +15,7 @@ func LoadDefinition(path string) (*SystemDefinition, error) {
 	}
 
 	var system SystemDefinition
-	err = yaml.Unmarshal(data, &system)
+	err = yaml.Unmarshal([]byte(os.ExpandEnv(string(data))), &system)
 	if err != nil {
 		return nil, err
 	}

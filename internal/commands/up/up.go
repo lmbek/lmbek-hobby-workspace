@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
-	"strings"
+	"runtime"
 	"workspace-controller/internal/system"
 )
 
@@ -26,7 +26,8 @@ func Run() {
 
 	infraDir := getEnv("INFRA_DIR", "../workspace/infrastructure")
 	if _, err := os.Stat(infraDir); os.IsNotExist(err) {
-		slog.Error("Infrastructure directory not found. Please run 'sync' first.", "path", infraDir)
+		slog.Error("Infrastructure directory not found. Please run '<cli> init' first.", "path", infraDir)
+		system.PrintCLINote()
 		os.Exit(1)
 	}
 
@@ -59,7 +60,7 @@ func Run() {
 
 func runHook(command string) error {
 	var cmd *exec.Cmd
-	if strings.Contains(os.Getenv("OS"), "Windows") {
+	if runtime.GOOS == "windows" {
 		cmd = exec.Command("cmd", "/C", command)
 	} else {
 		cmd = exec.Command("sh", "-c", command)

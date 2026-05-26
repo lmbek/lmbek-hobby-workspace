@@ -28,52 +28,75 @@ For a hands-on experience of all features, follow the [DEMO.md](DEMO.md) guide.
 - [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/)
 
 ### Installation
-Clone this repository and build the binary (or run directly with Go):
+Clone this repository and build the binary into the `bin` directory (or run directly with Go):
 ```bash
 git clone <this-repo-url>
 cd workspace-controller
+go build -o bin/workspace-controller.exe main.go
 ```
 
 ---
 
-## Usage & Commands
-
-The controller is operated through a set of explicit commands:
-
-### 1. `start`
-Generates an execution plan based on `system/system-definition.yaml`.
+### Using the Makefile (Recommended)
+You can use the provided `Makefile` for a more convenient experience. It automatically handles the `WORKSPACE_ROOT` environment variable.
 ```bash
-go run main.go start
+make help      # Show available commands
+make init      # [1] Initialize workspace
+make validate  # [2] Validate consistency
+make up        # [3] Start the system
+make down      # Stop the system
+make doctor    # [4] Diagnose issues
 ```
 
-### 2. `sync`
-Materializes the system. It creates the `workspace/` directory and updates repositories using `git fetch` and `git pull` while staying on the current branch (e.g., `main`).
+### Manual Usage & Commands
+If you prefer running commands manually, ensure you set the `WORKSPACE_ROOT` environment variable.
+
+> **Note:** In the examples below, `<cli>` refers to the command you are using (e.g., `./bin/workspace-controller.exe`, `go run main.go`, or `make`).
+
+### 1. `init`
+Initializes the workspace by performing an execution plan (analysis) and then materializing the system (cloning/updating repositories).
 ```bash
-go run main.go sync
+$env:WORKSPACE_ROOT=".."
+<cli> init
 ```
 
-### 3. `validate`
-Verifies that your local workspace is consistent. It checks for missing directories and uncommitted changes. It also checks for version mismatches but treats them as warnings to respect the "stay on branch" policy.
+### 2. `validate`
+Verifies that your local workspace is consistent. It checks for missing directories, uncommitted changes, and service health (HTTP/TCP).
 ```bash
-go run main.go validate
+$env:WORKSPACE_ROOT=".."
+<cli> validate
 ```
 
-### 4. `up`
+### 3. `up`
 Starts the entire environment (services and infrastructure) using Docker Compose.
 ```bash
-go run main.go up
+$env:WORKSPACE_ROOT=".."
+<cli> up
 ```
 
-### 5. `down`
+### 4. `down`
 Stops and removes all containers associated with the workspace.
 ```bash
-go run main.go down
+$env:WORKSPACE_ROOT=".."
+<cli> down
 ```
 
-### 6. `help`
+### 5. `doctor`
+Diagnoses environmental issues (Git, SSH, Docker).
+```bash
+<cli> doctor
+```
+
+### 6. `ssh-setup`
+Interactive tool to manage SSH keys and configuration.
+```bash
+<cli> ssh-setup
+```
+
+### 7. `help`
 Shows the available commands and usage information.
 ```bash
-go run main.go help
+<cli> help
 ```
 
 ---

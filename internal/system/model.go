@@ -1,5 +1,13 @@
 package system
 
+import "fmt"
+
+const CLIDescription = "<cli> refers to the command you are using (e.g., ./workspace-controller.exe, go run main.go, or make)"
+
+func PrintCLINote() {
+	fmt.Printf("\nNote: %s\n", CLIDescription)
+}
+
 type SystemDefinition struct {
 	SystemVersion  string             `yaml:"system-version"`
 	Hooks          Hooks              `yaml:"hooks,omitempty"` // Added hooks

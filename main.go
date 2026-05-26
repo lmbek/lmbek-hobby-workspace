@@ -4,20 +4,17 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"workspace-controller/internal/commands/doctor"
 	"workspace-controller/internal/commands/down"
-	"workspace-controller/internal/commands/start"
-	"workspace-controller/internal/commands/sync"
+	initcmd "workspace-controller/internal/commands/init"
+	"workspace-controller/internal/commands/sshsetup"
 	"workspace-controller/internal/commands/up"
 	"workspace-controller/internal/commands/validate"
+	"workspace-controller/internal/system"
 )
 
 func main() {
-	// Initialize structured logger
-	handler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
-	})
-	logger := slog.New(handler)
-	slog.SetDefault(logger)
+	setupLogger()
 
 	if len(os.Args) < 2 {
 		showHelp()
@@ -26,36 +23,44 @@ func main() {
 
 	command := os.Args[1]
 
-	switch command {
-	case "start":
-		start.Run()
-	case "sync":
-		sync.Run()
-	case "validate":
-		validate.Run()
-	case "up":
-		up.Run()
-	case "down":
-		down.Run()
-	case "help":
-		showHelp()
-	default:
+	commands := map[string]func(){
+		"init":      initcmd.Run,
+		"validate":  validate.Run,
+		"up":        up.Run,
+		"down":      down.Run,
+		"doctor":    doctor.RunFull,
+		"ssh-setup": sshsetup.Run,
+		"help":      showHelp,
+	}
+
+	if run, ok := commands[command]; ok {
+		run()
+	} else {
 		slog.Error("Unknown command", "command", command)
 		showHelp()
 		os.Exit(1)
 	}
 }
 
+func setupLogger() {
+	opts := &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}
+	handler := slog.NewTextHandler(os.Stdout, opts)
+	slog.SetDefault(slog.New(handler))
+}
+
 func showHelp() {
-	fmt.Println("\nWorkspace Controller - Help")
-	fmt.Println("==========================")
-	fmt.Println("Usage:")
-	fmt.Println("  workspace-controller <command>")
+	fmt.Println("\nWorkspace Controller")
+	fmt.Println("====================")
+	fmt.Println("Usage: <cli> [command]")
+	system.PrintCLINote()
 	fmt.Println("\nAvailable Commands:")
-	fmt.Println("  start     Generate execution plan and infrastructure files")
-	fmt.Println("  sync      Materialize the system (clone repos and setup workspace)")
-	fmt.Println("  validate  Check system consistency and local state")
-	fmt.Println("  up        Start the workspace (docker-compose up)")
-	fmt.Println("  down      Stop the workspace (docker-compose down)")
-	fmt.Println("  help      Show this help message")
+	fmt.Println("  init       Initialize workspace (Pre-flight checks + Planning + Materialization)")
+	fmt.Println("  validate   Validate system consistency and health")
+	fmt.Println("  up         Start the system (docker-compose up)")
+	fmt.Println("  down       Stop the system (docker-compose down)")
+	fmt.Println("  doctor     Diagnose environmental issues (Git, SSH, Docker)")
+	fmt.Println("  ssh-setup  Interactive SSH key management tool")
+	fmt.Println("  help       Show this help information")
 }
