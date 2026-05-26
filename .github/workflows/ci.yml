@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-latest, windows-latest ]
-        go-version: [ '1.25' ]
+        go-version: [ '1.26' ]
 
     steps:
     - uses: actions/checkout@v4
@@ -21,14 +21,10 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version: ${{ matrix.go-version }}
-        cache-dependency-path: workspace-controller/go.sum
+        cache-dependency-path: go.mod
 
     - name: Build
-      run: |
-        cd workspace-controller
-        go build -v ./...
+      run: go build -v ./...
 
     - name: Test
-      run: |
-        cd workspace-controller
-        go test -v ./...
+      run: go test -v ./...
