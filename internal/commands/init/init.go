@@ -182,7 +182,7 @@ func handleGitError(err error) {
 
 		if runtime.GOOS == "windows" {
 			fmt.Println("\nWindows Tip: Ensure the 'OpenSSH Authentication Agent' service is running and your key is loaded (run 'make ssh' Option 2).")
-			fmt.Println("Also verify that your 'core.sshCommand' is set to the System OpenSSH (run 'make ssh' Option 4).")
+			fmt.Println("Also verify that your 'core.sshCommand' is set to the System OpenSSH (run 'make ssh' Option 4 - Configure git to use Windows OpenSSH).")
 		}
 
 		fmt.Println("\nRun 'make doctor' for more diagnostics.")
@@ -190,11 +190,7 @@ func handleGitError(err error) {
 	} else if strings.Contains(errStr, "Host key verification failed") {
 		fmt.Println("\nERROR: Host key verification failed.")
 		fmt.Println("GitHub's host key is missing from your known_hosts file.")
-		if runtime.GOOS == "windows" {
-			fmt.Println("Run 'make ssh' Option 4 (Configure git to use Windows OpenSSH) to fix this.")
-		} else {
-			fmt.Println("Run 'make ssh' Option 5 (Check current SSH status) to fix this.")
-		}
+		fmt.Println("Run 'make ssh' Option 5 (Check current SSH status) to fix this automatically.")
 		os.Exit(1)
 	} else {
 		slog.Error("Git operation failed", "error", err)
