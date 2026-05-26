@@ -35,6 +35,13 @@ cd workspace-controller
 go build -o bin/workspace-controller.exe main.go
 ```
 
+Alternatively, you can build a minimal Docker image (based on `scratch`):
+```bash
+make docker-build
+```
+
+*Note: The Docker image is a minimal distribution containing only the statically linked binary. It does not include `git` or `docker` binaries, so commands relying on them (like `sync` or `up`) should be run from the host or a container with those tools mounted/installed.*
+
 ---
 
 ### Using the Makefile (Recommended)

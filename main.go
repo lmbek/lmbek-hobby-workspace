@@ -14,6 +14,8 @@ import (
 	"workspace-controller/internal/system"
 )
 
+const version = "1.0.0"
+
 func main() {
 	setupLogger()
 
@@ -34,6 +36,8 @@ func main() {
 		"ssh-setup": sshsetup.Run,
 		"ssh":       sshsetup.Run,
 		"help":      showHelp,
+		"version":   showVersion,
+		"v":         showVersion,
 	}
 
 	if run, ok := commands[command]; ok {
@@ -54,7 +58,7 @@ func setupLogger() {
 }
 
 func showHelp() {
-	fmt.Println("\nWorkspace Controller")
+	fmt.Printf("\nWorkspace Controller v%s\n", version)
 	fmt.Println("====================")
 	fmt.Println("Usage: <cli> [command]")
 	system.PrintCLINote()
@@ -67,5 +71,10 @@ func showHelp() {
 	fmt.Println("  doctor     [D] Diagnose environmental issues (Git, SSH, Docker)")
 	fmt.Println("  ssh-setup  [S] Interactive SSH key management tool (alias: ssh)")
 	fmt.Println("  ssh        [S] Alias for ssh-setup")
+	fmt.Println("  version    [V] Show version information (alias: v)")
 	fmt.Println("  help           Show this help information")
+}
+
+func showVersion() {
+	fmt.Printf("Workspace Controller version %s\n", version)
 }
