@@ -1,7 +1,7 @@
 # Workspace Controller Makefile
 # Mirrors the steps in DEMO.md
 
-.PHONY: help init sync validate up down doctor ssh-setup ssh workspace-controller-test workspace-controller-help version docker-build docker-run
+.PHONY: help init sync validate up down doctor ssh-setup ssh workspace-controller-test workspace-controller-help version
 
 # Default workspace root if not set
 export WORKSPACE_ROOT ?= ..
@@ -23,8 +23,6 @@ help:
 	@echo "    make version   - [V] Show version information"
 	@echo "    make ssh       - [S] Interactive SSH setup (alias for ssh-setup)"
 	@echo "    make ssh-setup - [S] Interactive SSH setup (alias: ssh)"
-	@echo "    make docker-build - Build Docker image"
-	@echo "    make docker-run   - Run Docker image (help)"
 
 init:
 	@echo "==> Bootstrapping workspace (init)..."
@@ -76,11 +74,3 @@ ssh-setup:
 version:
 	@echo "==> Workspace Controller version:"
 	go run main.go version
-
-docker-build:
-	@echo "==> Building Docker image..."
-	docker build -t workspace-controller .
-
-docker-run:
-	@echo "==> Running Docker image..."
-	docker run --rm workspace-controller
