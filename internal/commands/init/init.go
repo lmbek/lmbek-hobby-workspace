@@ -190,7 +190,11 @@ func handleGitError(err error) {
 	} else if strings.Contains(errStr, "Host key verification failed") {
 		fmt.Println("\nERROR: Host key verification failed.")
 		fmt.Println("GitHub's host key is missing from your known_hosts file.")
-		fmt.Println("Run 'make ssh' Option 4 to fix this.")
+		if runtime.GOOS == "windows" {
+			fmt.Println("Run 'make ssh' Option 4 (Configure git to use Windows OpenSSH) to fix this.")
+		} else {
+			fmt.Println("Run 'make ssh' Option 5 (Check current SSH status) to fix this.")
+		}
 		os.Exit(1)
 	} else {
 		slog.Error("Git operation failed", "error", err)

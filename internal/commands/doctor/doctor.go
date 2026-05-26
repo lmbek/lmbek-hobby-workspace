@@ -71,7 +71,7 @@ func checkSSH() {
 	for _, issue := range issues {
 		slog.Error("SSH Structural Issue", "detail", issue)
 		if strings.Contains(issue, "is a directory") {
-			slog.Info("Fix: Run '<cli> ssh-setup' and select Option 4 to resolve this automatically.")
+			slog.Info("Fix: Run '<cli> ssh-setup' and select Option 6 (Cleanup broken SSH configurations) to resolve this automatically.")
 		}
 	}
 
@@ -84,7 +84,7 @@ func checkSSH() {
 		if runtime.GOOS == "windows" {
 			slog.Info("Hint: On Windows, the 'OpenSSH Authentication Agent' service is often disabled by default.")
 			slog.Info("Fix (Admin PowerShell): Set-Service -Name ssh-agent -StartupType Manual; Start-Service ssh-agent")
-			slog.Info("Or use '<cli> ssh-setup' -> Option 4 to try starting it automatically.")
+			slog.Info("Or use '<cli> ssh-setup' -> Option 5 (Check current SSH status) to try starting it automatically.")
 		} else {
 			slog.Info("Hint: On Linux/WSL, ensure ssh-agent is running. Start it with: eval \"$(ssh-agent -s)\"")
 			slog.Info("To persist, add the following snippet to your ~/.bashrc or ~/.zshrc:")
@@ -96,7 +96,7 @@ func checkSSH() {
        eval $(ssh-agent -s)
      fi
    fi`)
-			slog.Info("Or use '<cli> ssh-setup' -> Option 4 to try starting it automatically.")
+			slog.Info("Or use '<cli> ssh-setup' -> Option 5 (Check current SSH status) to try starting it automatically.")
 		}
 	} else {
 		slog.Info("ssh-agent is responsive.")

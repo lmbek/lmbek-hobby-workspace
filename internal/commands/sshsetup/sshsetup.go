@@ -198,9 +198,9 @@ func configureSSHConfig(reader *bufio.Reader) {
 	slog.Info("SSH config updated and consolidated successfully.", "path", configPath)
 	fmt.Println("\nRecommended next step:")
 	if runtime.GOOS == "windows" {
-		fmt.Println("1. Run Option 4 to verify everything is working and test GitHub connectivity.")
+		fmt.Println("1. Run Option 4 (Configure git to use Windows OpenSSH) then Option 5 (Check current SSH status).")
 	} else {
-		fmt.Println("1. Run Option 5 to verify everything is working and test GitHub connectivity.")
+		fmt.Println("1. Run Option 5 (Check current SSH status) to verify everything is working and test GitHub connectivity.")
 	}
 }
 
@@ -323,7 +323,7 @@ func checkStatus(reader *bufio.Reader) {
 		currentSsh := sshutil.GetConfiguredSSHCommand()
 		if currentSsh == "ssh" {
 			slog.Warn("Git core.sshCommand is not explicitly set. Git might use its internal SSH client.")
-			fmt.Println("Recommendation: Run Option 4 to configure Git to use Windows OpenSSH for consistency.")
+			fmt.Println("Recommendation: Run Option 4 (Configure git to use Windows OpenSSH) for consistency.")
 		} else {
 			slog.Info("Git core.sshCommand is set", "value", currentSsh)
 		}
@@ -523,9 +523,9 @@ func addToAgent(keyPath string) {
 		fmt.Println("\nRecommended next steps:")
 		fmt.Println("1. Run Option 3 to configure your ~/.ssh/config for GitHub (if you haven't yet).")
 		if runtime.GOOS == "windows" {
-			fmt.Println("2. Run Option 4 to verify everything is working and test GitHub connectivity.")
+			fmt.Println("2. Run Option 4 (Configure git to use Windows OpenSSH) then Option 5 (Check current SSH status).")
 		} else {
-			fmt.Println("2. Run Option 5 to verify everything is working and test GitHub connectivity.")
+			fmt.Println("2. Run Option 5 (Check current SSH status) to verify everything is working and test GitHub connectivity.")
 		}
 	}
 }
