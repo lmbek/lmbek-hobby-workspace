@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"workspace-controller/internal/commands/sync"
 	"workspace-controller/internal/gitutil"
 	"workspace-controller/internal/sshutil"
 	"workspace-controller/internal/system"
@@ -59,12 +58,8 @@ func Run() {
 	}
 	slog.Info("System plan created", "components", planCount)
 
-	// 2. Materialize (Sync)
-	fmt.Println("\n[2] Materializing Workspace:")
-	sync.Run()
-
 	fmt.Println("\nInitialization finished successfully!")
-	fmt.Println("Next step: Run '<cli> sync' to ensure all repositories are synchronized, or '<cli> up' to start the system.")
+	fmt.Println("Next step: Run '<cli> sync' to materialize the workspace and synchronize all repositories.")
 	system.PrintCLINote()
 }
 

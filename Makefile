@@ -8,8 +8,8 @@ export WORKSPACE_ROOT ?= ..
 
 help:
 	@echo "Workspace Controller - Available commands:"
-	@echo "  make init      - [1] Bootstrap workspace (Pre-flight + Planning + Materialization)"
-	@echo "  make sync      - [2] Synchronize all repositories (fetch/pull/hooks)"
+	@echo "  make init      - [1] Bootstrap workspace (Pre-flight + Planning)"
+	@echo "  make sync      - [2] Synchronize all repositories (Materialization + fetch/pull/hooks)"
 	@echo "  make validate  - [3] Validate consistency and health"
 	@echo "  make up        - [4] Start the system (docker-compose up)"
 	@echo "  make down      - Stop the system (docker-compose down)"
