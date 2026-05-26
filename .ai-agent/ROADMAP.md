@@ -42,5 +42,11 @@
 - [x] Standardized CLI numbering [1] [2] [3] [4] [D] [S] for intuitive workflow.
 - [x] Improved error handling and actionable diagnostics in `doctor` and `HandleGitError`.
 
+## Phase 8: Quality Assurance & CI (Current State) *
+- [x] Integrated unit tests for core logic (system, sshutil, validate).
+- [x] Configured GitHub Actions CI for multi-platform build and test (Windows/Linux).
+- [x] Added `make test` command for local verification.
+- [x] Added `make workspace-controller-coverage` for HTML reports.
+
 ---
 *This roadmap reflects the actual journey taken to build the workspace-controller. All phases are currently completed and verified.*

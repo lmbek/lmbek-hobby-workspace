@@ -61,7 +61,7 @@ Each command is implemented in its own package:
 - Interactive tool for key generation and management.
 - Configures `~/.ssh/config` with consolidation logic.
 - (Windows only) Configures `git core.sshCommand` to use System OpenSSH.
-- Automated cleanup and agent management.
+- Automated agent management (no automatic file renames/backups).
 - `ssh` is an alias for `ssh-setup`.
 
 ---
@@ -92,13 +92,19 @@ The system is defined by configuration, not scripts.
 Given the same `system-definition.yaml`, the result must always be identical.
 
 ### 3. Command-Based Interface
-All interactions happen through explicit, numbered commands:
+All interactions happen through explicit commands, separated into core workflow and supporting tools:
+
+#### Core Workflow:
 - `[1] init`: Bootstrap environment.
 - `[2] sync`: Materialize repositories.
 - `[3] validate`: Check health and consistency.
 - `[4] up`: Start containers.
-- `[D] doctor`: Environmental diagnostics.
-- `[S] ssh-setup`: Interactive SSH management.
+
+#### Tooling & Diagnostics (Integrated CLI Commands):
+- `[D] doctor`: Environmental diagnostics tool.
+- `[T] test`: Automated test suite (via `make workspace-controller-test`).
+- `[C] coverage`: Generate coverage report (HTML).
+- `[S] ssh-setup` / `[S] ssh`: Interactive SSH management tool.
 
 ### 4. Cross-Platform First
 Code must handle Windows paths (slashes) and shell differences (PowerShell vs Sh) automatically.

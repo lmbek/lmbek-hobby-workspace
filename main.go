@@ -66,5 +66,6 @@ func showHelp() {
 	fmt.Println("  down           Stop the system (docker-compose down)")
 	fmt.Println("  doctor     [D] Diagnose environmental issues (Git, SSH, Docker)")
 	fmt.Println("  ssh-setup  [S] Interactive SSH key management tool (alias: ssh)")
+	fmt.Println("  ssh        [S] Alias for ssh-setup")
 	fmt.Println("  help           Show this help information")
 }

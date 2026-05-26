@@ -23,7 +23,7 @@ Move away from brittle bash scripts and manual setup. Use a single source of tru
 For a hands-on experience of all features, follow the [DEMO.md](DEMO.md) guide.
 
 ### 2. Prerequisites
-- [Go](https://golang.org/doc/install) (1.20 or later)
+- [Go](https://golang.org/doc/install) (1.26 or later)
 - [Git](https://git-scm.com/)
 - [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/)
 
@@ -39,6 +39,8 @@ go build -o bin/workspace-controller.exe main.go
 
 ### Using the Makefile (Recommended)
 You can use the provided `Makefile` for a more convenient experience. It automatically handles the `WORKSPACE_ROOT` environment variable.
+
+#### Core Workflow
 ```bash
 make help      # Show available commands
 make init      # [1] Bootstrap workspace (Pre-flight + Planning)
@@ -46,7 +48,13 @@ make sync      # [2] Synchronize all repositories (Materialization)
 make validate  # [3] Validate consistency and health
 make up        # [4] Start the system
 make down      # Stop the system
+```
+
+#### Tooling & Diagnostics
+```bash
 make doctor    # [D] Diagnose environment issues
+make workspace-controller-test # [T] Run automated tests
+make workspace-controller-coverage # [C] Generate test coverage report (HTML)
 make ssh       # [S] Interactive SSH setup (alias for ssh-setup)
 make ssh-setup # [S] Interactive SSH setup
 ```
@@ -91,14 +99,14 @@ $env:WORKSPACE_ROOT=".."
 <cli> down
 ```
 
-### 6. `doctor`
-Diagnoses environmental issues (Git, SSH, Docker) and provides automated fixes for common SSH agent and key problems.
+### 6. `doctor` [D]
+Diagnoses environmental issues (Git, SSH, Docker) and provides automated fixes for common SSH agent and key problems. This is an integrated diagnostic tool in the workspace-controller CLI.
 ```bash
 <cli> doctor
 ```
 
-### 7. `ssh-setup` / `ssh`
-Interactive tool to manage SSH keys, configure `~/.ssh/config`, and ensure Git is using the correct SSH client (especially important on Windows). `ssh` is an alias for `ssh-setup`.
+### 7. `ssh-setup` / `ssh` [S]
+Interactive tool to manage SSH keys, configure `~/.ssh/config`, and ensure Git is using the correct SSH client (especially important on Windows). Both `ssh-setup` and the `ssh` alias are integrated commands of the workspace-controller CLI.
 ```bash
 <cli> ssh-setup
 # or

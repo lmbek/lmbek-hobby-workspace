@@ -7,16 +7,23 @@ This repository is structured as a command-based workspace controller for local 
 ## Structure
 
 ### commands/
-User-facing operations. Each folder represents a command that can be executed.
+User-facing operations, separated into core workspace lifecycle and supporting tools.
 
+#### Core Workflow:
 - init → bootstraps workspace: performs planning/analysis and pre-flight checks (SSH, agent)
 - sync → materializes system locally: clones/updates repos and runs hooks
 - validate → checks system consistency and health (static checks + warnings for version mismatch)
 - up → starts the system (docker-compose up)
 - down → stops the system (docker-compose down)
-- doctor → diagnoses environmental issues
-- ssh-setup → manages SSH keys interactively and configures Git SSH (alias: ssh)
+
+#### Tooling & Diagnostics (Integrated CLI Commands):
+- doctor → [D] diagnoses environmental issues
+- test → [T] runs automated tests (make workspace-controller-test)
+- coverage → [C] generates HTML coverage report
+- ssh-setup / ssh → [S] manages SSH keys interactively and configures Git SSH
 - help → shows usage instructions
+
+Note: The controller prioritizes safety and will not automatically rename or delete user configuration files. Manual intervention is requested for critical structural issues.
 
 ### internal/
 Shared system logic used by all commands.

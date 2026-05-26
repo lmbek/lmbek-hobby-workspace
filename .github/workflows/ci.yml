@@ -1,0 +1,34 @@
+name: Workspace Controller CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest ]
+        go-version: [ '1.25' ]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ matrix.go-version }}
+        cache-dependency-path: workspace-controller/go.sum
+
+    - name: Build
+      run: |
+        cd workspace-controller
+        go build -v ./...
+
+    - name: Test
+      run: |
+        cd workspace-controller
+        go test -v ./...

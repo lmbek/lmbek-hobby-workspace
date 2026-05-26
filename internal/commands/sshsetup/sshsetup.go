@@ -96,7 +96,7 @@ func configureSSHConfig(reader *bufio.Reader) {
 		for _, file := range files {
 			if !file.IsDir() {
 				name := file.Name()
-				if !strings.HasSuffix(name, ".pub") && !strings.HasSuffix(name, ".old") && !strings.HasSuffix(name, ".Identifier") && name != "known_hosts" && name != "config" && name != "authorized_keys" {
+				if !strings.HasSuffix(name, ".public") && !strings.HasSuffix(name, ".old") && !strings.HasSuffix(name, ".Identifier") && name != "known_hosts" && name != "config" && name != "authorized_keys" {
 					keys = append(keys, filepath.Join(sshDir, name))
 				}
 			}
@@ -216,12 +216,17 @@ func generateNewKey(reader *bufio.Reader) {
 		return
 	}
 
-	defaultPath := filepath.Join(home, ".ssh", "id_ed25519")
+	defaultPath := filepath.Join(home, ".ssh", "id_ed25519.private")
 	fmt.Printf("Enter file in which to save the key (%s): ", defaultPath)
 	keyPath, _ := reader.ReadString('\n')
 	keyPath = strings.TrimSpace(keyPath)
 	if keyPath == "" {
 		keyPath = defaultPath
+	}
+
+	if !strings.HasSuffix(keyPath, ".private") {
+		keyPath += ".private"
+		slog.Info("Automatically added .private extension", "path", keyPath)
 	}
 
 	// Ensure .ssh directory exists
@@ -231,6 +236,9 @@ func generateNewKey(reader *bufio.Reader) {
 	}
 
 	slog.Info("Generating new SSH key...", "path", keyPath)
+	// We need to tell ssh-keygen where to put the public key too,
+	// but it usually just appends .pub to the filename.
+	// Since the user wants .public, we'll have to rename it after generation.
 	cmd := exec.Command("ssh-keygen", "-t", "ed25519", "-C", email, "-f", keyPath)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
@@ -248,8 +256,14 @@ func generateNewKey(reader *bufio.Reader) {
 	fmt.Println("3. Run Option 3 to configure your ~/.ssh/config for GitHub.")
 
 	fmt.Printf("\nNext step: Add your public key to GitHub:\n")
-	pubKeyPath := keyPath + ".pub"
+	// Look for both .pub and .public
+	pubKeyPath := strings.TrimSuffix(keyPath, ".private") + ".public"
 	pubKey, err := os.ReadFile(pubKeyPath)
+	if err != nil {
+		pubKeyPath = keyPath + ".pub"
+		pubKey, err = os.ReadFile(pubKeyPath)
+	}
+
 	if err == nil {
 		fmt.Println("\nYour public key content:")
 		fmt.Println(string(pubKey))
@@ -271,9 +285,8 @@ func addExistingKey(reader *bufio.Reader) {
 		for _, file := range files {
 			if !file.IsDir() {
 				name := file.Name()
-				// Basic heuristic for private keys: no extension, and maybe some common prefixes
-				// Or check for the matching .pub file
-				if !strings.HasSuffix(name, ".pub") && !strings.HasSuffix(name, ".old") && !strings.HasSuffix(name, ".Identifier") && name != "known_hosts" && name != "config" && name != "authorized_keys" {
+				// Basic heuristic for private keys: ends with .private
+				if strings.HasSuffix(name, ".private") {
 					keys = append(keys, filepath.Join(sshDir, name))
 				}
 			}
@@ -304,7 +317,7 @@ func addExistingKey(reader *bufio.Reader) {
 			return
 		}
 	} else {
-		fmt.Printf("Enter the path to your private key (e.g., %s): ", filepath.Join(home, ".ssh", "id_ed25519"))
+		fmt.Printf("Enter the path to your private key (e.g., %s): ", filepath.Join(home, ".ssh", "id_ed25519.private"))
 		manualPath, _ := reader.ReadString('\n')
 		keyPath = strings.TrimSpace(manualPath)
 	}
@@ -449,10 +462,10 @@ func cleanupConfigs(reader *bufio.Reader) {
 	case "2":
 		configPath := filepath.Join(sshDir, "config")
 		if _, err := os.Stat(configPath); err == nil {
-			backupPath := configPath + ".backup_" + fmt.Sprintf("%d", os.Getpid())
-			slog.Info("Backing up existing config", "to", backupPath)
-			if err := os.Rename(configPath, backupPath); err != nil {
-				slog.Error("Failed to backup config", "error", err)
+			slog.Warn("Existing config found. Please manually back it up before resetting.", "path", configPath)
+			fmt.Print("Are you sure you want to overwrite it with a fresh one? (y/n): ")
+			answer, _ := reader.ReadString('\n')
+			if strings.ToLower(strings.TrimSpace(answer)) != "y" {
 				return
 			}
 		}
@@ -468,16 +481,16 @@ func cleanupConfigs(reader *bufio.Reader) {
 		// Config
 		configPath := filepath.Join(sshDir, "config")
 		if _, err := os.Stat(configPath); err == nil {
-			os.Rename(configPath, configPath+".reset_bak")
+			slog.Warn("Existing config found. Manual reset required.", "path", configPath)
 		}
 
 		// Known hosts
 		khPath := filepath.Join(sshDir, "known_hosts")
 		if _, err := os.Stat(khPath); err == nil {
-			os.Rename(khPath, khPath+".reset_bak")
+			slog.Warn("Existing known_hosts found. Manual reset required.", "path", khPath)
 		}
 
-		slog.Info("Full reset completed. You may need to run Option 1, 2, and 3 again to set up a clean environment.")
+		slog.Info("Full reset requested. Please manually clean up the files mentioned above.")
 
 	default:
 		slog.Info("Cleanup cancelled.")

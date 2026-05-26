@@ -180,7 +180,7 @@ func DetectSSHIssues() []string {
 
 	sshDir := filepath.Join(home, ".ssh")
 	// Check for common identity names that might be directories
-	defaultKeys := []string{"id_rsa", "id_ed25519", "id_ecdsa", "id_dsa"}
+	defaultKeys := []string{"id_rsa.private", "id_ed25519.private", "id_ecdsa.private", "id_dsa.private"}
 	for _, key := range defaultKeys {
 		path := filepath.Join(sshDir, key)
 		if fi, err := os.Stat(path); err == nil && fi.IsDir() {
@@ -212,21 +212,9 @@ func ResolveSSHIssue(issue string) (bool, error) {
 		keyName := issue[start+7 : start+end]
 		path := filepath.Join(home, ".ssh", keyName)
 
-		newName := keyName + "_backup_dir"
-		newPath := filepath.Join(home, ".ssh", newName)
-
-		// Check if backup already exists
-		if _, err := os.Stat(newPath); err == nil {
-			// Try with timestamp
-			newPath = filepath.Join(home, ".ssh", keyName+"_backup_dir_"+fmt.Sprintf("%d", os.Getpid()))
-		}
-
-		err := os.Rename(path, newPath)
-		if err != nil {
-			return false, err
-		}
-		slog.Info("Renamed conflicting directory", "from", path, "to", newPath)
-		return true, nil
+		slog.Warn("SSH Structural Issue", "path", path, "detail", "is a directory, but SSH expects it to be a key file.")
+		slog.Info("Fix: Please manually rename or remove this directory to allow SSH to use this key name.")
+		return false, fmt.Errorf("manual intervention required: %s is a directory", path)
 	}
 
 	return false, fmt.Errorf("unsupported issue type")
@@ -291,8 +279,14 @@ func GetLoadedKeys() (string, error) {
 
 // GetPublicKeyContent attempts to find and return the public key content for a given private key path.
 func GetPublicKeyContent(privateKeyPath string) (string, string, error) {
-	// Try .pub extension
-	pubPath := privateKeyPath + ".pub"
+	// Try .public extension (replacing .private with .public if it exists)
+	pubPath := strings.TrimSuffix(privateKeyPath, ".private") + ".public"
+	if data, err := os.ReadFile(pubPath); err == nil {
+		return string(data), pubPath, nil
+	}
+
+	// Try just appending .public
+	pubPath = privateKeyPath + ".public"
 	if data, err := os.ReadFile(pubPath); err == nil {
 		return string(data), pubPath, nil
 	}
