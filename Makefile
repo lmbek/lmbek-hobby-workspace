@@ -15,7 +15,7 @@ help:
 	@echo "  make down      - Stop the system (docker-compose down)"
 	@echo "  make doctor    - [D] Diagnose environmental issues"
 	@echo "  make ssh       - [S] Interactive SSH setup (alias for ssh-setup)"
-	@echo "  make ssh-setup - [S] Interactive SSH setup"
+	@echo "  make ssh-setup - [S] Interactive SSH setup (alias: ssh)"
 
 init:
 	@echo "==> Bootstrapping workspace (init)..."

@@ -34,39 +34,49 @@ It is declarative and does NOT execute anything.
 Each command is implemented in its own package:
 
 #### init/
-- Reads system-definition.yaml
-- Produces an execution plan
-- Materializes system locally (clones/updates repos)
-- Runs post-sync hooks
+- Performs pre-flight checks (SSH agent status, GitHub connectivity).
+- Automatically adds `github.com` to `known_hosts` on Windows.
+- Reads `system-definition.yaml` and produces an execution plan.
+- Guides user to run `sync` as the next step.
+
+#### sync/
+- Materializes system locally (clones/updates repos).
+- Centralizes Git operations via `internal/gitutil`.
+- Forces consistent SSH usage via `GIT_SSH_COMMAND`.
+- Runs post-sync hooks.
 
 #### validate/
-- Validates system consistency
-- Checks for missing or invalid configuration
-- Verifies local Git state (dirty check)
-- Performs real-time Health Checks (HTTP/TCP)
-- Issues warnings for version mismatches (branch/tag vs definition) without blocking
-- Ensures system integrity
+- Validates system consistency (directory existence).
+- Checks branch matches (defaulting to `main`).
+- Performs real-time Health Checks (HTTP/TCP) on exposed host ports.
+- Warns about local changes in infrastructure without blocking.
 
 #### doctor/
-- Diagnoses environmental issues (Git, SSH, Docker)
-- Provides setup guidance for SSH keys and agents
-- Tests connectivity to GitHub
+- Diagnoses environmental issues (Git, SSH, Docker).
+- Provides setup guidance for SSH keys and agents.
+- Tests connectivity to GitHub with verbose diagnostic options.
+- Detects structural SSH issues (e.g., identity file as directory).
+
+#### ssh-setup / ssh
+- Interactive tool for key generation and management.
+- Configures `~/.ssh/config` with consolidation logic.
+- (Windows only) Configures `git core.sshCommand` to use System OpenSSH.
+- Automated cleanup and agent management.
+- `ssh` is an alias for `ssh-setup`.
 
 ---
 
 ### 3. internal/ (Shared System Engine)
-
 This folder contains shared logic used by all commands.
 
 It is NOT a utility folder.
 
 It contains:
 
-- YAML parsing logic
-- System model definitions
-- Git orchestration logic
-- Validation helpers
-- Health Check logic
+- **system**: parsing logic, system model definitions, and CLI notes.
+- **gitutil**: Git execution, environment isolation, and error handling.
+- **sshutil**: Platform-specific SSH agent control, connectivity testing, and identity discovery.
+- **validation**: Static check and health check (HTTP/TCP) implementation.
 
 This enforces a strict boundary:
 commands must not duplicate logic.
@@ -79,19 +89,19 @@ commands must not duplicate logic.
 The system is defined by configuration, not scripts.
 
 ### 2. Deterministic Execution
-Given the same system-definition.yaml, the result must always be identical.
+Given the same `system-definition.yaml`, the result must always be identical.
 
 ### 3. Command-Based Interface
-All interactions happen through explicit commands:
+All interactions happen through explicit, numbered commands:
+- `[1] init`: Bootstrap environment.
+- `[2] sync`: Materialize repositories.
+- `[3] validate`: Check health and consistency.
+- `[4] up`: Start containers.
+- `[D] doctor`: Environmental diagnostics.
+- `[S] ssh-setup`: Interactive SSH management.
 
-- ./bin/workspace-controller init (OR go run main.go init)
-- ./bin/workspace-controller validate (OR go run main.go validate)
-- ./bin/workspace-controller up (OR go run main.go up)
-- ./bin/workspace-controller down (OR go run main.go down)
-- ./bin/workspace-controller doctor (OR go run main.go doctor)
-
-### 4. No Hidden Behavior
-No implicit scripts or side effects outside commands.
+### 4. Cross-Platform First
+Code must handle Windows paths (slashes) and shell differences (PowerShell vs Sh) automatically.
 
 ---
 
@@ -100,7 +110,7 @@ To build the project, use:
 ```bash
 go build -o bin/workspace-controller.exe main.go
 ```
-The binary is ignored by Git and should always reside in the `bin/` directory. However, for development and demo purposes, `go run main.go [command]` is the preferred way to execute the controller.
+The binary is ignored by Git. `go run main.go [command]` is the preferred way to execute during development. The `Makefile` provides a convenient wrapper.
 
 ---
 
@@ -108,36 +118,28 @@ The binary is ignored by Git and should always reside in the `bin/` directory. H
 
 Completed:
 
-- system-definition.yaml created (supporting Services, Infrastructure, and Tools)
-- init command implemented (unified planning + materialization)
-- validate command implemented (Git state + health checks)
-- up/down commands implemented (Docker lifecycle orchestration)
-- doctor command implemented (environmental diagnostics)
-- Unified CLI entrypoint established
-- Renamed project to workspace-controller
-- Workspace reorganization (centralized services directory)
-- Decoupled infrastructure and tools into specialized repositories
-- Environment variable support in system definition (e.g., `${WORKSPACE_ROOT}`)
+- Separated `init` and `sync` for granular control.
+- Centralized `gitutil` and `sshutil` for robust orchestration.
+- Fixed Windows health check connectivity by exposing ports in Compose.
+- Automated SSH agent management and `known_hosts` setup.
+- Comprehensive `doctor` and `ssh-setup` tools for troubleshooting.
+- Cleaned up CLI output and standardized recommended actions.
+- Full Windows/Linux/WSL compatibility verified.
 
 ---
 
 ## High-Level Goal
 
-To evolve this system into a fully reproducible local development environment where:
-
-- Any developer can clone one repo
-- Run a single command (`init`)
-- Get a fully running distributed system locally (`up`)
-- With identical behavior across machines
+To provide a "one-click" setup experience for distributed local environments where all authentication and networking complexity is abstracted away by the controller.
 
 ---
 
 ## Key Constraints
 
-1. **Language**: All code (variables, functions, comments) and documentation must be in **English**.
+1. **Language**: All code and documentation must be in **English**.
 2. **No Git Commands**: AI agents are NOT allowed to suggest or execute Git commands.
-3. **No Refactor Without Request**: Do not refactor unless explicitly asked.
-4. **No Hidden Optimization**: Keep logic explicit.
+3. **Cross-Platform Compatibility**: Use `filepath.ToSlash()` when passing absolute paths to Git on Windows.
+4. **No Refactor Without Request**: Do not refactor unless explicitly asked.
 5. **Diff-Only Change Policy**: Prefer minimal changes.
 6. **Avoid Over-Abstraction**: Keep the system explicit and readable.
 7. **AI Guidelines**: Refer to [guidelines.md](guidelines.md) for detailed AI interaction rules.

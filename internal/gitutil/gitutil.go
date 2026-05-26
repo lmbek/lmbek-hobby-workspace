@@ -58,6 +58,7 @@ func HandleGitError(err error) {
 		}
 
 		fmt.Println("\nRun 'make doctor' for more diagnostics.")
+		fmt.Println("You can also run 'make ssh' (alias for ssh-setup) to manage your keys.")
 		os.Exit(1)
 	} else if strings.Contains(errStr, "Host key verification failed") {
 		fmt.Println("\nERROR: Host key verification failed.")

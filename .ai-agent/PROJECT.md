@@ -3,8 +3,12 @@
 ## Vision
 The purpose of this project is to create a tool that allows defining and starting a complete distributed system locally with a single command. We want to move away from complex bash scripts towards a declarative approach, where the system state is described in a central configuration file.
 
+A core focus is on **Cross-Platform Reliability**, ensuring that authentication (SSH) and repository management (Git) work seamlessly on Windows, Linux, and WSL without manual intervention.
+
 ## Core Concepts
 - **Declarative Definition:** The entire system (services, versions, infrastructure) is described in `system-definition.yaml`.
+- **Command-Based Lifecycle:** Clear separation between bootstrapping (`init`), materializing (`sync`), validating (`validate`), and running (`up`).
+- **SSH & Git Synchronization:** The controller manages SSH agents and forces Git to use verified SSH clients to prevent authentication mismatches.
 - **No Scripting:** Logic resides in the controller, not in scattered scripts. This ensures consistency across machines.
 - **Isolated Workspace:** All services are materialized in a dedicated `workspace/` directory to avoid cluttering the rest of the system.
 - **Infrastructure as Code:** Infrastructure (databases, queues, etc.) configuration is managed in a dedicated, version-controlled repository.

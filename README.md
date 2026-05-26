@@ -41,11 +41,14 @@ go build -o bin/workspace-controller.exe main.go
 You can use the provided `Makefile` for a more convenient experience. It automatically handles the `WORKSPACE_ROOT` environment variable.
 ```bash
 make help      # Show available commands
-make init      # [1] Initialize workspace
-make validate  # [2] Validate consistency
-make up        # [3] Start the system
+make init      # [1] Bootstrap workspace (Pre-flight + Planning)
+make sync      # [2] Synchronize all repositories (Materialization)
+make validate  # [3] Validate consistency and health
+make up        # [4] Start the system
 make down      # Stop the system
-make doctor    # [4] Diagnose issues
+make doctor    # [D] Diagnose environment issues
+make ssh       # [S] Interactive SSH setup (alias for ssh-setup)
+make ssh-setup # [S] Interactive SSH setup
 ```
 
 ### Manual Usage & Commands
@@ -54,46 +57,55 @@ If you prefer running commands manually, ensure you set the `WORKSPACE_ROOT` env
 > **Note:** In the examples below, `<cli>` refers to the command you are using (e.g., `./bin/workspace-controller.exe`, `go run main.go`, or `make`).
 
 ### 1. `init`
-Initializes the workspace by performing an execution plan (analysis) and then materializing the system (cloning/updating repositories).
+Bootstraps the workspace by performing pre-flight checks (SSH connectivity, agent status) and creating an execution plan.
 ```bash
 $env:WORKSPACE_ROOT=".."
 <cli> init
 ```
 
-### 2. `validate`
-Verifies that your local workspace is consistent. It checks for missing directories, uncommitted changes, and service health (HTTP/TCP).
+### 2. `sync`
+Materializes the system by cloning or updating all repositories defined in the system definition. It also runs post-sync hooks.
+```bash
+$env:WORKSPACE_ROOT=".."
+<cli> sync
+```
+
+### 3. `validate`
+Verifies that your local workspace is consistent. It checks for missing directories, branch matches (defaulting to `main`), and service health (HTTP/TCP).
 ```bash
 $env:WORKSPACE_ROOT=".."
 <cli> validate
 ```
 
-### 3. `up`
+### 4. `up`
 Starts the entire environment (services and infrastructure) using Docker Compose.
 ```bash
 $env:WORKSPACE_ROOT=".."
 <cli> up
 ```
 
-### 4. `down`
+### 5. `down`
 Stops and removes all containers associated with the workspace.
 ```bash
 $env:WORKSPACE_ROOT=".."
 <cli> down
 ```
 
-### 5. `doctor`
-Diagnoses environmental issues (Git, SSH, Docker).
+### 6. `doctor`
+Diagnoses environmental issues (Git, SSH, Docker) and provides automated fixes for common SSH agent and key problems.
 ```bash
 <cli> doctor
 ```
 
-### 6. `ssh-setup`
-Interactive tool to manage SSH keys and configuration.
+### 7. `ssh-setup` / `ssh`
+Interactive tool to manage SSH keys, configure `~/.ssh/config`, and ensure Git is using the correct SSH client (especially important on Windows). `ssh` is an alias for `ssh-setup`.
 ```bash
 <cli> ssh-setup
+# or
+<cli> ssh
 ```
 
-### 7. `help`
+### 8. `help`
 Shows the available commands and usage information.
 ```bash
 <cli> help

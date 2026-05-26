@@ -23,11 +23,24 @@
 - [x] Hook system for post-sync and post-startup automation.
 - [x] Dependency management between services (startup order).
 
-## Phase 5: Decoupling & Specialization (Current State) ✅
+## Phase 5: Decoupling & Specialization ✅
 - [x] Infrastructure decoupling: Move configuration to specialized repositories.
 - [x] Reorganization: Centralized `services/` directory within the workspace.
 - [x] Introduction of the `tools/` ecosystem (e.g., Terraform-based `deployer`).
 - [x] Modernized demo and documentation (Phase 5 Alignment).
+
+## Phase 6: Reliability & Cross-Platform ✅
+- [x] Windows/Linux/WSL compatibility for SSH and Git operations.
+- [x] Robust SSH agent management (Start-Service on Windows, socket discovery on Linux).
+- [x] Automated `known_hosts` management for GitHub.
+- [x] Synchronization of SSH clients between pre-flight checks and Git operations (GIT_SSH_COMMAND).
+- [x] Interactive `ssh-setup` tool for key management and consolidation.
+
+## Phase 7: CLI Refinement & Optimization (Current State) ✅
+- [x] Separation of `init` (bootstrap) and `sync` (materialize) commands.
+- [x] Centralization of common logic into `gitutil` and `sshutil` packages.
+- [x] Standardized CLI numbering [1] [2] [3] [4] [D] [S] for intuitive workflow.
+- [x] Improved error handling and actionable diagnostics in `doctor` and `HandleGitError`.
 
 ---
 *This roadmap reflects the actual journey taken to build the workspace-controller. All phases are currently completed and verified.*

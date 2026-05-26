@@ -8,6 +8,7 @@ This document contains guidelines and best practices for AI agents working on th
 - **No Git Commands:** AI agents are strictly forbidden from executing `git` commands (e.g., `git init`, `git add`, `git commit`, `git tag`). These operations must be performed or requested by the human user.
 - **Minimal Changes:** Follow the "Diff-Only Change Policy". Prefer minimal, focused changes over broad refactors unless explicitly requested.
 - **Explicit Logic:** Avoid over-abstraction or hidden optimizations. Keep the system explicit and readable.
+- **Cross-Platform Paths:** When executing Git commands on Windows, absolute paths in environment variables (like `GIT_SSH_COMMAND`) must use forward slashes (`/`) and be quoted if they contain spaces. Use `filepath.ToSlash()` for consistency.
 - **Branch Management:** The controller MUST ensure that repositories remain on the `main` branch (or a specific `feature` branch) and never enter a "detached HEAD" state. The `sync` command is configured to use `git fetch` and `git pull` on the current branch rather than `git checkout <tag>`. Version validation in `validate` will issue a warning if the branch/tag doesn't match the definition, but it will not block execution. AI agents must also respect this and never suggest commands that lead to a detached HEAD.
 
 ## 2. Project Architecture Principles

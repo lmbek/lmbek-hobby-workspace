@@ -36,7 +36,7 @@ func Run() {
 
 	if err := checkGitHubConnectivity(); err != nil {
 		fmt.Printf("\nERROR: GitHub connectivity check failed.\n%v\n", err)
-		fmt.Println("\nRun 'make ssh' to set up your environment.")
+		fmt.Println("\nRun 'make ssh' (or 'make ssh-setup') to set up your environment.")
 		os.Exit(1)
 	}
 	slog.Info("GitHub connectivity verified")

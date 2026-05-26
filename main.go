@@ -32,6 +32,7 @@ func main() {
 		"down":      down.Run,
 		"doctor":    doctor.RunFull,
 		"ssh-setup": sshsetup.Run,
+		"ssh":       sshsetup.Run,
 		"help":      showHelp,
 	}
 
@@ -64,6 +65,6 @@ func showHelp() {
 	fmt.Println("  up         [4] Start the system (docker-compose up)")
 	fmt.Println("  down           Stop the system (docker-compose down)")
 	fmt.Println("  doctor     [D] Diagnose environmental issues (Git, SSH, Docker)")
-	fmt.Println("  ssh-setup  [S] Interactive SSH key management tool")
+	fmt.Println("  ssh-setup  [S] Interactive SSH key management tool (alias: ssh)")
 	fmt.Println("  help           Show this help information")
 }

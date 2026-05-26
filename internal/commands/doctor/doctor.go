@@ -71,7 +71,7 @@ func checkSSH() {
 	for _, issue := range issues {
 		slog.Error("SSH Structural Issue", "detail", issue)
 		if strings.Contains(issue, "is a directory") {
-			slog.Info("Fix: Run '<cli> ssh-setup' and select Option 6 (Cleanup broken SSH configurations) to resolve this automatically.")
+			slog.Info("Fix: Run '<cli> ssh' and select Option 6 (Cleanup broken SSH configurations) to resolve this automatically.")
 		}
 	}
 
@@ -84,7 +84,7 @@ func checkSSH() {
 		if runtime.GOOS == "windows" {
 			slog.Info("Hint: On Windows, the 'OpenSSH Authentication Agent' service is often disabled by default.")
 			slog.Info("Fix (Admin PowerShell): Set-Service -Name ssh-agent -StartupType Manual; Start-Service ssh-agent")
-			slog.Info("Or use '<cli> ssh-setup' -> Option 5 (Check current SSH status) to try starting it automatically.")
+			slog.Info("Or use '<cli> ssh' -> Option 5 (Check current SSH status) to try starting it automatically.")
 		} else {
 			slog.Info("Hint: On Linux/WSL, ensure ssh-agent is running. Start it with: eval \"$(ssh-agent -s)\"")
 			slog.Info("To persist, add the following snippet to your ~/.bashrc or ~/.zshrc:")
@@ -96,7 +96,7 @@ func checkSSH() {
        eval $(ssh-agent -s)
      fi
    fi`)
-			slog.Info("Or use '<cli> ssh-setup' -> Option 5 (Check current SSH status) to try starting it automatically.")
+			slog.Info("Or use '<cli> ssh' -> Option 5 (Check current SSH status) to try starting it automatically.")
 		}
 	} else {
 		slog.Info("ssh-agent is responsive.")
@@ -108,7 +108,7 @@ func checkSSH() {
 		slog.Warn("Could not check loaded keys", "output", keys)
 	} else if strings.Contains(keys, "The agent has no identities") || err != nil {
 		slog.Warn("No SSH keys found in agent", "output", keys)
-		slog.Info("Hint: Run '<cli> ssh-setup' -> Option 2 to add a key to the agent.")
+		slog.Info("Hint: Run '<cli> ssh' -> Option 2 to add a key to the agent.")
 	} else {
 		slog.Info("Loaded SSH keys", "keys", keys)
 	}
@@ -182,6 +182,6 @@ func PrintSSHSetupInstructions() {
 
 	fmt.Println("\n--- Automated Configuration ---")
 	fmt.Println("   You can use the built-in automated tool for these steps:")
-	fmt.Println("   <cli> ssh-setup")
+	fmt.Println("   <cli> ssh")
 	system.PrintCLINote()
 }
