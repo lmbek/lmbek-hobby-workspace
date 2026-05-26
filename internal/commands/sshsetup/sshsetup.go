@@ -202,6 +202,7 @@ func configureSSHConfig(reader *bufio.Reader) {
 	} else {
 		fmt.Println("1. Run Option 5 (Check current SSH status) to verify everything is working and test GitHub connectivity.")
 	}
+	fmt.Println("2. Run '<cli> sync' to synchronize your repositories.")
 }
 
 func generateNewKey(reader *bufio.Reader) {
@@ -388,7 +389,7 @@ func checkStatus(reader *bufio.Reader) {
 		slog.Warn("GitHub authentication failed", "output", strings.TrimSpace(output))
 		if strings.Contains(output, "Permission denied") {
 			slog.Info("Hint: Your key might have a passphrase and is not added to the agent, or the wrong key is being used.")
-			slog.Info("Try Option 2 (Add existing key to agent) if you are prompted for a passphrase during 'make init'.")
+			slog.Info("Try Option 2 (Add existing key to agent) if you are prompted for a passphrase during '<cli> sync'.")
 
 			if identityFile := sshutil.GetGitHubIdentityFile(); identityFile != "" {
 				fmt.Printf("\nYour configured IdentityFile is: %s\n", identityFile)
@@ -527,5 +528,6 @@ func addToAgent(keyPath string) {
 		} else {
 			fmt.Println("2. Run Option 5 (Check current SSH status) to verify everything is working and test GitHub connectivity.")
 		}
+		fmt.Println("3. Run '<cli> sync' to synchronize your repositories.")
 	}
 }

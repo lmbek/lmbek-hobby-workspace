@@ -8,6 +8,7 @@ import (
 	"workspace-controller/internal/commands/down"
 	initcmd "workspace-controller/internal/commands/init"
 	"workspace-controller/internal/commands/sshsetup"
+	"workspace-controller/internal/commands/sync"
 	"workspace-controller/internal/commands/up"
 	"workspace-controller/internal/commands/validate"
 	"workspace-controller/internal/system"
@@ -25,6 +26,7 @@ func main() {
 
 	commands := map[string]func(){
 		"init":      initcmd.Run,
+		"sync":      sync.Run,
 		"validate":  validate.Run,
 		"up":        up.Run,
 		"down":      down.Run,
@@ -56,11 +58,12 @@ func showHelp() {
 	fmt.Println("Usage: <cli> [command]")
 	system.PrintCLINote()
 	fmt.Println("\nAvailable Commands:")
-	fmt.Println("  init       Initialize workspace (Pre-flight checks + Planning + Materialization)")
-	fmt.Println("  validate   Validate system consistency and health")
-	fmt.Println("  up         Start the system (docker-compose up)")
-	fmt.Println("  down       Stop the system (docker-compose down)")
-	fmt.Println("  doctor     Diagnose environmental issues (Git, SSH, Docker)")
-	fmt.Println("  ssh-setup  Interactive SSH key management tool")
-	fmt.Println("  help       Show this help information")
+	fmt.Println("  init       [1] Bootstrap workspace (Pre-flight checks + Planning + Materialization)")
+	fmt.Println("  sync       [2] Synchronize all repositories (fetch/pull/hooks)")
+	fmt.Println("  validate   [3] Validate system consistency and health")
+	fmt.Println("  up         [4] Start the system (docker-compose up)")
+	fmt.Println("  down           Stop the system (docker-compose down)")
+	fmt.Println("  doctor     [D] Diagnose environmental issues (Git, SSH, Docker)")
+	fmt.Println("  ssh-setup  [S] Interactive SSH key management tool")
+	fmt.Println("  help           Show this help information")
 }
