@@ -10,6 +10,7 @@ import (
 	"workspace/git-controller/internal/commands/checkout"
 	"workspace/git-controller/internal/commands/clone"
 	"workspace/git-controller/internal/commands/doctor"
+	"workspace/git-controller/internal/commands/fetch"
 	"workspace/git-controller/internal/commands/pull"
 	"workspace/git-controller/internal/commands/push"
 	"workspace/git-controller/internal/commands/scaffold"
@@ -35,6 +36,7 @@ func main() {
 	commands := map[string]func() error{
 		"init":     wsinit.Run,
 		"clone":    clone.Run,
+		"fetch":    fetch.Run,
 		"pull":     pull.Run,
 		"push":     push.Run,
 		"scaffold": scaffold.Run,
@@ -85,6 +87,7 @@ func showHelp() {
 	fmt.Println("\nWorkflow Commands:")
 	fmt.Println("  init       Scaffold a new workspace (system-definition.yaml, Makefile, .gitignore)")
 	fmt.Println("  clone      Clone all repositories defined in system-definition.yaml")
+	fmt.Println("  fetch      Fetch all remotes across all repositories")
 	fmt.Println("  pull       Pull latest changes across all repositories (clone if missing)")
 	fmt.Println("  push       Push local commits across all repositories")
 	fmt.Println("  scaffold   Initialise .git and set remote origin (no clone/fetch needed)")

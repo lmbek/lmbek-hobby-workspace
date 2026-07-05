@@ -1,7 +1,7 @@
 # Workspace Controller Makefile
 # Thin wrapper around git-controller commands.
 
-.PHONY: help init clone pull push scaffold checkout status validate doctor ssh ssh-setup
+.PHONY: help init clone fetch pull push scaffold checkout status validate doctor ssh ssh-setup
 
 export WORKSPACE_ROOT ?= $(abspath .)
 
@@ -11,6 +11,7 @@ help:
 	@echo "  Workflow:"
 	@echo "  make init      - Scaffold a new workspace"
 	@echo "  make clone     - Clone all repositories (initial setup)"
+	@echo "  make fetch     - Fetch all remotes across all repositories"
 	@echo "  make pull      - Pull updates across all repositories (clone if missing)"
 	@echo "  make push      - Push local commits across all repositories"
 	@echo "  make scaffold  - Initialise .git, set remote origin, fetch, and configure default branch"
@@ -27,6 +28,9 @@ init:
 
 clone:
 	cd git-controller && go run . clone
+
+fetch:
+	cd git-controller && go run . fetch
 
 pull:
 	cd git-controller && go run . pull

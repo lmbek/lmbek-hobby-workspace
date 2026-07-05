@@ -25,6 +25,12 @@ func Clone(repo, targetPath string) error {
 	return EnhanceGitError(RunGit("clone", repo, targetPath))
 }
 
+// Fetch fetches all remotes in the given repository directory.
+func Fetch(repoDir string) error {
+	slog.Debug("Fetching repository", "dir", repoDir)
+	return EnhanceGitError(RunGitInDir(repoDir, "fetch", "--all"))
+}
+
 // Pull fetches and pulls the latest changes in the given repository directory.
 func Pull(repoDir string) error {
 	slog.Debug("Pulling repository", "dir", repoDir)
