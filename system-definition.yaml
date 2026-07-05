@@ -47,12 +47,6 @@ repos:
             repository: git@github.com:lmbek/lmbek-hobby-infrastructure.git
             version: main
 
-    # ── Platform / Internal Tooling ───────────────────────────────────────────
-    # The workspace controller itself and any other platform-level tooling.
-    platform:
-        workspace-controller:
-            repository: git@github.com:lmbek/lmbek-hobby-workspace-controller.git
-            version: main
 
     # ── Observability ─────────────────────────────────────────────────────────
     # Monitoring, logging, and alerting configuration.

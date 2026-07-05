@@ -126,23 +126,15 @@ Centralising observability also enables consistency. When all dashboards are in 
 
 ---
 
-### Platform: The Developer Experience Layer
-
-The platform repository contains internal developer tooling — the tools that make engineers productive but are not themselves part of the product. This workspace controller is the primary example: it is a CLI that manages all the other repositories, but it is not a microservice that serves end users.
-
-**Why separate from tools?** Because platform tooling is foundational. It is the layer that everything else depends on. The workspace controller defines how repositories are cloned, updated, and validated. CI/CD template libraries define how every service is built and deployed. These are not utilities — they are infrastructure for the development process itself.
-
-Platform repos tend to have different ownership (a platform or DevEx team), different SLAs (if the workspace controller breaks, everyone is blocked), and different release processes (changes need to be backwards-compatible because every team depends on them).
-
----
-
 ### Tools: Everything Else That Helps
 
 Every project accumulates small utilities that do not fit neatly into any other category. Migration scripts. Data seeders. Code generators. One-off automation for bulk operations. If these do not have a home, they end up in random places — a `scripts/` folder in an application repo, a personal repository on someone's GitHub, a Slack message that gets lost.
 
 The tools repository is the designated home for these utilities. It is intentionally broad because its purpose is to prevent clutter elsewhere. The rule is simple: if a utility serves multiple repos or does not belong to a specific service, it goes in tools.
 
-This category also includes deployment helpers and automation scripts. CI/CD pipeline definitions might reference shared scripts from the tools repo. A deployer utility that wraps Terraform commands might live here. The key distinction from platform is scope: platform tools are foundational and used by everyone; tools are useful but not critical.
+This category also includes deployment helpers and automation scripts. CI/CD pipeline definitions might reference shared scripts from the tools repo. A deployer utility that wraps Terraform commands might live here.
+
+Note that the workspace controller itself is **not** a managed sub-repo — it is the root project that manages everything else. It does not need to clone itself. That is why there is no separate "platform" category: the workspace controller lives at the root level, outside the `git-repositories/` tree.
 
 ---
 
@@ -173,7 +165,7 @@ Conway's Law states that organisations design systems that mirror their communic
 The repository structure mirrors the team structure of an enterprise:
 
 - **Product teams** own application repos.
-- **A platform team** owns the platform and tools repos.
+- **A platform team** owns the tools repo and the workspace controller.
 - **An SRE or infrastructure team** owns the infrastructure and observability repos.
 - **A DevOps or release team** owns the orchestrator and deployment repos.
 - **Everyone** contributes to docs.
@@ -277,6 +269,5 @@ The question is not "why so many repos?" The question is "why would you force th
 | Deployment | Per-environment config (dev/staging/prod folders) | Environment settings change, releases are promoted | Release / DevOps team |
 | Infrastructure | Cloud resource provisioning (Terraform, IaC) | Cloud resources are added or modified | SRE / Infrastructure team |
 | Observability | Monitoring, dashboards, alerts, log pipelines | Incidents reveal blind spots, thresholds are tuned | SRE / Observability team |
-| Platform | Internal developer tooling (e.g. workspace controller) | Developer workflows change | Platform / DevEx team |
-| Tools | General-purpose utilities and scripts | New automation needs arise | Any team |
+| Tools | General-purpose utilities, scripts, and helper tooling | New automation needs arise | Platform / Any team |
 | Docs | Architecture docs, API contracts, manual runbooks | Decisions are made, procedures change | Any team |

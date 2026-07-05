@@ -3,7 +3,6 @@ package sshsetup
 import (
 	"bufio"
 	"fmt"
-	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -68,7 +67,7 @@ func configureGitSSH(reader *bufio.Reader) {
 	fmt.Print("Do you want to proceed? (y/n): ")
 	answer, _ := reader.ReadString('\n')
 	if strings.ToLower(strings.TrimSpace(answer)) != "y" {
-		slog.Info("Operation cancelled.")
+		ui.Info("Operation cancelled.")
 		return
 	}
 
@@ -77,17 +76,17 @@ func configureGitSSH(reader *bufio.Reader) {
 
 	cmd := exec.Command("git", "config", "--global", "core.sshCommand", sshPath)
 	if err := cmd.Run(); err != nil {
-		slog.Error("Failed to set git config", "error", err)
+		ui.Error("Failed to set git config: %v", err)
 		return
 	}
 
-	slog.Info("Successfully configured git to use Windows OpenSSH.")
+	ui.Success("Successfully configured git to use Windows OpenSSH.")
 }
 
 func configureSSHConfig(reader *bufio.Reader) {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		slog.Error("Could not determine home directory", "error", err)
+		ui.Error("Could not determine home directory: %v", err)
 		return
 	}
 
@@ -134,7 +133,7 @@ func configureSSHConfig(reader *bufio.Reader) {
 	}
 
 	if selectedKey == "" {
-		slog.Error("Key path cannot be empty")
+		ui.Error("Key path cannot be empty.")
 		return
 	}
 
@@ -151,7 +150,7 @@ func configureSSHConfig(reader *bufio.Reader) {
 	fmt.Print("\nDo you want to apply this to your SSH config? This will consolidate multiple github.com entries. (y/n): ")
 	answer, _ := reader.ReadString('\n')
 	if strings.ToLower(strings.TrimSpace(answer)) != "y" {
-		slog.Info("Configuration skipped.")
+		ui.Info("Configuration skipped.")
 		return
 	}
 
@@ -196,11 +195,11 @@ func configureSSHConfig(reader *bufio.Reader) {
 	finalConfig += configEntry
 
 	if err := os.WriteFile(configPath, []byte(finalConfig), 0600); err != nil {
-		slog.Error("Could not write to config file", "error", err)
+		ui.Error("Could not write to config file: %v", err)
 		return
 	}
 
-	slog.Info("SSH config updated and consolidated successfully.", "path", configPath)
+	ui.Success("SSH config updated and consolidated successfully: %s", configPath)
 	fmt.Println("\nRecommended next step:")
 	if runtime.GOOS == "windows" {
 		fmt.Println("1. Run Option 4 (Configure git to use Windows OpenSSH) then Option 5 (Check current SSH status).")
@@ -217,7 +216,7 @@ func generateNewKey(reader *bufio.Reader) {
 
 	home, err := os.UserHomeDir()
 	if err != nil {
-		slog.Error("Could not determine home directory", "error", err)
+		ui.Error("Could not determine home directory: %v", err)
 		return
 	}
 
@@ -231,7 +230,7 @@ func generateNewKey(reader *bufio.Reader) {
 
 	if !strings.HasSuffix(keyPath, ".private") {
 		keyPath += ".private"
-		slog.Info("Automatically added .private extension", "path", keyPath)
+		ui.Info("Automatically added .private extension: %s", keyPath)
 	}
 
 	// Ensure .ssh directory exists
@@ -240,7 +239,7 @@ func generateNewKey(reader *bufio.Reader) {
 		os.MkdirAll(sshDir, 0700)
 	}
 
-	slog.Info("Generating new SSH key...", "path", keyPath)
+	ui.Info("Generating new SSH key: %s", keyPath)
 	// We need to tell ssh-keygen where to put the public key too,
 	// but it usually just appends .pub to the filename.
 	// Since the user wants .public, we'll have to rename it after generation.
@@ -250,11 +249,11 @@ func generateNewKey(reader *bufio.Reader) {
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Run(); err != nil {
-		slog.Error("Error generating SSH key", "error", err)
+		ui.Error("Error generating SSH key: %v", err)
 		return
 	}
 
-	slog.Info("SSH key generated successfully.")
+	ui.Success("SSH key generated successfully.")
 	fmt.Println("\nRecommended next steps:")
 	fmt.Println("1. Add the public key to your GitHub account (see below).")
 	fmt.Println("2. Run Option 2 to add this key to the ssh-agent (this allows it to remember your passphrase).")
@@ -279,7 +278,7 @@ func generateNewKey(reader *bufio.Reader) {
 func addExistingKey(reader *bufio.Reader) {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		slog.Error("Could not determine home directory", "error", err)
+		ui.Error("Could not determine home directory: %v", err)
 		return
 	}
 
@@ -318,7 +317,7 @@ func addExistingKey(reader *bufio.Reader) {
 			manualPath, _ := reader.ReadString('\n')
 			keyPath = strings.TrimSpace(manualPath)
 		} else {
-			slog.Error("Invalid choice")
+			ui.Error("Invalid choice.")
 			return
 		}
 	} else {
@@ -328,7 +327,7 @@ func addExistingKey(reader *bufio.Reader) {
 	}
 
 	if keyPath == "" {
-		slog.Error("Key path cannot be empty")
+		ui.Error("Key path cannot be empty.")
 		return
 	}
 
@@ -336,15 +335,15 @@ func addExistingKey(reader *bufio.Reader) {
 }
 
 func checkStatus(reader *bufio.Reader) {
-	slog.Info("Checking current SSH status...")
+	ui.Info("Checking current SSH status...")
 
 	if runtime.GOOS == "windows" {
 		currentSsh := sshutil.GetConfiguredSSHCommand()
 		if currentSsh == "ssh" {
-			slog.Warn("Git core.sshCommand is not explicitly set. Git might use its internal SSH client.")
+			ui.Warn("Git core.sshCommand is not explicitly set. Git might use its internal SSH client.")
 			fmt.Println("Recommendation: Run Option 4 (Configure git to use Windows OpenSSH) for consistency.")
 		} else {
-			slog.Info("Git core.sshCommand is set", "value", currentSsh)
+			ui.Info("Git core.sshCommand is set to: %s", currentSsh)
 		}
 	}
 
@@ -359,9 +358,9 @@ func checkStatus(reader *bufio.Reader) {
 			if strings.ToLower(strings.TrimSpace(answer)) == "y" {
 				success, err := sshutil.ResolveSSHIssue(issue)
 				if success {
-					slog.Info("Successfully resolved issue")
+					ui.Success("Successfully resolved issue.")
 				} else {
-					slog.Error("Failed to resolve issue", "error", err)
+					ui.Error("Failed to resolve issue: %v", err)
 				}
 			}
 		}
@@ -369,24 +368,24 @@ func checkStatus(reader *bufio.Reader) {
 
 	keys, err := sshutil.GetLoadedKeys()
 	if err != nil {
-		slog.Warn("No keys found in agent or ssh-agent not running", "error", keys)
+		ui.Warn("No keys found in agent or ssh-agent not running: %s", keys)
 		if strings.Contains(keys, "authentication agent") || strings.Contains(keys, "Error connecting") {
 			fmt.Print("\nssh-agent is not running or accessible. Do you want to try starting it? (y/n): ")
 			answer, _ := reader.ReadString('\n')
 			if strings.ToLower(strings.TrimSpace(answer)) == "y" {
 				if err := sshutil.StartAgent(); err != nil {
-					slog.Error("Failed to start ssh-agent", "error", err)
+					ui.Error("Failed to start ssh-agent: %v", err)
 				} else {
 					// Retry
 					keys, err = sshutil.GetLoadedKeys()
 					if err == nil {
-						slog.Info("Loaded keys", "keys", keys)
+						ui.Success("Loaded keys:\n%s", keys)
 					}
 				}
 			}
 		}
 	} else {
-		slog.Info("Loaded keys", "keys", keys)
+		ui.Success("Loaded keys:\n%s", keys)
 	}
 
 	home, _ := os.UserHomeDir()
@@ -395,19 +394,19 @@ func checkStatus(reader *bufio.Reader) {
 		content := string(data)
 		content = strings.ReplaceAll(content, "\r\n", "\n")
 		if strings.Count(content, "Host github.com") > 1 {
-			slog.Warn("Duplicate 'Host github.com' entries detected in your config. Option 3 will consolidate them.")
+			ui.Warn("Duplicate 'Host github.com' entries detected in your config. Option 3 will consolidate them.")
 		}
 	}
 
-	slog.Info("Testing GitHub connectivity...")
+	ui.Info("Testing GitHub connectivity...")
 	success, output := sshutil.CheckGitHubConnectivity()
 	if success {
-		slog.Info("GitHub authentication successful!")
+		ui.Success("GitHub authentication successful!")
 	} else {
-		slog.Warn("GitHub authentication failed", "output", strings.TrimSpace(output))
+		ui.Warn("GitHub authentication failed: %s", strings.TrimSpace(output))
 		if strings.Contains(output, "Permission denied") {
-			slog.Info("Hint: Your key might have a passphrase and is not added to the agent, or the wrong key is being used.")
-			slog.Info(fmt.Sprintf("Try Option 2 (Add existing key to agent) if you are prompted for a passphrase during '%s clone'.", system.CLIName))
+			ui.Info("Hint: Your key might have a passphrase and is not added to the agent, or the wrong key is being used.")
+			ui.Info("Try Option 2 (Add existing key to agent) if you are prompted for a passphrase during '%s clone'.", system.CLIName)
 
 			if identityFile := sshutil.GetGitHubIdentityFile(); identityFile != "" {
 				fmt.Printf("\nYour configured IdentityFile is: %s\n", identityFile)
@@ -436,7 +435,7 @@ func checkStatus(reader *bufio.Reader) {
 }
 
 func cleanupConfigs(reader *bufio.Reader) {
-	slog.Info("Starting SSH configuration cleanup...")
+	ui.Info("Starting SSH configuration cleanup...")
 
 	fmt.Println("\nCleanup Options:")
 	fmt.Println("1. Clear all keys from ssh-agent (ssh-add -D)")
@@ -449,34 +448,34 @@ func cleanupConfigs(reader *bufio.Reader) {
 
 	home, err := os.UserHomeDir()
 	if err != nil {
-		slog.Error("Could not determine home directory", "error", err)
+		ui.Error("Could not determine home directory: %v", err)
 		return
 	}
 	sshDir := filepath.Join(home, ".ssh")
 
 	switch choice {
 	case "1":
-		slog.Info("Clearing keys from agent...")
+		ui.Info("Clearing keys from agent...")
 		cmd := exec.Command("ssh-add", "-D")
 		if output, err := cmd.CombinedOutput(); err != nil {
-			slog.Error("Failed to clear keys", "error", err, "output", string(output))
+			ui.Error("Failed to clear keys: %v (%s)", err, string(output))
 		} else {
-			slog.Info("All identities removed from agent.")
+			ui.Success("All identities removed from agent.")
 		}
 
 	case "2":
 		configPath := filepath.Join(sshDir, "config")
 		if _, err := os.Stat(configPath); err == nil {
-			slog.Warn("Existing config found. Please manually back it up before resetting.", "path", configPath)
+			ui.Warn("Existing config found at %s. Please manually back it up before resetting.", configPath)
 			fmt.Print("Are you sure you want to overwrite it with a fresh one? (y/n): ")
 			answer, _ := reader.ReadString('\n')
 			if strings.ToLower(strings.TrimSpace(answer)) != "y" {
 				return
 			}
 		}
-		slog.Info("Creating fresh ~/.ssh/config")
+		ui.Info("Creating fresh ~/.ssh/config...")
 		if err := os.WriteFile(configPath, []byte("# Fresh SSH Config\n"), 0600); err != nil {
-			slog.Error("Failed to create fresh config", "error", err)
+			ui.Error("Failed to create fresh config: %v", err)
 		}
 
 	case "3":
@@ -486,27 +485,27 @@ func cleanupConfigs(reader *bufio.Reader) {
 		// Config
 		configPath := filepath.Join(sshDir, "config")
 		if _, err := os.Stat(configPath); err == nil {
-			slog.Warn("Existing config found. Manual reset required.", "path", configPath)
+			ui.Warn("Existing config found at %s. Manual reset required.", configPath)
 		}
 
 		// Known hosts
 		khPath := filepath.Join(sshDir, "known_hosts")
 		if _, err := os.Stat(khPath); err == nil {
-			slog.Warn("Existing known_hosts found. Manual reset required.", "path", khPath)
+			ui.Warn("Existing known_hosts found at %s. Manual reset required.", khPath)
 		}
 
-		slog.Info("Full reset requested. Please manually clean up the files mentioned above.")
+		ui.Info("Full reset requested. Please manually clean up the files mentioned above.")
 
 	default:
-		slog.Info("Cleanup cancelled.")
+		ui.Info("Cleanup cancelled.")
 	}
 }
 
 func addToAgent(keyPath string) {
-	slog.Info("Adding key to ssh-agent...", "path", keyPath)
+	ui.Info("Adding key to ssh-agent: %s", keyPath)
 
 	if err := sshutil.StartAgent(); err != nil {
-		slog.Warn("Could not ensure ssh-agent is running", "error", err)
+		ui.Warn("Could not ensure ssh-agent is running: %v", err)
 	}
 
 	// On Windows, the OpenSSH agent service doesn't support -K, but it does persist
@@ -517,13 +516,13 @@ func addToAgent(keyPath string) {
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Run(); err != nil {
-		slog.Error("Error adding key to agent", "error", err)
+		ui.Error("Error adding key to agent: %v", err)
 		if runtime.GOOS == "windows" {
-			slog.Info("Hint: If you are on Windows, ensure the 'OpenSSH Authentication Agent' service is running and you have permissions to start it.")
+			ui.Info("Hint: If you are on Windows, ensure the 'OpenSSH Authentication Agent' service is running and you have permissions to start it.")
 		} else {
-			slog.Info("Hint: On Linux/WSL, ensure ssh-agent is running. If you just started it, you may need to reload your shell or run:")
+			ui.Info("Hint: On Linux/WSL, ensure ssh-agent is running. If you just started it, you may need to reload your shell or run:")
 			fmt.Println("   eval \"$(ssh-agent -s)\"")
-			slog.Info("To make it persistent, consider adding this to your ~/.bashrc or ~/.zshrc:")
+			ui.Info("To make it persistent, consider adding this to your ~/.bashrc or ~/.zshrc:")
 			fmt.Println(`   if [ -z "$SSH_AUTH_SOCK" ]; then
      # Check for existing agent
      SOCK=$(ls /tmp/ssh-*/agent.* 2>/dev/null | head -n 1)
@@ -535,9 +534,9 @@ func addToAgent(keyPath string) {
    fi`)
 		}
 	} else {
-		slog.Info("Key added successfully to ssh-agent.")
+		ui.Success("Key added successfully to ssh-agent.")
 		if runtime.GOOS == "windows" {
-			slog.Info("Windows Tip: Once added and passphrase entered, the OpenSSH Agent service should remember it across sessions.")
+			ui.Info("Windows Tip: Once added and passphrase entered, the OpenSSH Agent service should remember it across sessions.")
 		}
 		fmt.Println("\nRecommended next steps:")
 		fmt.Println("1. Run Option 3 to configure your ~/.ssh/config for GitHub (if you haven't yet).")

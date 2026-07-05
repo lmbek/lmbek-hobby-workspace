@@ -45,10 +45,10 @@ When you run the CLI, it reads the definition file and ensures every listed repo
 │              └──────────┘   └──────────┘   └──────────┘        │
 │                    │             │             │                │
 │                    ▼             ▼             ▼                │
-│              deployment    observability     platform           │
+│              deployment    observability     tools              │
 │              ┌──────────┐  ┌──────────┐   ┌──────────┐        │
-│              │ dev/      │  │ grafana  │   │ workspace│        │
-│              │ staging/  │  │ prometheus│  │ controller│       │
+│              │ dev/      │  │ grafana  │   │ scripts  │        │
+│              │ staging/  │  │ prometheus│  │ utilities│        │
 │              │ prod/     │  │ alerts   │   └──────────┘        │
 │              └──────────┘  └──────────┘                        │
 └─────────────────────────────────────────────────────────────────┘
@@ -175,7 +175,6 @@ LMBEK-HOBBY-WORKSPACE/
 │   ├── orchestrator/        Docker Compose / K8s manifests to run the stack
 │   ├── infrastructure/      Terraform / IaC for cloud provisioning
 │   ├── observability/       Monitoring, dashboards, alerts, log pipelines
-│   ├── platform/            Workspace controller and platform tooling
 │   ├── tools/               General-purpose utilities and scripts
 │   └── docs/                Architecture docs, API docs, manual runbooks
 ├── system-definition.yaml   Defines which repos/branches to manage
@@ -199,7 +198,6 @@ LMBEK-HOBBY-WORKSPACE/
 | `orchestrator`   | Central Docker Compose / K8s manifests that wire services using pre-built images | `lmbek-hobby-orchestrator`          |
 | `infrastructure` | Terraform modules for cloud resources (VPC, RDS, etc.)     | `lmbek-hobby-infrastructure`        |
 | `observability`  | Grafana dashboards, Prometheus rules, alert definitions, log pipelines | `lmbek-hobby-observability` |
-| `platform`       | Internal developer tooling (this workspace controller)     | `lmbek-hobby-workspace-controller`  |
 | `tools`          | General-purpose utilities, scripts, and helper tooling     | `lmbek-hobby-tools`                 |
 | `docs`           | Architecture Decision Records, API docs, manual runbooks   | `lmbek-hobby-docs`                  |
 
