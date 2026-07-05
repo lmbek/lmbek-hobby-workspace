@@ -41,7 +41,7 @@ When you run the CLI, it reads the definition file and ensures every listed repo
 │              applications   orchestrator   infrastructure       │
 │              ┌──────────┐   ┌──────────┐   ┌──────────┐        │
 │              │ service1  │   │ compose  │   │ terraform│        │
-│              │ service2  │   │ manifests│   │ modules  │        │
+│              │ service2  │   │ manifests│   │ servers  │        │
 │              └──────────┘   └──────────┘   └──────────┘        │
 │                    │             │             │                │
 │                    ▼             ▼             ▼                │
@@ -51,6 +51,12 @@ When you run the CLI, it reads the definition file and ensures every listed repo
 │              │ staging/  │  │ prometheus│  │ utilities│        │
 │              │ prod/     │  │ alerts   │   └──────────┘        │
 │              └──────────┘  └──────────┘                        │
+│                    │             │                              │
+│                    ▼             ▼                              │
+│                        docs                                    │
+│              ┌─────────────────────────┐                       │
+│              │ ADRs, runbooks          │                       │
+│              └─────────────────────────┘                       │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -173,7 +179,7 @@ LMBEK-HOBBY-WORKSPACE/
 │   ├── deployment/          Environment configs and manifests (folders per env)
 │   ├── applications/        Microservices (one repo per service)
 │   ├── orchestrator/        Docker Compose / K8s manifests to run the stack
-│   ├── infrastructure/      Terraform / IaC for cloud provisioning
+│   ├── infrastructure/      Terraform / IaC and server provisioning
 │   ├── observability/       Monitoring, dashboards, alerts, log pipelines
 │   ├── tools/               General-purpose utilities and scripts
 │   └── docs/                Architecture docs, API docs, manual runbooks
@@ -196,10 +202,10 @@ LMBEK-HOBBY-WORKSPACE/
 | `deployment`     | Per-environment values, secrets templates, and promotion config (folder-per-env) | `lmbek-hobby-deployment` |
 | `applications`   | Independent microservices, each with its own Dockerfile and CI/CD | `lmbek-hobby-placeholder1-service`  |
 | `orchestrator`   | Central Docker Compose / K8s manifests that wire services using pre-built images | `lmbek-hobby-orchestrator`          |
-| `infrastructure` | Terraform modules for cloud resources (VPC, RDS, etc.)     | `lmbek-hobby-infrastructure`        |
+| `infrastructure` | Terraform modules for cloud resources and server provisioning (Ansible, Packer, cloud-init) | `lmbek-hobby-infrastructure`, `lmbek-hobby-servers` |
 | `observability`  | Grafana dashboards, Prometheus rules, alert definitions, log pipelines | `lmbek-hobby-observability` |
 | `tools`          | General-purpose utilities, scripts, and helper tooling     | `lmbek-hobby-tools`                 |
-| `docs`           | Architecture Decision Records, API docs, manual runbooks   | `lmbek-hobby-docs`                  |
+| `docs`           | Architecture Decision Records, API docs, manual runbooks | `lmbek-hobby-docs` |
 
 After cloning, start all services via the **orchestrator** repo:
 

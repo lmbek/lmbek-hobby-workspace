@@ -41,10 +41,14 @@ repos:
         version: main
 
     # ── Infrastructure ────────────────────────────────────────────────────────
-    # Terraform / IaC modules for cloud provisioning (networking, databases, etc.).
+    # Terraform / IaC modules for cloud provisioning (networking, databases, etc.)
+    # and server configuration / provisioning (Ansible, Packer, cloud-init).
     infrastructure:
         iac:
             repository: git@github.com:lmbek/lmbek-hobby-infrastructure.git
+            version: main
+        servers:
+            repository: git@github.com:lmbek/lmbek-hobby-servers.git
             version: main
 
 

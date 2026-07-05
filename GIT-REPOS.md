@@ -102,13 +102,18 @@ The folder-per-environment approach is recommended by the ArgoCD project, the Fl
 
 ### Infrastructure: What Exists in the Cloud
 
-Infrastructure-as-Code (IaC) is no longer optional. If your cloud resources are not defined in version-controlled code, you are operating on hope and tribal knowledge. The infrastructure repository contains Terraform modules (or Pulumi, CloudFormation, or CDK) that define the cloud resources your system needs: VPCs, subnets, databases, storage buckets, Kubernetes clusters, DNS records, and everything else.
+Infrastructure-as-Code (IaC) is no longer optional. If your cloud resources are not defined in version-controlled code, you are operating on hope and tribal knowledge. The infrastructure category contains two complementary concerns:
 
-**Why separate from application repos?** Because infrastructure has a fundamentally different lifecycle. Application code changes daily. Infrastructure changes weekly or monthly. The people who modify Terraform modules (platform engineers, SREs) are often different from the people who write application code (product engineers). The review process is different — infrastructure changes require careful planning, blast radius analysis, and often a change management process.
+1. **IaC modules** — Terraform (or Pulumi, CloudFormation, CDK) that define the cloud resources your system needs: VPCs, subnets, databases, storage buckets, Kubernetes clusters, DNS records, and everything else.
+2. **Server provisioning** — Ansible playbooks, Packer templates, cloud-init scripts, and any other configuration that turns a bare VM or container host into a ready-to-use server. This includes OS hardening, package installation, user management, firewall rules, and runtime setup.
+
+These two concerns live in separate repos within the same category because they target different layers: IaC provisions the resources ("create a VM"), while server provisioning configures them ("install Docker, harden SSH, mount volumes"). They share an owner (the infrastructure/SRE team) and a review process, but they change independently.
+
+**Why separate from application repos?** Because infrastructure has a fundamentally different lifecycle. Application code changes daily. Infrastructure changes weekly or monthly. The people who modify Terraform modules and Ansible playbooks (platform engineers, SREs) are often different from the people who write application code (product engineers). The review process is different — infrastructure changes require careful planning, blast radius analysis, and often a change management process.
 
 If infrastructure code lives in an application repo, it sends the wrong signal. It suggests that infrastructure changes are as routine as application changes. It makes it easy for application developers to accidentally modify infrastructure. It clutters the application repo's history with Terraform state changes and module updates that have nothing to do with the application.
 
-**Why separate from deployment config?** Because infrastructure defines *what exists* (a database cluster, a Kubernetes namespace, a load balancer), while deployment config defines *what runs on it* (which services, with what settings). You provision infrastructure once (or rarely). You deploy applications constantly. These cadences should not be coupled.
+**Why separate from deployment config?** Because infrastructure defines *what exists* (a database cluster, a Kubernetes namespace, a load balancer, a configured server), while deployment config defines *what runs on it* (which services, with what settings). You provision infrastructure once (or rarely). You deploy applications constantly. These cadences should not be coupled.
 
 The infrastructure repo defines the stage. The deployment repo directs the actors. The application repos are the actors themselves.
 
@@ -267,7 +272,7 @@ The question is not "why so many repos?" The question is "why would you force th
 | Applications | Business logic, one repo per service | Features are added or bugs are fixed | Product teams |
 | Orchestrator | Wires services together for local/full-stack runs | Services are added, removed, or re-wired | Platform / DevOps team |
 | Deployment | Per-environment config (dev/staging/prod folders) | Environment settings change, releases are promoted | Release / DevOps team |
-| Infrastructure | Cloud resource provisioning (Terraform, IaC) | Cloud resources are added or modified | SRE / Infrastructure team |
+| Infrastructure | Cloud resource provisioning (Terraform, IaC) and server provisioning (Ansible, Packer) | Cloud resources or server configs are added or modified | SRE / Infrastructure team |
 | Observability | Monitoring, dashboards, alerts, log pipelines | Incidents reveal blind spots, thresholds are tuned | SRE / Observability team |
 | Tools | General-purpose utilities, scripts, and helper tooling | New automation needs arise | Platform / Any team |
 | Docs | Architecture docs, API contracts, manual runbooks | Decisions are made, procedures change | Any team |
