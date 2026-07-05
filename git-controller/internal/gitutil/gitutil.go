@@ -182,6 +182,32 @@ func Scaffold(targetPath, repo string) error {
 	return nil
 }
 
+// HasOutgoingCommits returns true if the current branch has commits that have
+// not been pushed to the remote yet, or if there is no upstream configured.
+func HasOutgoingCommits(repoDir string) bool {
+	// If there are no commits at all, there's nothing to push unless we'd
+	// create an initial commit (handled by Push itself).
+	if !hasCommits(repoDir) {
+		return true
+	}
+	// If no upstream is configured, we need to push to set one up.
+	if !hasUpstream(repoDir) {
+		return true
+	}
+	// Count commits ahead of upstream.
+	var out strings.Builder
+	cmd := execCommand("git", "rev-list", "--count", "@{u}..HEAD")
+	cmd.Dir = repoDir
+	cmd.Env = gitEnv()
+	cmd.Stdout = &out
+	cmd.Stderr = nil
+	if err := cmd.Run(); err != nil {
+		// On error, assume there might be something to push.
+		return true
+	}
+	return strings.TrimSpace(out.String()) != "0"
+}
+
 // IsCloned returns true if the given path contains a .git directory.
 func IsCloned(targetPath string) bool {
 	gitDir := filepath.Join(targetPath, ".git")

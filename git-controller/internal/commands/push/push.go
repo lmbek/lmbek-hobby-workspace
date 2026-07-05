@@ -47,6 +47,11 @@ func Run() error {
 				continue
 			}
 
+			if !gitutil.HasOutgoingCommits(targetPath) {
+				ui.Info("✓ %s (nothing to push)", displayName)
+				continue
+			}
+
 			ui.Info("→ Pushing %s", displayName)
 			if err := gitutil.Push(targetPath); err != nil {
 				ui.Error("Failed to push %s: %v", displayName, err)
