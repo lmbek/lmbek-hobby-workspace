@@ -66,15 +66,15 @@ The most important boundary in the entire structure is the one between services.
 
 ---
 
-### Orchestrator: Wiring Services Together
+### Orchestrators: Wiring Services Together
 
-If each service is an independent unit, something needs to define how they connect. That is the orchestrator's job.
+If each service is an independent unit, something needs to define how they connect. That is the orchestrators' job.
 
-The orchestrator repository contains Docker Compose files (or Kubernetes manifests, or Helm charts) that pull pre-built images and wire them together with networking, ports, volumes, and dependency ordering. It is the answer to the question every developer asks on their first day: "How do I run the whole thing locally?"
+The orchestrators repository contains per-grouping Docker Compose files (with local, stage, and prod variants) that pull pre-built images and wire them together with networking, ports, volumes, and dependency ordering. It is the answer to the question every developer asks on their first day: "How do I run the whole thing locally?"
 
 **Why a separate repo?** Because the service topology is not owned by any single service. It is a cross-cutting concern. If you put the docker-compose file in one of the application repos, you create an asymmetry — one service becomes "special" because it contains the orchestration config. Changes to the topology require commits to that service's repo, polluting its history with unrelated changes.
 
-**Why not build from source?** The orchestrator references pre-built images, not source code. This is a critical distinction. If the orchestrator builds services from source, it needs access to every service's repository, and a change to any service's code triggers a rebuild of the entire stack. By referencing images, the orchestrator is decoupled from the build process. It only cares about which version of each service to run, not how they are built.
+**Why not build from source?** The orchestrators reference pre-built images, not source code (except in local development where building from source is convenient). This is a critical distinction. If the orchestrators build services from source in staging/production, they need access to every service's repository, and a change to any service's code triggers a rebuild of the entire stack. By referencing images, the orchestrators are decoupled from the build process. They only care about which version of each service to run, not how they are built.
 
 This separation also mirrors production. In production, you never build from source — you deploy pre-built, tested, versioned images. The orchestrator should work the same way in development, so that the local environment is as close to production as possible. The only difference is that developers might use `:latest` or `:dev` tags locally, while production uses pinned versions.
 
@@ -96,7 +96,7 @@ The deployment repository is the answer. It contains a folder for each environme
 
 The folder-per-environment approach is recommended by the ArgoCD project, the Flux project, Codefresh, and virtually every GitOps practitioner who has tried both approaches. It is the industry consensus.
 
-**Why separate from the orchestrator?** Because the orchestrator defines *what* runs (which services, how they connect), while the deployment repo defines *how* it runs in each environment (how many replicas, which database, what resource limits). These are different concerns with different change cadences. The orchestrator changes when you add or remove a service. The deployment config changes when you tune performance, rotate secrets, or promote a release.
+**Why separate from the orchestrators?** Because the orchestrators define *what* runs (which services, how they connect), while the deployment repo defines *how* it runs in each environment (how many replicas, which database, what resource limits). These are different concerns with different change cadences. The orchestrators change when you add or remove a service. The deployment config changes when you tune performance, rotate secrets, or promote a release.
 
 ---
 
@@ -159,7 +159,7 @@ Code is not documentation. Comments explain *how*; documentation explains *why*.
 
 The Single Responsibility Principle states that a module should have one, and only one, reason to change. This principle applies to repositories just as it applies to classes and functions.
 
-An application repo changes when business logic changes. The orchestrator changes when service topology changes. The deployment repo changes when environment configuration changes. The infrastructure repo changes when cloud resources change. Each repository has one reason to change, one type of owner, and one cadence of evolution.
+An application repo changes when business logic changes. The orchestrators change when service topology changes. The deployment repo changes when environment configuration changes. The infrastructure repo changes when cloud resources change. Each repository has one reason to change, one type of owner, and one cadence of evolution.
 
 When a repository has multiple reasons to change, it becomes a coordination bottleneck. Two teams need to merge to the same repo. Two CI pipelines compete for the same branch. Two types of changes — one urgent, one routine — are forced through the same review process. Single responsibility at the repository level prevents this.
 
@@ -172,7 +172,7 @@ The repository structure mirrors the team structure of an enterprise:
 - **Product teams** own application repos.
 - **A platform team** owns the tools repo and the workspace controller.
 - **An SRE or infrastructure team** owns the infrastructure and observability repos.
-- **A DevOps or release team** owns the orchestrator and deployment repos.
+- **A DevOps or release team** owns the orchestrators and deployment repos.
 - **Everyone** contributes to docs.
 
 When repository boundaries align with team boundaries, ownership is clear, communication overhead is minimised, and each team can move at its own pace. When they do not align — when two teams share a repo, or one team's code is scattered across five repos — friction is constant.
@@ -181,7 +181,7 @@ When repository boundaries align with team boundaries, ownership is clear, commu
 
 Coupling is the degree to which one component depends on another. In a well-designed system, coupling is minimised — components interact through well-defined interfaces and can be changed independently.
 
-The repository structure enforces low coupling at the highest level. Application repos do not reference each other. The orchestrator references images, not source code. The deployment repo references configuration values, not application logic. The infrastructure repo provisions resources without knowing which applications will use them.
+The repository structure enforces low coupling at the highest level. Application repos do not reference each other. The orchestrators reference images, not source code. The deployment repo references configuration values, not application logic. The infrastructure repo provisions resources without knowing which applications will use them.
 
 This is not accidental. Every boundary in the structure is drawn at a point where coupling should be minimal. If you find yourself needing to change two repos simultaneously for a single feature, it is a signal that either the feature crosses a legitimate boundary (and the coordination cost is acceptable) or the boundary is drawn in the wrong place (and the structure should be reconsidered).
 
@@ -235,13 +235,13 @@ The number of categories does not equal the number of repos. The applications ca
 
 ### "Cross-cutting changes are harder."
 
-Yes. If you need to change an API contract, update the service that implements it, modify the orchestrator to add a new dependency, and update the deployment config for the new service — that is four repos. In a monorepo, it would be one commit.
+Yes. If you need to change an API contract, update the service that implements it, modify the orchestrators to add a new dependency, and update the deployment config for the new service — that is four repos. In a monorepo, it would be one commit.
 
 But this friction is intentional. Cross-cutting changes are high-risk changes. They affect multiple teams, multiple deployment pipelines, and multiple environments. Forcing them through separate pull requests in separate repos ensures that each change is reviewed by the appropriate team, tested in isolation, and deployed independently. The alternative — a single commit that changes everything at once — is convenient but dangerous.
 
 ### "We are a small team. We do not need this."
 
-You might not need all of these categories today. But the structure scales gracefully. Start with applications, orchestrator, and infrastructure. Add deployment when you have multiple environments. Add observability when you have dashboards to manage. Add docs when you have architecture decisions to record. The categories are independent — you can adopt them incrementally.
+You might not need all of these categories today. But the structure scales gracefully. Start with applications, orchestrators, and infrastructure. Add deployment when you have multiple environments. Add observability when you have dashboards to manage. Add docs when you have architecture decisions to record. The categories are independent — you can adopt them incrementally.
 
 What you should not do is start with a monorepo and try to split it later. Repository splits are painful, disruptive, and often incomplete. Starting with the right structure — even if some categories are empty — is far cheaper than restructuring later.
 
@@ -270,7 +270,7 @@ The question is not "why so many repos?" The question is "why would you force th
 | Category | Purpose | Changes When | Typical Owner |
 |---|---|---|---|
 | Applications | Business logic, one repo per service | Features are added or bugs are fixed | Product teams |
-| Orchestrator | Wires services together for local/full-stack runs | Services are added, removed, or re-wired | Platform / DevOps team |
+| Orchestrators | Per-grouping compose files with local/stage/prod variants | Services are added, removed, or re-wired | Platform / DevOps team |
 | Deployment | Per-environment config (dev/staging/prod folders) | Environment settings change, releases are promoted | Release / DevOps team |
 | Infrastructure | Cloud resource provisioning (Terraform, IaC) and server provisioning (Ansible, Packer) | Cloud resources or server configs are added or modified | SRE / Infrastructure team |
 | Observability | Monitoring, dashboards, alerts, log pipelines | Incidents reveal blind spots, thresholds are tuned | SRE / Observability team |

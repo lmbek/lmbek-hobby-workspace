@@ -39,7 +39,7 @@ When you run the CLI, it reads the definition file and ensures every listed repo
 │                                  │                              │
 │                    ┌─────────────┼─────────────┐                │
 │                    ▼             ▼             ▼                │
-│              applications   orchestrator   infrastructure       │
+│              applications   orchestrators  infrastructure       │
 │              ┌──────────┐   ┌──────────┐   ┌──────────┐        │
 │              │ service1  │   │ compose  │   │ terraform│        │
 │              │ service2  │   │ manifests│   │ servers  │        │
@@ -64,7 +64,7 @@ When you run the CLI, it reads the definition file and ensures every listed repo
 **Key principles:**
 
 - **One repo per service** — each microservice has its own repository, Dockerfile, and CI/CD pipeline.
-- **Orchestrator wires services** — uses pre-built images, never builds from source.
+- **Orchestrators wire services** — per-grouping compose files with local/stage/prod variants.
 - **Deployment is environment config** — folder-per-environment (dev/staging/prod) in a single repo.
 - **Observability is separate** — dashboards, alerts, and log pipelines live outside application code.
 - **Everything is YAML-driven** — `system-definition.yaml` is the single source of truth.
@@ -180,7 +180,7 @@ LMBEK-HOBBY-WORKSPACE/
 ├── git-repositories/        All managed repos live here (gitignored)
 │   ├── deployment/          Environment configs and manifests (folders per env)
 │   ├── applications/        Microservices (one repo per service)
-│   ├── orchestrator/        Docker Compose / K8s manifests to run the stack
+│   ├── orchestrators/       Per-grouping Docker Compose files (local/stage/prod)
 │   ├── infrastructure/      Terraform / IaC and server provisioning
 │   ├── observability/       Monitoring, dashboards, alerts, log pipelines
 │   ├── tools/               General-purpose utilities and scripts
@@ -203,16 +203,19 @@ LMBEK-HOBBY-WORKSPACE/
 |------------------|------------------------------------------------------------|-------------------------------------|
 | `deployment`     | Per-environment values, secrets templates, and promotion config (folder-per-env) | `lmbek-hobby-deployment` |
 | `applications`   | Independent microservices, each with its own Dockerfile and CI/CD | `lmbek-hobby-placeholder1-service`  |
-| `orchestrator`   | Central Docker Compose / K8s manifests that wire services using pre-built images | `lmbek-hobby-orchestrator`          |
+| `orchestrators`  | Per-grouping Docker Compose files with local/stage/prod variants | `lmbek-hobby-orchestrators`         |
 | `infrastructure` | Terraform modules for cloud resources and server provisioning (Ansible, Packer, cloud-init) | `lmbek-hobby-infrastructure`, `lmbek-hobby-servers` |
 | `observability`  | Grafana dashboards, Prometheus rules, alert definitions, log pipelines | `lmbek-hobby-observability` |
 | `tools`          | General-purpose utilities, scripts, and helper tooling     | `lmbek-hobby-tools`                 |
 | `docs`           | Architecture Decision Records, API docs, manual runbooks | `lmbek-hobby-docs` |
 
-After cloning, start all services via the **orchestrator** repo:
+After cloning, start all services via the **orchestrators** repo:
 
 ```
-cd git-repositories/orchestrator && docker compose up -d
+cd git-repositories/orchestrators
+docker compose -f docker-compose.proxy.local.yml up -d
+docker compose -f docker-compose.applications.local.yml up -d --build
+docker compose -f docker-compose.docs.local.yml up -d --build
 ```
 
 ### Where Do Compose Files Live?
@@ -220,10 +223,10 @@ cd git-repositories/orchestrator && docker compose up -d
 | Compose file | Location | Purpose |
 |---|---|---|
 | Per-service `docker-compose.yml` | Each application repo | Run that single service in isolation during development (with its own DB, cache, etc.) |
-| Central `docker-compose.yml` | Orchestrator repo | Wire **all** services together using pre-built images — the full-stack local environment |
+| Per-grouping compose files | Orchestrators repo | Wire services together per grouping (proxy, applications, docs) with local/stage/prod variants |
 | Environment overrides | Deployment repo | Per-environment values (dev/staging/prod folders) consumed by CI/CD or GitOps tooling |
 
-Each service repo owns its own `Dockerfile`. The orchestrator references images built from those Dockerfiles — it does **not** build from source.
+Each service repo owns its own `Dockerfile`. The orchestrators repo references images built from those Dockerfiles — local composes build from source, stage/prod use pre-built registry images.
 
 ---
 

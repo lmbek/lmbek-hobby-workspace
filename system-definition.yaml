@@ -4,7 +4,7 @@ system-version: main
 hooks:
     post-clone:
         - echo "Clone complete! To start all services:"
-        - echo "  cd git-repositories/orchestrator && docker compose up -d"
+        - echo "  cd git-repositories/orchestrators && docker compose -f docker-compose.proxy.local.yml up -d"
         - echo "Run 'make status' to see the state of all repositories."
 
 # ── Git Repositories ──────────────────────────────────────────────────────────
@@ -33,11 +33,12 @@ repos:
             version: main
 
     # ── Orchestration ─────────────────────────────────────────────────────────
-    # Central Docker Compose / Kubernetes manifests that wire all services together.
+    # Per-grouping Docker Compose files with local, stage, and prod variants.
     # References pre-built images from each service repo — does NOT build from source.
-    # Use this repo to start, stop, and manage the full application stack locally.
-    orchestrator:
-        repository: git@github.com:lmbek/lmbek-hobby-orchestrator.git
+    # Use this repo to start, stop, and manage the full application stack.
+    # Also contains shared local-only dependencies such as the reverse proxy.
+    orchestrators:
+        repository: git@github.com:lmbek/lmbek-hobby-orchestrators.git
         version: main
 
     # ── Infrastructure ────────────────────────────────────────────────────────
