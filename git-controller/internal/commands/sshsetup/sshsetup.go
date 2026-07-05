@@ -93,6 +93,14 @@ func configureSSHConfig(reader *bufio.Reader) {
 	sshDir := filepath.Join(home, ".ssh")
 	configPath := filepath.Join(sshDir, "config")
 
+	// Ensure .ssh directory exists with correct permissions (important on Linux/WSL)
+	if _, err := os.Stat(sshDir); os.IsNotExist(err) {
+		if err := os.MkdirAll(sshDir, 0700); err != nil {
+			ui.Error("Could not create %s: %v", sshDir, err)
+			return
+		}
+	}
+
 	// 1. Discover keys to help user pick one for the config
 	files, err := os.ReadDir(sshDir)
 	var keys []string
@@ -100,7 +108,7 @@ func configureSSHConfig(reader *bufio.Reader) {
 		for _, file := range files {
 			if !file.IsDir() {
 				name := file.Name()
-				if !strings.HasSuffix(name, ".public") && !strings.HasSuffix(name, ".old") && !strings.HasSuffix(name, ".Identifier") && name != "known_hosts" && name != "config" && name != "authorized_keys" {
+				if !strings.HasSuffix(name, ".public") && !strings.HasSuffix(name, ".pub") && !strings.HasSuffix(name, ".old") && !strings.HasSuffix(name, ".Identifier") && name != "known_hosts" && name != "known_hosts.old" && name != "config" && name != "authorized_keys" {
 					keys = append(keys, filepath.Join(sshDir, name))
 				}
 			}
@@ -144,7 +152,7 @@ func configureSSHConfig(reader *bufio.Reader) {
 		identityFile = fmt.Sprintf("\"%s\"", identityFile)
 	}
 
-	configEntry := fmt.Sprintf("Host github.com\n  HostName github.com\n  User git\n  IdentityFile %s\n", identityFile)
+	configEntry := fmt.Sprintf("Host github.com\n  HostName github.com\n  User git\n  IdentityFile %s\n  AddKeysToAgent yes\n  IdentitiesOnly yes\n", identityFile)
 
 	fmt.Printf("\nProposed configuration entry for %s:\n%s", configPath, configEntry)
 	fmt.Print("\nDo you want to apply this to your SSH config? This will consolidate multiple github.com entries. (y/n): ")
@@ -424,7 +432,8 @@ func checkStatus(reader *bufio.Reader) {
 			diagAnswer, _ := reader.ReadString('\n')
 			if strings.ToLower(strings.TrimSpace(diagAnswer)) == "y" {
 				fmt.Println("\n--- SSH Detailed Diagnostic ---")
-				cmd := exec.Command("ssh", "-vT", "git@github.com")
+				sshCmd := sshutil.GetConfiguredSSHCommand()
+				cmd := exec.Command(sshCmd, "-vT", "git@github.com")
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
 				_ = cmd.Run()

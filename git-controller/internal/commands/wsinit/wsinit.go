@@ -23,26 +23,42 @@ repos:
     #         version: main
 `
 
-// Run scaffolds a new workspace in the current directory.
+// workspaceRoot returns the workspace root directory. It uses WORKSPACE_ROOT
+// if set, otherwise falls back to the parent of the current working directory
+// (assuming the binary runs from git-controller/).
+func workspaceRoot() string {
+	if root := os.Getenv("WORKSPACE_ROOT"); root != "" {
+		return root
+	}
+	if cwd, err := os.Getwd(); err == nil {
+		return filepath.Dir(cwd)
+	}
+	return "."
+}
+
+// Run scaffolds a new workspace by creating the system-definition.yaml in the
+// workspace root directory. It will not overwrite an existing definition file.
 func Run() error {
 	ui.Header("Initialise Workspace")
 
-	defPath := "system-definition.yaml"
+	root := workspaceRoot()
+	defPath := filepath.Join(root, "system-definition.yaml")
+
 	if _, err := os.Stat(defPath); err == nil {
-		return fmt.Errorf("%s already exists — this directory is already a workspace", defPath)
+		ui.Info("system-definition.yaml already exists at %s — skipping creation", defPath)
+	} else {
+		if err := os.WriteFile(defPath, []byte(defaultDefinition), 0644); err != nil {
+			return fmt.Errorf("failed to create %s: %w", defPath, err)
+		}
+		ui.Success("Created %s", defPath)
 	}
 
-	if err := os.WriteFile(defPath, []byte(defaultDefinition), 0644); err != nil {
-		return fmt.Errorf("failed to create %s: %w", defPath, err)
-	}
-	ui.Success("Created %s", defPath)
-
-	gitReposDir := filepath.Join(".", "git-repositories")
+	gitReposDir := filepath.Join(root, "git-repositories")
 	if err := os.MkdirAll(gitReposDir, 0755); err != nil {
 		return fmt.Errorf("failed to create git-repositories/: %w", err)
 	}
 
-	gitignorePath := ".gitignore"
+	gitignorePath := filepath.Join(root, ".gitignore")
 	if _, err := os.Stat(gitignorePath); os.IsNotExist(err) {
 		content := "git-repositories/\n"
 		if err := os.WriteFile(gitignorePath, []byte(content), 0644); err != nil {
@@ -51,9 +67,14 @@ func Run() error {
 		ui.Success("Created .gitignore")
 	}
 
-	makefile := "Makefile"
+	makefile := filepath.Join(root, "Makefile")
 	if _, err := os.Stat(makefile); os.IsNotExist(err) {
-		content := `.PHONY: clone pull push status validate doctor ssh version
+		content := `.PHONY: init clone pull push scaffold checkout status validate doctor ssh
+
+export WORKSPACE_ROOT ?= $(abspath .)
+
+init:
+	cd git-controller && go run . init
 
 clone:
 	cd git-controller && go run . clone
@@ -63,6 +84,12 @@ pull:
 
 push:
 	cd git-controller && go run . push
+
+scaffold:
+	cd git-controller && go run . scaffold
+
+checkout:
+	cd git-controller && go run . checkout
 
 status:
 	cd git-controller && go run . status
@@ -75,9 +102,6 @@ doctor:
 
 ssh:
 	cd git-controller && go run . ssh
-
-version:
-	cd git-controller && go run . version
 `
 		if err := os.WriteFile(makefile, []byte(content), 0644); err != nil {
 			return fmt.Errorf("failed to create Makefile: %w", err)
@@ -85,6 +109,6 @@ version:
 		ui.Success("Created Makefile")
 	}
 
-	ui.Success("Workspace initialised! Edit %s to add your repositories, then run 'make clone'.", defPath)
+	ui.Success("Workspace initialised! Edit system-definition.yaml to add your repositories, then run 'make clone'.")
 	return nil
 }

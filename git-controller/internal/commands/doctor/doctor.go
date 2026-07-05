@@ -23,9 +23,9 @@ func Run() error {
 
 func runCheck() bool {
 	ui.Header("Workspace Doctor")
-	slog.Debug("Environment Info", "os", runtime.GOOS, "arch", runtime.GOARCH)
+	ui.Info("OS: %s/%s", runtime.GOOS, runtime.GOARCH)
 	if isWSL() {
-		slog.Debug("Environment Info", "wsl", true)
+		ui.Info("Environment: WSL (Windows Subsystem for Linux)")
 	}
 
 	checkGit()
@@ -133,8 +133,11 @@ func checkSSH() bool {
 		if runtime.GOOS == "windows" {
 			ui.Info("Hint: On Windows, the 'OpenSSH Authentication Agent' service is often disabled by default.")
 			ui.Info("Fix (Admin PowerShell): Set-Service -Name ssh-agent -StartupType Manual; Start-Service ssh-agent")
+		} else if isWSL() {
+			ui.Info("Hint: In WSL, the ssh-agent does not persist across sessions by default.")
+			ui.Info("Fix: Add 'eval \"$(ssh-agent -s)\"' to your ~/.bashrc or ~/.zshrc")
 		} else {
-			ui.Info("Hint: On Linux/WSL, ensure ssh-agent is running. Start it with: eval \"$(ssh-agent -s)\"")
+			ui.Info("Hint: On Linux, ensure ssh-agent is running. Start it with: eval \"$(ssh-agent -s)\"")
 		}
 	} else {
 		ui.Success("ssh-agent is responsive")
