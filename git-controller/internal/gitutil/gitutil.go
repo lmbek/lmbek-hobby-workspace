@@ -280,6 +280,9 @@ func EnsureDir(path string) {
 }
 
 // gitEnv returns the current environment with GIT_SSH_COMMAND configured.
+// On non-Windows systems it also injects SSH_AUTH_SOCK / SSH_AGENT_PID from
+// ~/.ssh/agent-env when they are missing, so that git can reach the ssh-agent
+// even when invoked from a non-interactive, non-login shell (e.g. via WSL).
 func gitEnv() []string {
 	sshCmd := sshutil.GetConfiguredSSHCommand()
 
@@ -298,6 +301,13 @@ func gitEnv() []string {
 
 	env := os.Environ()
 	env = append(env, "GIT_SSH_COMMAND="+sshCmd)
+
+	// On Linux/WSL, ensure the ssh-agent socket is available even when the
+	// process was not started from an interactive shell.
+	if runtime.GOOS != "windows" {
+		env = injectSSHAgent(env)
+	}
+
 	var filtered []string
 	for _, e := range env {
 		upper := strings.ToUpper(e)
@@ -306,4 +316,53 @@ func gitEnv() []string {
 		}
 	}
 	return filtered
+}
+
+// injectSSHAgent reads ~/.ssh/agent-env and injects SSH_AUTH_SOCK and
+// SSH_AGENT_PID into the environment slice when they are not already present.
+func injectSSHAgent(env []string) []string {
+	hasSock := false
+	hasPID := false
+	for _, e := range env {
+		upper := strings.ToUpper(e)
+		if strings.HasPrefix(upper, "SSH_AUTH_SOCK=") {
+			hasSock = true
+		}
+		if strings.HasPrefix(upper, "SSH_AGENT_PID=") {
+			hasPID = true
+		}
+	}
+	if hasSock && hasPID {
+		return env
+	}
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return env
+	}
+	agentEnvPath := filepath.Join(home, ".ssh", "agent-env")
+	data, err := os.ReadFile(agentEnvPath)
+	if err != nil {
+		return env
+	}
+
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "#") || line == "" {
+			continue
+		}
+		// Lines look like: SSH_AUTH_SOCK=/tmp/ssh-xxx/agent.123; export SSH_AUTH_SOCK;
+		if idx := strings.Index(line, ";"); idx > 0 {
+			line = line[:idx]
+		}
+		if !hasSock && strings.HasPrefix(line, "SSH_AUTH_SOCK=") {
+			env = append(env, line)
+			hasSock = true
+		}
+		if !hasPID && strings.HasPrefix(line, "SSH_AGENT_PID=") {
+			env = append(env, line)
+			hasPID = true
+		}
+	}
+	return env
 }
