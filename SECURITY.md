@@ -1,13 +1,5 @@
 # Security Policy
 
-## Supported Versions
-
-| Version | Supported          |
-|---------|--------------------|
-| 4.x     | ✅ Active support  |
-| 3.x     | ⚠️ Security fixes only |
-| < 3.0   | ❌ End of life     |
-
 ## Reporting a Vulnerability
 
 If you discover a security vulnerability, please report it responsibly:

@@ -20,8 +20,6 @@ import (
 	"workspace/git-controller/internal/ui"
 )
 
-const version = "5.0.0"
-
 func main() {
 	setupLogger()
 	system.CLIName = filepath.Base(os.Args[0])
@@ -52,11 +50,6 @@ func main() {
 		return
 	}
 
-	if command == "version" || command == "v" {
-		showVersion()
-		return
-	}
-
 	if run, ok := commands[command]; ok && run != nil {
 		if err := run(); err != nil {
 			ui.Error("%v", err)
@@ -83,7 +76,7 @@ func setupLogger() {
 }
 
 func showHelp() {
-	fmt.Printf("\n%sWorkspace Controller v%s%s\n", ui.ColorBold, version, ui.ColorReset)
+	fmt.Printf("\n%sWorkspace Controller%s\n", ui.ColorBold, ui.ColorReset)
 	fmt.Println(strings.Repeat("=", 25))
 	fmt.Printf("Usage: %s [command]\n", ui.ColorBold+system.CLIName+ui.ColorReset)
 
@@ -99,10 +92,5 @@ func showHelp() {
 	fmt.Println("\nSetup Commands:")
 	fmt.Println("  doctor     Diagnose environment (Git, Go, SSH, Docker)")
 	fmt.Println("  ssh-setup  Interactive SSH key management (alias: ssh)")
-	fmt.Println("  version    Show version (alias: v)")
 	fmt.Println("  help       Show this help")
-}
-
-func showVersion() {
-	fmt.Printf("Workspace Controller version %s\n", version)
 }

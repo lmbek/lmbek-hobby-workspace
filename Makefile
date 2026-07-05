@@ -1,7 +1,7 @@
 # Workspace Controller Makefile
 # Thin wrapper around git-controller commands.
 
-.PHONY: help init clone pull push checkout status validate doctor ssh ssh-setup version v
+.PHONY: help init clone pull push checkout status validate doctor ssh ssh-setup
 
 export WORKSPACE_ROOT ?= $(abspath .)
 
@@ -20,7 +20,6 @@ help:
 	@echo "  Setup:"
 	@echo "  make doctor    - Diagnose environment (Git, Go, SSH, Docker)"
 	@echo "  make ssh       - Interactive SSH setup (alias: ssh-setup)"
-	@echo "  make version   - Show version (alias: v)"
 
 init:
 	cd git-controller && go run . init
@@ -50,8 +49,3 @@ ssh:
 	cd git-controller && go run . ssh
 
 ssh-setup: ssh
-
-version:
-	cd git-controller && go run . version
-
-v: version

@@ -161,7 +161,6 @@ All commands can be run via `make` from the workspace root, or directly with `go
 | `make validate`  | Verify repos match the system definition                 |
 | `make doctor`    | Diagnose environment issues (Git, Go, SSH, Docker)       |
 | `make ssh`       | Interactive SSH key setup wizard                         |
-| `make version`   | Show git-controller version                              |
 
 ---
 
