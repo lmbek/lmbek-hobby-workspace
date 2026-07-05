@@ -3,7 +3,7 @@
 The **Workspace Controller** is a declarative tool designed to manage complex, distributed local development environments. It allows you to define your entire system—services, versions, and infrastructure—in a single configuration file and orchestrate everything with simple commands.
 
 ## Vision
-Move away from brittle bash scripts and manual setup. Use a single source of truth (`system-definition.yaml`) to materialize, validate, and run your local workspace.
+Move away from brittle bash scripts and manual setup. Use a single source of truth (`repos.yaml`) to materialize, validate, and run your local workspace.
 
 ## Key Features
 - **Declarative Definition:** System state is described in YAML.
@@ -28,17 +28,25 @@ For a hands-on experience of all features, follow the [DEMO.md](DEMO.md) guide.
 - [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/)
 
 ### Installation
+**Note:** This project uses SSH for all Git operations. Ensure your SSH keys are configured and added to your GitHub account before proceeding.
+
 Clone this repository and build the binary into the `bin` directory (or run directly with Go):
 ```bash
-git clone <this-repo-url>
-cd workspace-controller
-go build -o bin/workspace-controller.exe main.go
+git clone git@github.com:Lars-Bek/LMBEK-HOBBY-WORKSPACE.git
+cd LMBEK-HOBBY-WORKSPACE
+go build -o bin/workspace-controller.exe ./controller/main.go
 ```
 
 ---
 
 ### Using the Makefile (Recommended)
 You can use the provided `Makefile` for a more convenient experience. It automatically handles the `WORKSPACE_ROOT` environment variable.
+
+#### SSH Setup (First Time Only)
+If you haven't configured SSH for GitHub on this machine:
+```bash
+make ssh-setup   # Follow the interactive prompts to generate/add keys
+```
 
 #### Core Workflow
 ```bash
@@ -53,12 +61,12 @@ make down      # Stop the system
 #### Tooling & Diagnostics
 ```bash
 make doctor    # [D] Diagnose environment issues
-make workspace-controller-test # [T] Run automated tests
-make workspace-controller-coverage # [C] Generate test coverage report (HTML)
-make workspace-controller-help # Show CLI help
-make ssh       # [S] Interactive SSH setup (alias for ssh-setup)
-make ssh-setup # [S] Interactive SSH setup
 ```
+
+#### Development & Testing
+Commands for development, testing, and service management are located within their respective directories:
+- **Controller Logic:** `cd controller && make help`
+- **Services:** Each service in `applications/` has its own `Makefile` (e.g., `make test`, `make build`).
 
 ### Manual Usage & Commands
 If you prefer running commands manually, ensure you set the `WORKSPACE_ROOT` environment variable.
@@ -68,35 +76,35 @@ If you prefer running commands manually, ensure you set the `WORKSPACE_ROOT` env
 ### 1. `init`
 Bootstraps the workspace by performing pre-flight checks (SSH connectivity, agent status) and creating an execution plan.
 ```bash
-$env:WORKSPACE_ROOT=".."
+$env:WORKSPACE_ROOT="."
 <cli> init
 ```
 
 ### 2. `sync`
 Materializes the system by cloning or updating all repositories defined in the system definition. It also runs post-sync hooks.
 ```bash
-$env:WORKSPACE_ROOT=".."
+$env:WORKSPACE_ROOT="."
 <cli> sync
 ```
 
 ### 3. `validate`
 Verifies that your local workspace is consistent. It checks for missing directories, branch matches (defaulting to `main`), and service health (HTTP/TCP).
 ```bash
-$env:WORKSPACE_ROOT=".."
+$env:WORKSPACE_ROOT="."
 <cli> validate
 ```
 
 ### 4. `up`
 Starts the entire environment (services and infrastructure) using Docker Compose.
 ```bash
-$env:WORKSPACE_ROOT=".."
+$env:WORKSPACE_ROOT="."
 <cli> up
 ```
 
 ### 5. `down`
 Stops and removes all containers associated with the workspace.
 ```bash
-$env:WORKSPACE_ROOT=".."
+$env:WORKSPACE_ROOT="."
 <cli> down
 ```
 
@@ -123,23 +131,35 @@ Shows the available commands and usage information.
 ---
 
 ## Structure
-The project is organized to keep everything related to the workspace together:
-- `workspace/`: (Root) The main container for your local environment.
-  - `services/`: Contains source code for services (e.g., `authentication-service/`, `user-service/`).
-  - `infrastructure/`: Configuration for shared services (Docker Compose).
-  - `tools/`: Additional development tools and utilities.
-- `workspace-controller/`: (Root) The tool itself that orchestrates everything.
+The project is organized to keep the root clean while having all managed components readily available:
+- `applications/`: Customer/business services (e.g., Auth, User).
+- `proxy/`: Central workspace dashboard and reverse proxy.
+- `orchestrator/`: Dedicated orchestration repositories (e.g., Docker Compose, Kubernetes).
+- `infrastructure/`: Cloud resources, servers, and networking.
+- `platform/`: Developer tooling and observability.
+- `tools/`: Local helper scripts and CLIs.
+- `docs/`: Architecture and onboarding documentation.
+- `repos.yaml`: The manifest defining all managed repositories.
+- `controller/`: The Go source code for the **Workspace Controller** orchestrator.
+- `Makefile`: Root-level entry point for managing the entire workspace.
+- `README.md`: Project documentation.
 
-The system is defined in `system/system-definition.yaml`. You can specify:
-- **Services:** Git repository URLs, versions (tags/branches), and environment variables.
-- **Infrastructure:** A single version-controlled infrastructure repository.
-- **Tools:** A single version-controlled development tools repository.
+The system is defined in `repos.yaml`. You can specify:
+- **Applications:** Git repository URLs, versions (tags/branches), and environment variables.
+- **Infrastructure:** Multiple version-controlled infrastructure repositories.
+- **Platform:** Developer tooling, deployment systems, and observability repositories.
+- **Tools:** Local helper scripts and CLI repositories.
+- **Docs:** Architecture and onboarding documentation repositories.
 
 ### Environment Variables
-The controller supports environment variables to override default paths:
-- `SERVICES_DIR`: Directory for services (default: `../workspace/services`)
-- `INFRA_DIR`: Directory for infrastructure (default: `../workspace/infrastructure`)
-- `TOOLS_DIR`: Directory for tools (default: `../workspace/tools`)
+The controller supports environment variables to override default paths and control behavior:
+- `DEBUG`: Set to `true` to enable verbose debug logging (default: `false`).
+- `WORKSPACE_ROOT`: The absolute path to the workspace root.
+- `SERVICES_DIR`: Directory for applications (default: `./applications`).
+- `INFRA_DIR`: Directory for infrastructure (default: `./infrastructure`).
+- `PLATFORM_DIR`: Directory for platform (default: `./platform`).
+- `TOOLS_DIR`: Directory for tools (default: `./tools`).
+- `DOCS_DIR`: Directory for documentation (default: `./docs`).
 
 ---
 

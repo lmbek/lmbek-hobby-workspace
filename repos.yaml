@@ -1,0 +1,39 @@
+# System Definition for Workspace Controller
+system-version: main
+
+hooks:
+    post-sync:
+        - echo "Sync complete! You can now run 'up' to start the system."
+    post-up:
+        - echo "System is up! Access the dashboard at http://localhost"
+
+proxy:
+    repository: ""
+    version: main
+
+applications:
+    placeholder1-service:
+        repository: git@github.com:lmbek/lmbek-hobby-placeholder1-service.git
+        version: main
+    placeholder2-service:
+        repository: git@github.com:lmbek/lmbek-hobby-placeholder2-service.git
+        version: main
+
+orchestrator:
+    repository: git@github.com:lmbek/lmbek-hobby-infrastructure.git
+    version: main
+
+infrastructure: {}
+
+platform:
+    workspace-controller:
+        repository: git@github.com:lmbek/lmbek-hobby-workspace-controller.git
+        version: main
+
+tools:
+    repository: git@github.com:lmbek/lmbek-hobby-tools.git
+    version: main
+
+docs:
+    repository: git@github.com:lmbek/lmbek-hobby-workspace-controller.git
+    version: main

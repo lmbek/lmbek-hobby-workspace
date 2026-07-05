@@ -1,4 +1,8 @@
-.idea
-bin
-coverage.html
-coverage.out
+.idea/
+bin/
+*.exe
+*.test
+*.out
+*.html
+vendor/
+.DS_Store
