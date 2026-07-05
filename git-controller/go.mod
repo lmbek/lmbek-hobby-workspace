@@ -1,4 +1,4 @@
-module controller
+module workspace
 
 go 1.26
 

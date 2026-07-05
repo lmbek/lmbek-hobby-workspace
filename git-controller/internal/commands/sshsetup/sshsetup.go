@@ -2,8 +2,6 @@ package sshsetup
 
 import (
 	"bufio"
-	"controller/internal/sshutil"
-	"controller/internal/ui"
 	"fmt"
 	"log/slog"
 	"os"
@@ -11,6 +9,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"workspace/git-controller/internal/sshutil"
+	"workspace/git-controller/internal/ui"
 )
 
 func RunError() error {

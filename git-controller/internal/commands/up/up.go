@@ -1,18 +1,18 @@
 package up
 
 import (
-	"controller/internal/system"
-	"controller/internal/ui"
 	"fmt"
 	"os"
 	"os/exec"
 	"runtime"
+	"workspace/git-controller/internal/system"
+	"workspace/git-controller/internal/ui"
 )
 
 func Run() error {
 	ui.Header("Start System")
 
-	sys, err := system.LoadDefinition("repos.yaml")
+	sys, err := system.LoadDefinition("system-definition.yaml")
 	if err != nil {
 		return fmt.Errorf("could not read system definition: %w", err)
 	}

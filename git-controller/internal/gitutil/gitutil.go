@@ -1,8 +1,6 @@
 package gitutil
 
 import (
-	"controller/internal/sshutil"
-	"controller/internal/ui"
 	"fmt"
 	"log/slog"
 	"os"
@@ -10,6 +8,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"workspace/git-controller/internal/sshutil"
+	"workspace/git-controller/internal/ui"
 )
 
 func ProcessGitComponent(baseDir, name, repo string) error {
@@ -21,7 +21,7 @@ func ProcessGitComponent(baseDir, name, repo string) error {
 
 	// Enforce SSH for remote repositories
 	if strings.HasPrefix(repo, "http://") || strings.HasPrefix(repo, "https://") {
-		return fmt.Errorf("insecure repository URL detected: %s. This project strictly enforces SSH for Git operations. Please update your repos.yaml to use SSH URLs (e.g., git@github.com:...) or local paths", repo)
+		return fmt.Errorf("insecure repository URL detected: %s. This project strictly enforces SSH for Git operations. Please update your git-repositories/system-definition.yaml to use SSH URLs (e.g., git@github.com:...) or local paths", repo)
 	}
 
 	gitDir := filepath.Join(targetPath, ".git")

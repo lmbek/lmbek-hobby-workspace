@@ -1,8 +1,6 @@
 package validate
 
 import (
-	"controller/internal/system"
-	"controller/internal/ui"
 	"fmt"
 	"log/slog"
 	"net"
@@ -12,19 +10,19 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"workspace/git-controller/internal/system"
+	"workspace/git-controller/internal/ui"
 )
 
 func Run() error {
 	ui.Header("System Validation")
 
-	sys, err := system.LoadDefinition("repos.yaml")
+	sys, err := system.LoadDefinition("system-definition.yaml")
 	if err != nil {
 		return fmt.Errorf("could not read system definition: %w", err)
 	}
 
 	ui.Info("Validating components...")
-
-	hasErrors := false
 
 	categories := map[string]map[string]system.Component{
 		"proxy":          sys.Proxy,
@@ -35,6 +33,18 @@ func Run() error {
 		"tools":          sys.Tools,
 		"docs":           sys.Docs,
 	}
+
+	// Collect all component names for dependency validation
+	allComponentNames := make(map[string]bool)
+	for _, components := range categories {
+		for name := range components {
+			if name != "" {
+				allComponentNames[name] = true
+			}
+		}
+	}
+
+	hasErrors := false
 
 	for catName, components := range categories {
 		catDir := system.GetCategoryDir(catName)
@@ -66,6 +76,14 @@ func Run() error {
 					ui.Info("  Hint: Is the component running? Use '<cli> up' to start it.")
 				} else {
 					ui.Success("[%s] Healthy", displayName)
+				}
+			}
+
+			// Dependency Check
+			for _, dep := range comp.DependsOn {
+				if !allComponentNames[dep] {
+					ui.Error("[%s] Dependency not found: %s", displayName, dep)
+					hasErrors = true
 				}
 			}
 		}

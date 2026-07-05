@@ -1,17 +1,17 @@
 package sync
 
 import (
-	"controller/internal/gitutil"
-	"controller/internal/system"
-	"controller/internal/ui"
 	"fmt"
 	"path/filepath"
+	"workspace/git-controller/internal/gitutil"
+	"workspace/git-controller/internal/system"
+	"workspace/git-controller/internal/ui"
 )
 
 func Run() error {
 	ui.Header("System Synchronization")
 
-	sys, err := system.LoadDefinition("repos.yaml")
+	sys, err := system.LoadDefinition("system-definition.yaml")
 	if err != nil {
 		return fmt.Errorf("error loading system definition: %w", err)
 	}

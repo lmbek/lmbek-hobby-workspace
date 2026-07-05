@@ -1,10 +1,6 @@
 package initcmd
 
 import (
-	"controller/internal/gitutil"
-	"controller/internal/sshutil"
-	"controller/internal/system"
-	"controller/internal/ui"
 	"fmt"
 	"log/slog"
 	"os"
@@ -12,6 +8,10 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"workspace/git-controller/internal/gitutil"
+	"workspace/git-controller/internal/sshutil"
+	"workspace/git-controller/internal/system"
+	"workspace/git-controller/internal/ui"
 )
 
 func Run() error {
@@ -41,7 +41,7 @@ func Run() error {
 
 	// 1. Planning & Analysis
 	ui.Step(1, "Planning & Analysis")
-	sys, err := system.LoadDefinition("repos.yaml")
+	sys, err := system.LoadDefinition("system-definition.yaml")
 	if err != nil {
 		return fmt.Errorf("error loading system definition: %w", err)
 	}

@@ -19,36 +19,36 @@ help:
 
 init:
 	@echo "==> Bootstrapping workspace (init)..."
-	cd controller && go run main.go init
+	cd git-controller && go run main.go init
 
 sync:
 	@echo "==> Synchronizing repositories (sync)..."
-	cd controller && go run main.go sync
+	cd git-controller && go run main.go sync
 
 validate:
 	@echo "==> Validating system consistency (validate)..."
-	cd controller && go run main.go validate
+	cd git-controller && go run main.go validate
 
 up:
 	@echo "==> Starting the system (up)..."
-	cd controller && go run main.go up
+	cd git-controller && go run main.go up
 
 down:
 	@echo "==> Stopping the system (down)..."
-	cd controller && go run main.go down
+	cd git-controller && go run main.go down
 
 doctor:
 	@echo "==> Running environment diagnostics (doctor)..."
-	cd controller && go run main.go doctor
+	cd git-controller && go run main.go doctor
 
 ssh:
 	@echo "==> Running SSH setup tool..."
-	cd controller && go run main.go ssh
+	cd git-controller && go run main.go ssh
 
 ssh-setup: ssh
 
 version:
 	@echo "==> Workspace Controller version:"
-	cd controller && go run main.go version
+	cd git-controller && go run main.go version
 
 v: version

@@ -9,9 +9,9 @@ import (
 	"runtime"
 	"strings"
 
-	"controller/internal/sshutil"
-	"controller/internal/system"
-	"controller/internal/ui"
+	"workspace/git-controller/internal/sshutil"
+	"workspace/git-controller/internal/system"
+	"workspace/git-controller/internal/ui"
 )
 
 func Run() bool {
