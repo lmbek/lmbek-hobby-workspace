@@ -11,6 +11,7 @@ A multi-repo workspace that uses a single CLI to manage all your Git repositorie
 - [Available Commands](#available-commands)
 - [Project Structure](#project-structure)
 - [Troubleshooting](#troubleshooting)
+- [Registering Git Repos in Your IDE / Editor](#registering-git-repos-in-your-ide--editor)
 - [Contributing](#contributing)
 - [Security](#security)
 - [Guidelines](#guidelines)
@@ -162,6 +163,7 @@ All commands can be run via `make` from the workspace root, or directly with `go
 | `make clone`     | Clone all repositories (first-time setup)                |
 | `make pull`      | Pull updates across all repositories (clone if missing)  |
 | `make push`      | Push local commits across all repositories               |
+| `make scaffold`  | Initialise `.git` and set remote origin (no clone/fetch needed) |
 | `make checkout`  | Switch all repos to their defined branch                 |
 | `make status`    | Show dashboard overview of all repository states         |
 | `make validate`  | Verify repos match the system definition                 |
@@ -239,6 +241,52 @@ Each service repo owns its own `Dockerfile`. The orchestrator references images 
 
 - **SSH permission errors?**
   Run `make doctor` to see what's wrong, then `make ssh` to fix it.
+
+---
+
+## Registering Git Repos in Your IDE / Editor
+
+After cloning or scaffolding, your IDE only knows about the workspace root's `.git`. To get full Git integration (blame, diff, log, branch switching) for each managed repo, you need to register their `.git` directories.
+
+### JetBrains IDEs (GoLand, IntelliJ IDEA, PhpStorm, WebStorm, Rider, etc.)
+
+1. Open the workspace root folder as a project.
+2. Go to **Settings** → **Version Control** → **Directory Mappings** (or press `Ctrl+Alt+S` and search for "Directory Mappings").
+3. Click the **+** button to add a new mapping.
+4. Set **Directory** to the repo path, e.g. `git-repositories/applications/placeholder1-service`.
+5. Set **VCS** to **Git**.
+6. Repeat for every repo you want to track.
+7. Click **Apply** → **OK**.
+
+All registered repos will now appear in the **Git** tool window (`Alt+9`), and you can commit, push, pull, view log, and switch branches per repo.
+
+> **Tip:** JetBrains IDEs auto-detect `.git` directories in subdirectories and may prompt you to add them. Click **Add roots** when prompted to register them all at once.
+
+### Visual Studio Code
+
+VS Code automatically detects `.git` directories up to a configurable depth. If your repos are not showing up:
+
+1. Open the workspace root folder.
+2. Open **Settings** (`Ctrl+,`) and search for `git.repositoryScanMaxDepth`.
+3. Set it to at least **3** (default is 1), since repos live at `git-repositories/<category>/<repo>/.git`.
+4. Optionally, confirm `git.autoRepositoryDetection` is set to **true** (the default).
+5. Reload the window (`Ctrl+Shift+P` → **Developer: Reload Window**).
+
+All detected repos will appear in the **Source Control** panel (`Ctrl+Shift+G`). You can switch between them using the repository dropdown at the top of the panel.
+
+Alternatively, add repos manually by opening the Command Palette (`Ctrl+Shift+P`) → **Git: Open Repository** and selecting the repo folder.
+
+### Vim / Neovim (with fugitive or similar)
+
+Git plugins like [vim-fugitive](https://github.com/tpope/vim-fugitive) operate on the repo of the currently open file. No special configuration is needed — just open a file inside a managed repo and fugitive will detect its `.git` automatically.
+
+For multi-repo workflows, use `:cd` to switch to the repo directory, or use a session manager / workspace plugin to jump between repos.
+
+### General Advice
+
+- After running `make clone` or `make scaffold`, every repo under `git-repositories/` has its own `.git` directory.
+- Most modern editors detect `.git` directories automatically — you may just need to increase the scan depth.
+- If your editor does not support multi-root Git, open each repo as a separate project/window.
 
 ---
 

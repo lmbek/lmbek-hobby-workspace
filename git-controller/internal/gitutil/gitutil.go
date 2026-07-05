@@ -77,6 +77,24 @@ func InitAndLink(targetPath, repo string) error {
 	return nil
 }
 
+// Scaffold initialises a git repo and sets the remote origin without fetching
+// or requiring access to the remote. Useful for bootstrapping repos you cannot
+// yet clone.
+func Scaffold(targetPath, repo string) error {
+	if err := validateRemoteURL(repo); err != nil {
+		return err
+	}
+	slog.Debug("Scaffolding repository", "path", targetPath, "repo", repo)
+
+	if err := RunGitInDir(targetPath, "init"); err != nil {
+		return EnhanceGitError(err)
+	}
+	if err := RunGitInDir(targetPath, "remote", "add", "origin", repo); err != nil {
+		return EnhanceGitError(err)
+	}
+	return nil
+}
+
 // IsCloned returns true if the given path contains a .git directory.
 func IsCloned(targetPath string) bool {
 	gitDir := filepath.Join(targetPath, ".git")
