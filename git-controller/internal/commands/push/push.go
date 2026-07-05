@@ -20,6 +20,26 @@ func Run() error {
 
 	hasErrors := false
 
+	// Push the workspace repository itself.
+	wsRoot := workspace.Root
+	if wsRoot == "" {
+		wsRoot = "."
+	}
+	if abs, err := filepath.Abs(wsRoot); err == nil {
+		wsRoot = abs
+	}
+	if gitutil.IsCloned(wsRoot) {
+		if !gitutil.HasOutgoingCommits(wsRoot) {
+			ui.Info("✓ workspace (nothing to push)")
+		} else {
+			ui.Info("→ Pushing workspace")
+			if err := gitutil.Push(wsRoot); err != nil {
+				ui.Error("Failed to push workspace: %v", err)
+				hasErrors = true
+			}
+		}
+	}
+
 	for catName, repos := range sys.Repos {
 		if len(repos) == 0 {
 			continue
