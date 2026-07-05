@@ -23,13 +23,13 @@ applications:
 	}
 
 	// Test loading
-	sys, err := LoadDefinition(configPath)
+	sys, workspace, err := LoadDefinition(configPath)
 	if err != nil {
 		t.Errorf("expected no error, got %v", err)
 	}
 
-	if sys == nil {
-		t.Fatal("expected system definition, got nil")
+	if sys == nil || workspace == nil {
+		t.Fatal("expected system definition and workspace, got nil")
 	}
 
 	if sys.SystemVersion != "1.0.0" {
@@ -59,7 +59,7 @@ applications:
 		t.Fatalf("failed to write temp file: %v", err)
 	}
 
-	sys, err := LoadDefinition(configPath)
+	sys, _, err := LoadDefinition(configPath)
 	if err != nil {
 		t.Errorf("expected no error, got %v", err)
 	}

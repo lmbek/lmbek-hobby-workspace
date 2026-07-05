@@ -41,7 +41,7 @@ func Run() error {
 
 	// 1. Planning & Analysis
 	ui.Step(1, "Planning & Analysis")
-	sys, err := system.LoadDefinition("system-definition.yaml")
+	sys, _, err := system.LoadDefinition("system-definition.yaml")
 	if err != nil {
 		return fmt.Errorf("error loading system definition: %w", err)
 	}

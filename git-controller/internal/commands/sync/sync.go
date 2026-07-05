@@ -11,7 +11,7 @@ import (
 func Run() error {
 	ui.Header("System Synchronization")
 
-	sys, err := system.LoadDefinition("system-definition.yaml")
+	sys, workspace, err := system.LoadDefinition("system-definition.yaml")
 	if err != nil {
 		return fmt.Errorf("error loading system definition: %w", err)
 	}
@@ -37,7 +37,7 @@ func Run() error {
 		}
 
 		ui.Step(2, fmt.Sprintf("Synchronizing %s", cat.name))
-		catDir := system.GetCategoryDir(cat.name)
+		catDir := workspace.GetCategoryDir(cat.name)
 
 		if abs, err := filepath.Abs(catDir); err == nil {
 			catDir = abs

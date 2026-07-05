@@ -14,7 +14,14 @@ import (
 	"workspace/git-controller/internal/ui"
 )
 
-func Run() bool {
+func Run() error {
+	if runCheck() {
+		PrintSSHSetupInstructions()
+	}
+	return nil
+}
+
+func runCheck() bool {
 	ui.Header("Workspace Doctor")
 	slog.Debug("Environment Info", "os", runtime.GOOS, "arch", runtime.GOARCH)
 	if isWSL() {
@@ -39,23 +46,17 @@ func Run() bool {
 	return sshIssues
 }
 
+// isWSL returns true if the current environment appears to be Windows Subsystem for Linux.
+// It checks for the presence of "microsoft" in /proc/version on linux systems.
 func isWSL() bool {
 	if runtime.GOOS != "linux" {
 		return false
 	}
-	// WSL typically has "microsoft" in /proc/version
 	data, err := os.ReadFile("/proc/version")
 	if err != nil {
 		return false
 	}
 	return strings.Contains(strings.ToLower(string(data)), "microsoft")
-}
-
-func RunFullError() error {
-	if Run() {
-		PrintSSHSetupInstructions()
-	}
-	return nil
 }
 
 func checkGit() {

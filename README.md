@@ -48,5 +48,7 @@ The project is organized to keep the root clean:
 
 ---
 
-## Documentation
-For more detailed information, see the repository wiki or documentation in the source code.
+## Documentation & Policies
+- Start with the MASTER guidelines: [GUIDELINES.md](./GUIDELINES.md)
+- Shared policy files at the workspace root — [AI_AGENTS.md](./AI_AGENTS.md), [AGENTS.md](./AGENTS.md), [CONTRIBUTING.md](./CONTRIBUTING.md), [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md), [SECURITY.md](./SECURITY.md) — all defer to the MASTER guidelines first, then to any application/project-specific docs.
+- Sub-projects may include their own README and guidelines; always apply them after the MASTER rules.

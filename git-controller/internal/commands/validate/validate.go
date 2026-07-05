@@ -17,7 +17,7 @@ import (
 func Run() error {
 	ui.Header("System Validation")
 
-	sys, err := system.LoadDefinition("system-definition.yaml")
+	sys, workspace, err := system.LoadDefinition("system-definition.yaml")
 	if err != nil {
 		return fmt.Errorf("could not read system definition: %w", err)
 	}
@@ -47,7 +47,7 @@ func Run() error {
 	hasErrors := false
 
 	for catName, components := range categories {
-		catDir := system.GetCategoryDir(catName)
+		catDir := workspace.GetCategoryDir(catName)
 
 		for name, comp := range components {
 			slog.Debug("Checking component", "category", catName, "name", name)

@@ -35,9 +35,9 @@ func main() {
 		"validate":  validate.Run,
 		"up":        up.Run,
 		"down":      down.Run,
-		"doctor":    doctor.RunFullError,
-		"ssh-setup": sshsetup.RunError,
-		"ssh":       sshsetup.RunError,
+		"doctor":    doctor.Run,
+		"ssh-setup": sshsetup.Run,
+		"ssh":       sshsetup.Run,
 	}
 
 	if command == "help" {

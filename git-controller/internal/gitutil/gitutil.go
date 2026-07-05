@@ -1,6 +1,7 @@
 package gitutil
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -11,6 +12,9 @@ import (
 	"workspace/git-controller/internal/sshutil"
 	"workspace/git-controller/internal/ui"
 )
+
+// execCommand allows injecting a stub in tests.
+var execCommand = exec.Command
 
 func ProcessGitComponent(baseDir, name, repo string) error {
 	targetPath := filepath.Join(baseDir, name)
@@ -102,12 +106,12 @@ func EnhanceGitError(err error) error {
 		msg.WriteString("\nRun 'make ssh' Option 5 to fix this automatically.")
 	}
 
-	return fmt.Errorf(msg.String())
+	return errors.New(msg.String())
 }
 
 func RunGit(args ...string) error {
 	var stderr strings.Builder
-	cmd := exec.Command("git", args...)
+	cmd := execCommand("git", args...)
 
 	sshCmd := sshutil.GetConfiguredSSHCommand()
 
@@ -147,7 +151,7 @@ func RunGit(args ...string) error {
 
 func RunGitInDir(dir string, args ...string) error {
 	var stderr strings.Builder
-	cmd := exec.Command("git", args...)
+	cmd := execCommand("git", args...)
 	cmd.Dir = dir
 
 	sshCmd := sshutil.GetConfiguredSSHCommand()
@@ -189,9 +193,9 @@ func EnsureDir(path string) {
 func RunHook(command string) error {
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
-		cmd = exec.Command("powershell", "-Command", command)
+		cmd = execCommand("powershell", "-Command", command)
 	} else {
-		cmd = exec.Command("sh", "-c", command)
+		cmd = execCommand("sh", "-c", command)
 	}
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

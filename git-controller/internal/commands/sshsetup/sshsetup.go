@@ -13,7 +13,9 @@ import (
 	"workspace/git-controller/internal/ui"
 )
 
-func RunError() error {
+// Run starts the interactive SSH setup wizard.
+// Signature standardized to `Run() error` like other commands.
+func Run() error {
 	ui.Header("SSH Setup Tool")
 
 	fmt.Println("\nSSH Setup Options:")
@@ -52,10 +54,6 @@ func RunError() error {
 		ui.Error("Invalid option selected")
 	}
 	return nil
-}
-
-func Run() {
-	_ = RunError()
 }
 
 func configureGitSSH(reader *bufio.Reader) {

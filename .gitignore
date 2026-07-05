@@ -6,9 +6,4 @@ bin/
 *.html
 vendor/
 .DS_Store
-**/applications/*/.git/
-**/infrastructure/*/.git/
-**/proxy/*/.git/
-**/tools/*/.git/
-**/platform/*/.git/
-**/docs/*/.git/
+git-repositories/

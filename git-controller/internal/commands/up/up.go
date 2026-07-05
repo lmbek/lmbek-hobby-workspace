@@ -12,12 +12,12 @@ import (
 func Run() error {
 	ui.Header("Start System")
 
-	sys, err := system.LoadDefinition("system-definition.yaml")
+	sys, workspace, err := system.LoadDefinition("system-definition.yaml")
 	if err != nil {
 		return fmt.Errorf("could not read system definition: %w", err)
 	}
 
-	infraDir := sys.GetOrchestrationDir()
+	infraDir := sys.GetOrchestrationDir(workspace)
 	if _, err := os.Stat(infraDir); os.IsNotExist(err) {
 		return fmt.Errorf("orchestration directory not found at %s. Please run '<cli> init' first", infraDir)
 	}

@@ -1,4 +1,4 @@
-module workspace
+module workspace/git-controller
 
 go 1.26
 

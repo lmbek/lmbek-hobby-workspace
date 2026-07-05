@@ -15,7 +15,11 @@ func PrintCLINote() {
 	fmt.Printf("\nNote: %s\n", CLIDescription)
 }
 
-func GetCategoryDir(catName string) string {
+type Workspace struct {
+	Root string
+}
+
+func (w *Workspace) GetCategoryDir(catName string) string {
 	envKey := strings.ToUpper(catName) + "_DIR"
 	switch catName {
 	case "applications":
@@ -26,25 +30,26 @@ func GetCategoryDir(catName string) string {
 		envKey = "ORCHESTRATOR_DIR"
 	}
 
-	if val, ok := os.LookupEnv(envKey); ok {
+	if val, ok := os.LookupEnv(envKey); ok && val != "" {
 		return val
 	}
 
-	root := os.Getenv("WORKSPACE_ROOT")
+	root := w.Root
 	if root == "" {
 		root = "."
 	}
 
-	return filepath.Join(root, catName)
+	// Place all managed categories under git-repositories/<category>
+	return filepath.Join(root, "git-repositories", catName)
 }
 
-func (sys *SystemDefinition) GetOrchestrationDir() string {
+func (sys *SystemDefinition) GetOrchestrationDir(w *Workspace) string {
 	if len(sys.Orchestrator) > 0 {
 		for name := range sys.Orchestrator {
-			return filepath.Join(GetCategoryDir("orchestrator"), name)
+			return filepath.Join(w.GetCategoryDir("orchestrator"), name)
 		}
 	}
-	return GetCategoryDir("infrastructure")
+	return w.GetCategoryDir("infrastructure")
 }
 
 type SystemDefinition struct {

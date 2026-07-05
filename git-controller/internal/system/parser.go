@@ -9,11 +9,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func LoadDefinition(path string) (*SystemDefinition, error) {
+func LoadDefinition(path string) (*SystemDefinition, *Workspace, error) {
 	// 1. Try path as is
 	if _, err := os.Stat(path); err == nil {
-		setWorkspaceRoot(filepath.Dir(path))
-		return loadFile(path)
+		return loadFile(path, filepath.Dir(path))
 	}
 
 	// 2. Try relative to WORKSPACE_ROOT if set
@@ -21,8 +20,7 @@ func LoadDefinition(path string) (*SystemDefinition, error) {
 	if workspaceRoot != "" {
 		altPath := filepath.Join(workspaceRoot, path)
 		if _, err := os.Stat(altPath); err == nil {
-			setWorkspaceRoot(workspaceRoot)
-			return loadFile(altPath)
+			return loadFile(altPath, workspaceRoot)
 		}
 	}
 
@@ -32,8 +30,7 @@ func LoadDefinition(path string) (*SystemDefinition, error) {
 		for {
 			altPath := filepath.Join(currentDir, path)
 			if _, err := os.Stat(altPath); err == nil {
-				setWorkspaceRoot(currentDir)
-				return loadFile(altPath)
+				return loadFile(altPath, currentDir)
 			}
 			parent := filepath.Dir(currentDir)
 			if parent == currentDir {
@@ -43,29 +40,24 @@ func LoadDefinition(path string) (*SystemDefinition, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("could not find system definition: %s", path)
+	return nil, nil, fmt.Errorf("could not find system definition: %s", path)
 }
 
-func setWorkspaceRoot(root string) {
-	if abs, err := filepath.Abs(root); err == nil {
-		root = abs
-	}
-	os.Setenv("WORKSPACE_ROOT", root)
-	slog.Debug("Setting effective WORKSPACE_ROOT", "root", root)
-}
-
-func loadFile(path string) (*SystemDefinition, error) {
+func loadFile(path string, root string) (*SystemDefinition, *Workspace, error) {
 	slog.Debug("Loading system definition", "path", path)
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	var system SystemDefinition
 	err = yaml.Unmarshal([]byte(os.ExpandEnv(string(data))), &system)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return &system, nil
+	if abs, err := filepath.Abs(root); err == nil {
+		root = abs
+	}
+	return &system, &Workspace{Root: root}, nil
 }
