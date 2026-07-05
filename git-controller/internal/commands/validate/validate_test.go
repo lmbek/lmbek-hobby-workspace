@@ -1,60 +1,72 @@
 package validate
 
 import (
-	"net"
-	"net/http"
-	"net/http/httptest"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"testing"
 )
 
-func TestPerformHealthCheckHTTP(t *testing.T) {
-	// Mock HTTP server
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	}))
-	defer ts.Close()
-
-	err := performHealthCheck(ts.URL)
-	if err != nil {
-		t.Errorf("expected no error for healthy service, got %v", err)
-	}
-
-	// Mock unhealthy HTTP server
-	tsErr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusInternalServerError)
-	}))
-	defer tsErr.Close()
-
-	err = performHealthCheck(tsErr.URL)
+func TestValidateRepo_NotCloned(t *testing.T) {
+	err := validateRepo(filepath.Join(t.TempDir(), "nonexistent"), "main")
 	if err == nil {
-		t.Error("expected error for unhealthy service, got nil")
+		t.Error("expected error for non-existent directory, got nil")
 	}
 }
 
-func TestPerformHealthCheckTCP(t *testing.T) {
-	// Start a TCP listener
-	ln, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		t.Fatalf("failed to start TCP listener: %v", err)
-	}
-	defer ln.Close()
+func TestValidateRepo_ClonedOnCorrectBranch(t *testing.T) {
+	dir := t.TempDir()
 
-	addr := ln.Addr().String()
-	err = performHealthCheck("tcp://" + addr)
-	if err != nil {
-		t.Errorf("expected no error for healthy TCP service, got %v", err)
+	run := func(args ...string) {
+		cmd := exec.Command("git", args...)
+		cmd.Dir = dir
+		cmd.Env = append(os.Environ(), "GIT_CONFIG_GLOBAL=/dev/null")
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("git %v failed: %s", args, out)
+		}
 	}
 
-	// Test non-existent TCP service
-	err = performHealthCheck("tcp://127.0.0.1:1") // Unlikely to have anything on port 1
-	if err == nil {
-		t.Error("expected error for non-existent TCP service, got nil")
+	run("init", "-b", "main")
+	run("config", "user.email", "test@test.com")
+	run("config", "user.name", "Test")
+
+	// Create an initial commit so HEAD is valid
+	f, _ := os.Create(filepath.Join(dir, "README.md"))
+	f.Close()
+	run("add", ".")
+	run("commit", "-m", "init")
+
+	err := validateRepo(dir, "main")
+	if err != nil {
+		t.Errorf("expected no error, got %v", err)
 	}
 }
 
-func TestPerformHealthCheckUnsupported(t *testing.T) {
-	err := performHealthCheck("invalid://localhost")
-	if err == nil {
-		t.Error("expected error for unsupported protocol, got nil")
+func TestGetGitCurrentVersion(t *testing.T) {
+	dir := t.TempDir()
+
+	run := func(args ...string) {
+		cmd := exec.Command("git", args...)
+		cmd.Dir = dir
+		cmd.Env = append(os.Environ(), "GIT_CONFIG_GLOBAL=/dev/null")
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("git %v failed: %s", args, out)
+		}
+	}
+
+	run("init", "-b", "main")
+	run("config", "user.email", "test@test.com")
+	run("config", "user.name", "Test")
+	f, _ := os.Create(filepath.Join(dir, "file.txt"))
+	f.Close()
+	run("add", ".")
+	run("commit", "-m", "init")
+
+	version, err := getGitCurrentVersion(dir)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if version != "main" {
+		t.Errorf("expected 'main', got %q", version)
 	}
 }

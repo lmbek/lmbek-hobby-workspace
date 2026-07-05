@@ -10,10 +10,8 @@ If a rule in a sub-project conflicts with the MASTER guidelines, the MASTER guid
 
 ### Shared Guideline Files (must defer to MASTER)
 To help humans and AI agents consistently discover the MASTER rules, the following common policy files exist at the workspace root and explicitly defer to this document:
-- `AI_AGENTS.md`
 - `AGENTS.md`
 - `CONTRIBUTING.md`
-- `CODE_OF_CONDUCT.md`
 - `SECURITY.md`
 
 All of these files state that the MASTER guidelines in `GUIDELINES.md` are the first source of truth. Project-level policies come second.

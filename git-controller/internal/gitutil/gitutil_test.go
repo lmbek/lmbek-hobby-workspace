@@ -26,9 +26,42 @@ func TestEnhanceGitError_HostKey(t *testing.T) {
 	}
 }
 
-func TestProcessGitComponent_RejectsHTTP(t *testing.T) {
-	err := ProcessGitComponent(t.TempDir(), "repo", "https://github.com/user/repo.git")
+func TestEnhanceGitError_Nil(t *testing.T) {
+	if EnhanceGitError(nil) != nil {
+		t.Fatal("expected nil for nil input")
+	}
+}
+
+func TestClone_RejectsHTTP(t *testing.T) {
+	err := Clone("https://github.com/user/repo.git", t.TempDir())
 	if err == nil || !strings.Contains(err.Error(), "enforces SSH") {
 		t.Fatalf("expected SSH enforcement error, got: %v", err)
+	}
+}
+
+func TestValidateRemoteURL(t *testing.T) {
+	if err := validateRemoteURL("git@github.com:user/repo.git"); err != nil {
+		t.Fatalf("SSH URL should be allowed: %v", err)
+	}
+	if err := validateRemoteURL("http://github.com/user/repo.git"); err == nil {
+		t.Fatal("HTTP URL should be rejected")
+	}
+	if err := validateRemoteURL("https://github.com/user/repo.git"); err == nil {
+		t.Fatal("HTTPS URL should be rejected")
+	}
+}
+
+func TestIsCloned(t *testing.T) {
+	if IsCloned(t.TempDir()) {
+		t.Fatal("empty dir should not be considered cloned")
+	}
+}
+
+func TestIsNonEmptyDir(t *testing.T) {
+	if IsNonEmptyDir(t.TempDir()) {
+		t.Fatal("empty dir should return false")
+	}
+	if IsNonEmptyDir("/nonexistent/path") {
+		t.Fatal("nonexistent path should return false")
 	}
 }

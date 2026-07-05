@@ -2,38 +2,73 @@
 system-version: main
 
 hooks:
-    post-sync:
-        - echo "Sync complete! You can now run 'up' to start the system."
-    post-up:
-        - echo "System is up! Access the dashboard at http://localhost"
+    post-clone:
+        - echo "Clone complete! To start all services:"
+        - echo "  cd git-repositories/orchestrator && docker compose up -d"
+        - echo "Run 'make status' to see the state of all repositories."
 
-proxy:
-    repository: ""
-    version: main
-
-applications:
-    placeholder1-service:
-        repository: git@github.com:lmbek/lmbek-hobby-placeholder1-service.git
-        version: main
-    placeholder2-service:
-        repository: git@github.com:lmbek/lmbek-hobby-placeholder2-service.git
-        version: main
-
-orchestrator:
-    repository: git@github.com:lmbek/lmbek-hobby-infrastructure.git
-    version: main
-
-infrastructure: {}
-
-platform:
-    workspace-controller:
-        repository: git@github.com:lmbek/lmbek-hobby-workspace-controller.git
+# ── Git Repositories ──────────────────────────────────────────────────────────
+# Each key under "repos" is a category folder inside git-repositories/.
+# A category can hold a single repo (flat) or multiple repos (map of names).
+repos:
+    # ── Deployment ─────────────────────────────────────────────────────────────
+    # Environment-specific configuration, value overrides, and release manifests.
+    # Uses folders internally (dev/, staging/, prod/) — one repo, not one per env.
+    # Separate from orchestrator: orchestrator defines service topology,
+    # deployment holds per-environment values, secrets templates, and promotion config.
+    deployment:
+        repository: git@github.com:lmbek/lmbek-hobby-deployment.git
         version: main
 
-tools:
-    repository: git@github.com:lmbek/lmbek-hobby-tools.git
-    version: main
+    # ── Application Services ─────────────────────────────────────────────────
+    # Each microservice gets its own repo with independent CI/CD.
+    # Each repo contains its own Dockerfile and optionally a docker-compose.yml
+    # for running the service in isolation during development.
+    applications:
+        placeholder1-service:
+            repository: git@github.com:lmbek/lmbek-hobby-placeholder1-service.git
+            version: main
+        placeholder2-service:
+            repository: git@github.com:lmbek/lmbek-hobby-placeholder2-service.git
+            version: main
 
-docs:
-    repository: git@github.com:lmbek/lmbek-hobby-workspace-controller.git
-    version: main
+    # ── Orchestration ─────────────────────────────────────────────────────────
+    # Central Docker Compose / Kubernetes manifests that wire all services together.
+    # References pre-built images from each service repo — does NOT build from source.
+    # Use this repo to start, stop, and manage the full application stack locally.
+    orchestrator:
+        repository: git@github.com:lmbek/lmbek-hobby-orchestrator.git
+        version: main
+
+    # ── Infrastructure ────────────────────────────────────────────────────────
+    # Terraform / IaC modules for cloud provisioning (networking, databases, etc.).
+    infrastructure:
+        iac:
+            repository: git@github.com:lmbek/lmbek-hobby-infrastructure.git
+            version: main
+
+    # ── Platform / Internal Tooling ───────────────────────────────────────────
+    # The workspace controller itself and any other platform-level tooling.
+    platform:
+        workspace-controller:
+            repository: git@github.com:lmbek/lmbek-hobby-workspace-controller.git
+            version: main
+
+    # ── Observability ─────────────────────────────────────────────────────────
+    # Monitoring, logging, and alerting configuration.
+    # Grafana dashboards, Prometheus rules, alert definitions, and log pipelines.
+    observability:
+        repository: git@github.com:lmbek/lmbek-hobby-observability.git
+        version: main
+
+    # ── Tools ─────────────────────────────────────────────────────────────────
+    # General-purpose utilities, scripts, and helper tooling.
+    tools:
+        repository: git@github.com:lmbek/lmbek-hobby-tools.git
+        version: main
+
+    # ── Documentation ─────────────────────────────────────────────────────────
+    # Architecture Decision Records, API docs, and manual runbooks.
+    docs:
+        repository: git@github.com:lmbek/lmbek-hobby-docs.git
+        version: main

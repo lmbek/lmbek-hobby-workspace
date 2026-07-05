@@ -16,68 +16,97 @@ import (
 // execCommand allows injecting a stub in tests.
 var execCommand = exec.Command
 
-func ProcessGitComponent(baseDir, name, repo string) error {
-	targetPath := filepath.Join(baseDir, name)
+// Clone clones a remote repository into the given target path.
+func Clone(repo, targetPath string) error {
+	if err := validateRemoteURL(repo); err != nil {
+		return err
+	}
+	slog.Debug("Cloning repository", "repo", repo, "target", targetPath)
+	return EnhanceGitError(RunGit("clone", repo, targetPath))
+}
 
-	if repo == "" || strings.Contains(repo, "@company") {
-		return nil
+// Pull fetches and pulls the latest changes in the given repository directory.
+func Pull(repoDir string) error {
+	slog.Debug("Pulling repository", "dir", repoDir)
+	if err := RunGitInDir(repoDir, "fetch", "--all"); err != nil {
+		return EnhanceGitError(err)
+	}
+	return EnhanceGitError(RunGitInDir(repoDir, "pull"))
+}
+
+// Checkout switches the given repository to the specified branch.
+func Checkout(repoDir, branch string) error {
+	slog.Debug("Checking out branch", "dir", repoDir, "branch", branch)
+	return EnhanceGitError(RunGitInDir(repoDir, "checkout", branch))
+}
+
+// Push pushes local commits to the remote in the given repository directory.
+func Push(repoDir string) error {
+	slog.Debug("Pushing repository", "dir", repoDir)
+	return EnhanceGitError(RunGitInDir(repoDir, "push"))
+}
+
+// InitAndLink initialises a git repo in an existing non-empty directory and
+// links it to the given remote origin. It attempts to align with the remote
+// main/master branch.
+func InitAndLink(targetPath, repo string) error {
+	if err := validateRemoteURL(repo); err != nil {
+		return err
+	}
+	slog.Debug("Initialising and linking repository", "path", targetPath, "repo", repo)
+
+	if err := RunGitInDir(targetPath, "init"); err != nil {
+		return EnhanceGitError(err)
+	}
+	if err := RunGitInDir(targetPath, "remote", "add", "origin", repo); err != nil {
+		return EnhanceGitError(err)
+	}
+	if err := RunGitInDir(targetPath, "fetch", "origin"); err != nil {
+		return EnhanceGitError(err)
 	}
 
-	// Enforce SSH for remote repositories
-	if strings.HasPrefix(repo, "http://") || strings.HasPrefix(repo, "https://") {
-		return fmt.Errorf("insecure repository URL detected: %s. This project strictly enforces SSH for Git operations. Please update your git-repositories/system-definition.yaml to use SSH URLs (e.g., git@github.com:...) or local paths", repo)
-	}
-
-	gitDir := filepath.Join(targetPath, ".git")
-	if _, err := os.Stat(gitDir); os.IsNotExist(err) {
-		slog.Debug("Initializing/Cloning component", "name", name, "repo", repo)
-
-		// Check if target directory exists and is not empty
-		if fi, err := os.Stat(targetPath); err == nil && fi.IsDir() {
-			entries, _ := os.ReadDir(targetPath)
-			if len(entries) > 0 {
-				slog.Debug("Target directory exists and is not empty, initializing git instead of cloning", "path", targetPath)
-				if err := RunGitInDir(targetPath, "init"); err != nil {
-					return EnhanceGitError(err)
-				}
-				if err := RunGitInDir(targetPath, "remote", "add", "origin", repo); err != nil {
-					return EnhanceGitError(err)
-				}
-				if err := RunGitInDir(targetPath, "fetch", "origin"); err != nil {
-					return EnhanceGitError(err)
-				}
-				// Attempt to align with the remote main branch
-				if err := RunGitInDir(targetPath, "reset", "--soft", "origin/main"); err == nil {
-					_ = RunGitInDir(targetPath, "branch", "--set-upstream-to=origin/main", "main")
-				} else {
-					// Fallback: Check if origin/master exists
-					if err := RunGitInDir(targetPath, "reset", "--soft", "origin/master"); err == nil {
-						_ = RunGitInDir(targetPath, "checkout", "-b", "main")
-						_ = RunGitInDir(targetPath, "branch", "--set-upstream-to=origin/master", "main")
-					} else {
-						_ = RunGitInDir(targetPath, "checkout", "-b", "main")
-					}
-				}
-				return nil
-			}
-		}
-
-		if err := RunGit("clone", repo, targetPath); err != nil {
-			return EnhanceGitError(err)
-		}
+	// Attempt to align with the remote main branch
+	if err := RunGitInDir(targetPath, "reset", "--soft", "origin/main"); err == nil {
+		_ = RunGitInDir(targetPath, "branch", "--set-upstream-to=origin/main", "main")
+	} else if err := RunGitInDir(targetPath, "reset", "--soft", "origin/master"); err == nil {
+		_ = RunGitInDir(targetPath, "checkout", "-b", "main")
+		_ = RunGitInDir(targetPath, "branch", "--set-upstream-to=origin/master", "main")
 	} else {
-		slog.Debug("Updating component", "name", name)
-		if err := RunGitInDir(targetPath, "fetch", "--all"); err != nil {
-			return EnhanceGitError(err)
-		}
-		if err := RunGitInDir(targetPath, "pull"); err != nil {
-			return EnhanceGitError(err)
-		}
+		_ = RunGitInDir(targetPath, "checkout", "-b", "main")
 	}
 	return nil
 }
 
+// IsCloned returns true if the given path contains a .git directory.
+func IsCloned(targetPath string) bool {
+	gitDir := filepath.Join(targetPath, ".git")
+	_, err := os.Stat(gitDir)
+	return err == nil
+}
+
+// IsNonEmptyDir returns true if the path is an existing non-empty directory.
+func IsNonEmptyDir(path string) bool {
+	fi, err := os.Stat(path)
+	if err != nil || !fi.IsDir() {
+		return false
+	}
+	entries, _ := os.ReadDir(path)
+	return len(entries) > 0
+}
+
+// validateRemoteURL rejects HTTP(S) URLs — this project enforces SSH.
+func validateRemoteURL(repo string) error {
+	if strings.HasPrefix(repo, "http://") || strings.HasPrefix(repo, "https://") {
+		return fmt.Errorf("insecure repository URL detected: %s. This project strictly enforces SSH for Git operations. Please update your system-definition.yaml to use SSH URLs (e.g., git@github.com:...) or local paths", repo)
+	}
+	return nil
+}
+
+// EnhanceGitError adds user-friendly hints to common git errors.
 func EnhanceGitError(err error) error {
+	if err == nil {
+		return nil
+	}
 	errStr := err.Error()
 	var msg strings.Builder
 	msg.WriteString(errStr)
@@ -88,10 +117,6 @@ func EnhanceGitError(err error) error {
 
 		if identityFile := sshutil.GetGitHubIdentityFile(); identityFile != "" {
 			msg.WriteString(fmt.Sprintf("\nIdentityFile: %s", identityFile))
-			pubKey, _, err := sshutil.GetPublicKeyContent(identityFile)
-			if err == nil {
-				msg.WriteString(fmt.Sprintf("\nPublic Key:\n%s", strings.TrimSpace(pubKey)))
-			}
 		}
 
 		if runtime.GOOS == "windows" {
@@ -109,10 +134,48 @@ func EnhanceGitError(err error) error {
 	return errors.New(msg.String())
 }
 
+// RunGit executes a git command with the configured SSH settings.
 func RunGit(args ...string) error {
 	var stderr strings.Builder
 	cmd := execCommand("git", args...)
+	cmd.Env = gitEnv()
 
+	slog.Debug("Running git", "args", args)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		slog.Debug("Git error output", "stderr", stderr.String())
+		return fmt.Errorf("%w: %s", err, strings.TrimSpace(stderr.String()))
+	}
+	return nil
+}
+
+// RunGitInDir executes a git command inside the given directory.
+func RunGitInDir(dir string, args ...string) error {
+	var stderr strings.Builder
+	cmd := execCommand("git", args...)
+	cmd.Dir = dir
+	cmd.Env = gitEnv()
+
+	slog.Debug("Running git in dir", "dir", dir, "args", args)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		slog.Debug("Git error output", "stderr", stderr.String())
+		return fmt.Errorf("%w: %s", err, strings.TrimSpace(stderr.String()))
+	}
+	return nil
+}
+
+// EnsureDir creates the directory (and parents) if it does not exist.
+func EnsureDir(path string) {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		os.MkdirAll(path, 0755)
+	}
+}
+
+// gitEnv returns the current environment with GIT_SSH_COMMAND configured.
+func gitEnv() []string {
 	sshCmd := sshutil.GetConfiguredSSHCommand()
 
 	if runtime.GOOS == "windows" {
@@ -130,74 +193,12 @@ func RunGit(args ...string) error {
 
 	env := os.Environ()
 	env = append(env, "GIT_SSH_COMMAND="+sshCmd)
-	var filteredEnv []string
+	var filtered []string
 	for _, e := range env {
 		upper := strings.ToUpper(e)
 		if !strings.HasPrefix(upper, "GIT_SSH=") && !strings.HasPrefix(upper, "GIT_SSH_VARIANT=") {
-			filteredEnv = append(filteredEnv, e)
+			filtered = append(filtered, e)
 		}
 	}
-	cmd.Env = filteredEnv
-
-	slog.Debug("Running git", "args", args, "ssh", sshCmd)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
-		slog.Debug("Git error output", "stderr", stderr.String())
-		return fmt.Errorf("%w: %s", err, strings.TrimSpace(stderr.String()))
-	}
-	return nil
-}
-
-func RunGitInDir(dir string, args ...string) error {
-	var stderr strings.Builder
-	cmd := execCommand("git", args...)
-	cmd.Dir = dir
-
-	sshCmd := sshutil.GetConfiguredSSHCommand()
-
-	if runtime.GOOS == "windows" && filepath.IsAbs(sshCmd) {
-		sshCmd = filepath.ToSlash(sshCmd)
-		if strings.Contains(sshCmd, " ") {
-			sshCmd = fmt.Sprintf("\"%s\"", sshCmd)
-		}
-	}
-
-	env := os.Environ()
-	env = append(env, "GIT_SSH_COMMAND="+sshCmd)
-	var filteredEnv []string
-	for _, e := range env {
-		upper := strings.ToUpper(e)
-		if !strings.HasPrefix(upper, "GIT_SSH=") && !strings.HasPrefix(upper, "GIT_SSH_VARIANT=") {
-			filteredEnv = append(filteredEnv, e)
-		}
-	}
-	cmd.Env = filteredEnv
-
-	slog.Debug("Running git in dir", "dir", dir, "args", args, "ssh", sshCmd)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
-		slog.Debug("Git error output", "stderr", stderr.String())
-		return fmt.Errorf("%w: %s", err, strings.TrimSpace(stderr.String()))
-	}
-	return nil
-}
-
-func EnsureDir(path string) {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		os.MkdirAll(path, 0755)
-	}
-}
-
-func RunHook(command string) error {
-	var cmd *exec.Cmd
-	if runtime.GOOS == "windows" {
-		cmd = execCommand("powershell", "-Command", command)
-	} else {
-		cmd = execCommand("sh", "-c", command)
-	}
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	return filtered
 }

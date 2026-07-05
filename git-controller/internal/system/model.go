@@ -9,11 +9,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const CLIDescription = "<cli> refers to the command you are using (e.g., ./workspace-controller.exe, go run main.go, or make)"
-
-func PrintCLINote() {
-	fmt.Printf("\nNote: %s\n", CLIDescription)
-}
+// CLIName is set by main() at startup to the actual binary name (e.g. "git-controller.exe").
+var CLIName = "git-controller"
 
 type Workspace struct {
 	Root string
@@ -21,15 +18,6 @@ type Workspace struct {
 
 func (w *Workspace) GetCategoryDir(catName string) string {
 	envKey := strings.ToUpper(catName) + "_DIR"
-	switch catName {
-	case "applications":
-		envKey = "SERVICES_DIR"
-	case "infrastructure":
-		envKey = "INFRA_DIR"
-	case "orchestrator":
-		envKey = "ORCHESTRATOR_DIR"
-	}
-
 	if val, ok := os.LookupEnv(envKey); ok && val != "" {
 		return val
 	}
@@ -43,25 +31,10 @@ func (w *Workspace) GetCategoryDir(catName string) string {
 	return filepath.Join(root, "git-repositories", catName)
 }
 
-func (sys *SystemDefinition) GetOrchestrationDir(w *Workspace) string {
-	if len(sys.Orchestrator) > 0 {
-		for name := range sys.Orchestrator {
-			return filepath.Join(w.GetCategoryDir("orchestrator"), name)
-		}
-	}
-	return w.GetCategoryDir("infrastructure")
-}
-
 type SystemDefinition struct {
-	SystemVersion  string   `yaml:"system-version"`
-	Hooks          Hooks    `yaml:"hooks,omitempty"` // Added hooks
-	Proxy          Category `yaml:"proxy,omitempty"` // Added proxy category
-	Applications   Category `yaml:"applications"`
-	Infrastructure Category `yaml:"infrastructure"`
-	Orchestrator   Category `yaml:"orchestrator"`
-	Platform       Category `yaml:"platform"`
-	Tools          Category `yaml:"tools"`
-	Docs           Category `yaml:"docs"`
+	SystemVersion string              `yaml:"system-version"`
+	Hooks         Hooks               `yaml:"hooks,omitempty"`
+	Repos         map[string]Category `yaml:"repos"`
 }
 
 type Category map[string]Component
@@ -71,10 +44,6 @@ func (c *Category) UnmarshalYAML(value *yaml.Node) error {
 	type mapType map[string]Component
 	var m mapType
 	if err := value.Decode(&m); err == nil {
-		// Heuristic: if the map successfully decoded but it contains "repository",
-		// it might be a singleton Component that was mistakenly partially decoded as a map.
-		// However, a struct Decode is more restrictive than map Decode.
-		// In yaml.v3, Decode into map[string]Component will fail if values aren't maps/structs.
 		*c = Category(m)
 		return nil
 	}
@@ -82,8 +51,6 @@ func (c *Category) UnmarshalYAML(value *yaml.Node) error {
 	// 2. Try as a single Component (the flat/singleton way)
 	var comp Component
 	if err := value.Decode(&comp); err == nil {
-		// If it has at least one of the known component fields, it's a singleton.
-		// We check Repository or Version as indicators.
 		if comp.Repository != "" || comp.Version != "" {
 			*c = Category{"": comp}
 			return nil
@@ -100,14 +67,10 @@ func (c *Category) UnmarshalYAML(value *yaml.Node) error {
 }
 
 type Hooks struct {
-	PostSync []string `yaml:"post-sync,omitempty"` // Commands to run after sync
-	PostUp   []string `yaml:"post-up,omitempty"`   // Commands to run after up
+	PostClone []string `yaml:"post-clone,omitempty"` // Commands to run after clone
 }
 
 type Component struct {
-	Repository  string            `yaml:"repository"`
-	Version     string            `yaml:"version"`
-	Environment map[string]string `yaml:"environment,omitempty"`
-	HealthCheck string            `yaml:"health-check,omitempty"`
-	DependsOn   []string          `yaml:"depends-on,omitempty"` // Added depends-on field
+	Repository string `yaml:"repository"`
+	Version    string `yaml:"version"`
 }

@@ -1,54 +1,57 @@
 # Workspace Controller Makefile
-# Mirrors the steps in DEMO.md
+# Thin wrapper around git-controller commands.
 
-.PHONY: help init sync validate up down doctor ssh ssh-setup version v
+.PHONY: help init clone pull push checkout status validate doctor ssh ssh-setup version v
 
-# Default workspace root if not set
 export WORKSPACE_ROOT ?= $(abspath .)
 
 help:
 	@echo "Workspace Controller - Available commands:"
-	@echo "  make init      - [1] Bootstrap workspace (Pre-flight + Planning)"
-	@echo "  make sync      - [2] Synchronize all repositories"
-	@echo "  make validate  - [3] Validate consistency and health"
-	@echo "  make up        - [4] Start the system"
-	@echo "  make down      - Stop the system"
-	@echo "  make doctor    - Diagnose environmental issues"
+	@echo ""
+	@echo "  Workflow:"
+	@echo "  make init      - Scaffold a new workspace"
+	@echo "  make clone     - Clone all repositories (initial setup)"
+	@echo "  make pull      - Pull updates across all repositories (clone if missing)"
+	@echo "  make push      - Push local commits across all repositories"
+	@echo "  make checkout  - Switch all repos to their defined branch"
+	@echo "  make status    - Show dashboard overview of all repository states"
+	@echo "  make validate  - Validate repository consistency"
+	@echo ""
+	@echo "  Setup:"
+	@echo "  make doctor    - Diagnose environment (Git, Go, SSH, Docker)"
 	@echo "  make ssh       - Interactive SSH setup (alias: ssh-setup)"
-	@echo "  make version   - Show version info (alias: v)"
+	@echo "  make version   - Show version (alias: v)"
 
 init:
-	@echo "==> Bootstrapping workspace (init)..."
-	cd git-controller && go run main.go init
+	cd git-controller && go run . init
 
-sync:
-	@echo "==> Synchronizing repositories (sync)..."
-	cd git-controller && go run main.go sync
+clone:
+	cd git-controller && go run . clone
+
+pull:
+	cd git-controller && go run . pull
+
+push:
+	cd git-controller && go run . push
+
+checkout:
+	cd git-controller && go run . checkout
+
+status:
+	cd git-controller && go run . status
 
 validate:
-	@echo "==> Validating system consistency (validate)..."
-	cd git-controller && go run main.go validate
-
-up:
-	@echo "==> Starting the system (up)..."
-	cd git-controller && go run main.go up
-
-down:
-	@echo "==> Stopping the system (down)..."
-	cd git-controller && go run main.go down
+	cd git-controller && go run . validate
 
 doctor:
-	@echo "==> Running environment diagnostics (doctor)..."
-	cd git-controller && go run main.go doctor
+	cd git-controller && go run . doctor
 
 ssh:
-	@echo "==> Running SSH setup tool..."
-	cd git-controller && go run main.go ssh
+	cd git-controller && go run . ssh
 
 ssh-setup: ssh
 
 version:
-	@echo "==> Workspace Controller version:"
-	cd git-controller && go run main.go version
+	cd git-controller && go run . version
 
 v: version

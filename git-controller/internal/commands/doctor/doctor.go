@@ -120,7 +120,7 @@ func checkSSH() bool {
 		ui.Error("SSH Structural Issue: %s", issue)
 		hasIssues = true
 		if strings.Contains(issue, "is a directory") {
-			ui.Info("Fix: Run '<cli> ssh' and select Option 6 (Cleanup broken SSH configurations) to resolve this automatically.")
+			ui.Info("Fix: Run '%s ssh' and select Option 6 (Cleanup broken SSH configurations) to resolve this automatically.", system.CLIName)
 		}
 	}
 
@@ -144,7 +144,7 @@ func checkSSH() bool {
 	if err == nil {
 		if strings.Contains(keys, "The agent has no identities") {
 			ui.Warn("No SSH keys found in agent")
-			ui.Info("Hint: Run '<cli> ssh' -> Option 2 to add a key to the agent.")
+			ui.Info("Hint: Run '%s ssh' -> Option 2 to add a key to the agent.", system.CLIName)
 		} else {
 			ui.Success("SSH keys loaded in agent")
 		}
@@ -226,6 +226,5 @@ func PrintSSHSetupInstructions() {
 
 	fmt.Println("\n--- Automated Configuration ---")
 	fmt.Println("   You can use the built-in automated tool for these steps:")
-	fmt.Println("   <cli> ssh")
-	system.PrintCLINote()
+	fmt.Printf("   %s ssh\n", system.CLIName)
 }

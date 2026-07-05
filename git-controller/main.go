@@ -4,23 +4,27 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"strings"
 
+	"workspace/git-controller/internal/commands/checkout"
+	"workspace/git-controller/internal/commands/clone"
 	"workspace/git-controller/internal/commands/doctor"
-	"workspace/git-controller/internal/commands/down"
-	initcmd "workspace/git-controller/internal/commands/init"
+	"workspace/git-controller/internal/commands/pull"
+	"workspace/git-controller/internal/commands/push"
 	"workspace/git-controller/internal/commands/sshsetup"
-	"workspace/git-controller/internal/commands/sync"
-	"workspace/git-controller/internal/commands/up"
+	"workspace/git-controller/internal/commands/status"
 	"workspace/git-controller/internal/commands/validate"
+	"workspace/git-controller/internal/commands/wsinit"
 	"workspace/git-controller/internal/system"
 	"workspace/git-controller/internal/ui"
 )
 
-const version = "1.1.0"
+const version = "5.0.0"
 
 func main() {
 	setupLogger()
+	system.CLIName = filepath.Base(os.Args[0])
 
 	if len(os.Args) < 2 {
 		showHelp()
@@ -30,11 +34,14 @@ func main() {
 	command := os.Args[1]
 
 	commands := map[string]func() error{
-		"init":      initcmd.Run,
-		"sync":      sync.Run,
-		"validate":  validate.Run,
-		"up":        up.Run,
-		"down":      down.Run,
+		"init":     wsinit.Run,
+		"clone":    clone.Run,
+		"pull":     pull.Run,
+		"push":     push.Run,
+		"checkout": checkout.Run,
+		"status":   status.Run,
+		"validate": validate.Run,
+		// Utilities
 		"doctor":    doctor.Run,
 		"ssh-setup": sshsetup.Run,
 		"ssh":       sshsetup.Run,
@@ -50,7 +57,7 @@ func main() {
 		return
 	}
 
-	if run, ok := commands[command]; ok {
+	if run, ok := commands[command]; ok && run != nil {
 		if err := run(); err != nil {
 			ui.Error("%v", err)
 			os.Exit(1)
@@ -71,27 +78,29 @@ func setupLogger() {
 	opts := &slog.HandlerOptions{
 		Level: level,
 	}
-	handler := slog.NewTextHandler(os.Stderr, opts) // Logs to Stderr
+	handler := slog.NewTextHandler(os.Stderr, opts)
 	slog.SetDefault(slog.New(handler))
 }
 
 func showHelp() {
 	fmt.Printf("\n%sWorkspace Controller v%s%s\n", ui.ColorBold, version, ui.ColorReset)
 	fmt.Println(strings.Repeat("=", 25))
-	fmt.Printf("Usage: %s [command]\n", ui.ColorBold+"<cli>"+ui.ColorReset)
-	ui.Note(system.CLIDescription)
+	fmt.Printf("Usage: %s [command]\n", ui.ColorBold+system.CLIName+ui.ColorReset)
 
-	fmt.Println("\nAvailable Commands:")
-	fmt.Println("  init       [1] Bootstrap workspace (Pre-flight checks + Planning)")
-	fmt.Println("  sync       [2] Synchronize all repositories (Materialization + fetch/pull/hooks)")
-	fmt.Println("  validate   [3] Validate system consistency and health")
-	fmt.Println("  up         [4] Start the system (docker-compose up)")
-	fmt.Println("  down           Stop the system (docker-compose down)")
-	fmt.Println("  doctor     [D] Diagnose environmental issues (Git, SSH, Docker)")
-	fmt.Println("  ssh-setup  [S] Interactive SSH key management tool (alias: ssh)")
-	fmt.Println("  ssh        [S] Alias for ssh-setup")
-	fmt.Println("  version    [V] Show version information (alias: v)")
-	fmt.Println("  help           Show this help information")
+	fmt.Println("\nWorkflow Commands:")
+	fmt.Println("  init       Scaffold a new workspace (system-definition.yaml, Makefile, .gitignore)")
+	fmt.Println("  clone      Clone all repositories defined in system-definition.yaml")
+	fmt.Println("  pull       Pull latest changes across all repositories (clone if missing)")
+	fmt.Println("  push       Push local commits across all repositories")
+	fmt.Println("  checkout   Switch all repositories to their defined branch")
+	fmt.Println("  status     Show dashboard overview of all repository states")
+	fmt.Println("  validate   Validate repository consistency against the definition")
+
+	fmt.Println("\nSetup Commands:")
+	fmt.Println("  doctor     Diagnose environment (Git, Go, SSH, Docker)")
+	fmt.Println("  ssh-setup  Interactive SSH key management (alias: ssh)")
+	fmt.Println("  version    Show version (alias: v)")
+	fmt.Println("  help       Show this help")
 }
 
 func showVersion() {
