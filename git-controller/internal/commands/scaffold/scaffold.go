@@ -67,6 +67,6 @@ func Run() error {
 		return fmt.Errorf("scaffold completed with errors")
 	}
 
-	ui.Success("All repositories scaffolded — git init + remote origin set (no fetch).")
+	ui.Success("All repositories scaffolded — git init, remote origin set, fetched, and default branch configured.")
 	return nil
 }

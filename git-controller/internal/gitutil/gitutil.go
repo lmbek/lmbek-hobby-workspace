@@ -41,9 +41,79 @@ func Checkout(repoDir, branch string) error {
 }
 
 // Push pushes local commits to the remote in the given repository directory.
+// If no upstream is configured for the current branch it automatically sets
+// one with "git push -u origin <branch>".
+// If the branch has no commits yet, an initial empty commit is created first.
 func Push(repoDir string) error {
 	slog.Debug("Pushing repository", "dir", repoDir)
+
+	// If the branch has no commits (unborn HEAD), create an initial empty commit
+	// so there is something to push.
+	if !hasCommits(repoDir) {
+		branch := currentBranch(repoDir)
+		if branch != "" {
+			slog.Debug("No commits on branch, creating initial commit", "dir", repoDir, "branch", branch)
+			if err := ensureGitIdentity(repoDir); err != nil {
+				return err
+			}
+			if err := RunGitInDir(repoDir, "commit", "--allow-empty", "-m", "Initial commit"); err != nil {
+				return EnhanceGitError(err)
+			}
+		}
+	}
+
+	// Check whether the current branch has an upstream configured.
+	if !hasUpstream(repoDir) {
+		branch := currentBranch(repoDir)
+		if branch != "" {
+			slog.Debug("No upstream configured, pushing with -u", "dir", repoDir, "branch", branch)
+			return EnhanceGitError(RunGitInDir(repoDir, "push", "-u", "origin", branch))
+		}
+	}
 	return EnhanceGitError(RunGitInDir(repoDir, "push"))
+}
+
+// ensureGitIdentity checks that git can resolve an author identity for commits.
+// If no identity is configured (no global/system/local user.name), it returns
+// an error asking the user to set one instead of silently using a placeholder.
+func ensureGitIdentity(repoDir string) error {
+	cmd := execCommand("git", "config", "user.name")
+	cmd.Dir = repoDir
+	cmd.Env = gitEnv()
+	if cmd.Run() == nil {
+		return nil // identity already configured
+	}
+	return fmt.Errorf("git author identity not configured. Please run:\n\n  git config --global user.name \"Your Name\"\n  git config --global user.email \"you@example.com\"")
+}
+
+// hasCommits returns true if HEAD points to a valid commit (i.e. the branch is not unborn).
+func hasCommits(repoDir string) bool {
+	cmd := execCommand("git", "rev-parse", "HEAD")
+	cmd.Dir = repoDir
+	cmd.Env = gitEnv()
+	return cmd.Run() == nil
+}
+
+// hasUpstream returns true if the current branch tracks a remote branch.
+func hasUpstream(repoDir string) bool {
+	cmd := execCommand("git", "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}")
+	cmd.Dir = repoDir
+	cmd.Env = gitEnv()
+	return cmd.Run() == nil
+}
+
+// currentBranch returns the name of the current branch, or "" on error.
+// It uses "git symbolic-ref" so it works even on unborn branches (no commits).
+func currentBranch(repoDir string) string {
+	var out strings.Builder
+	cmd := execCommand("git", "symbolic-ref", "--short", "HEAD")
+	cmd.Dir = repoDir
+	cmd.Env = gitEnv()
+	cmd.Stdout = &out
+	if err := cmd.Run(); err != nil {
+		return ""
+	}
+	return strings.TrimSpace(out.String())
 }
 
 // InitAndLink initialises a git repo in an existing non-empty directory and
@@ -77,9 +147,8 @@ func InitAndLink(targetPath, repo string) error {
 	return nil
 }
 
-// Scaffold initialises a git repo and sets the remote origin without fetching
-// or requiring access to the remote. Useful for bootstrapping repos you cannot
-// yet clone.
+// Scaffold initialises a git repo, sets the remote origin, fetches remote
+// refs, and checks out the default branch with upstream tracking configured.
 func Scaffold(targetPath, repo string) error {
 	if err := validateRemoteURL(repo); err != nil {
 		return err
@@ -91,6 +160,18 @@ func Scaffold(targetPath, repo string) error {
 	}
 	if err := RunGitInDir(targetPath, "remote", "add", "origin", repo); err != nil {
 		return EnhanceGitError(err)
+	}
+	if err := RunGitInDir(targetPath, "fetch", "origin"); err != nil {
+		return EnhanceGitError(err)
+	}
+
+	// Try to check out the default branch and set upstream tracking.
+	if err := RunGitInDir(targetPath, "checkout", "-b", "main", "--track", "origin/main"); err != nil {
+		// Fall back to master if main doesn't exist on the remote.
+		if err := RunGitInDir(targetPath, "checkout", "-b", "master", "--track", "origin/master"); err != nil {
+			slog.Debug("No main/master branch found on remote, creating local main branch", "path", targetPath)
+			_ = RunGitInDir(targetPath, "checkout", "-b", "main")
+		}
 	}
 	return nil
 }

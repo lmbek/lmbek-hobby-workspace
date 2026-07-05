@@ -13,7 +13,7 @@ help:
 	@echo "  make clone     - Clone all repositories (initial setup)"
 	@echo "  make pull      - Pull updates across all repositories (clone if missing)"
 	@echo "  make push      - Push local commits across all repositories"
-	@echo "  make scaffold  - Initialise .git and set remote origin (no clone/fetch needed)"
+	@echo "  make scaffold  - Initialise .git, set remote origin, fetch, and configure default branch"
 	@echo "  make checkout  - Switch all repos to their defined branch"
 	@echo "  make status    - Show dashboard overview of all repository states"
 	@echo "  make validate  - Validate repository consistency"
