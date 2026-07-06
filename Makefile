@@ -3,8 +3,6 @@
 
 .PHONY: help init clone fetch pull push scaffold checkout status validate doctor ssh ssh-setup update
 
-export WORKSPACE_ROOT ?= $(abspath .)
-
 help:
 	@echo "Workspace Controller - Available commands:"
 	@echo ""

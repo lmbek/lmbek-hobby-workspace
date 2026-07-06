@@ -23,26 +23,28 @@ repos:
     #         version: main
 `
 
-// workspaceRoot returns the workspace root directory. It uses WORKSPACE_ROOT
-// if set, otherwise falls back to the parent of the current working directory
-// (assuming the binary runs from git-controller/).
+// workspaceRoot returns the workspace root directory by looking at the parent
+// of the current working directory (assuming the binary runs from git-controller/).
 func workspaceRoot() string {
-	if root := os.Getenv("WORKSPACE_ROOT"); root != "" {
-		return root
-	}
 	if cwd, err := os.Getwd(); err == nil {
 		return filepath.Dir(cwd)
 	}
 	return "."
 }
 
-// Run scaffolds a new workspace by creating the system-definition.yaml in the
-// workspace root directory. It will not overwrite an existing definition file.
+// Run scaffolds a new workspace by creating the system-definition.yaml inside
+// git-repositories/. It will not overwrite an existing definition file.
 func Run() error {
 	ui.Header("Initialise Workspace")
 
 	root := workspaceRoot()
-	defPath := filepath.Join(root, "system-definition.yaml")
+
+	gitReposDir := filepath.Join(root, "git-repositories")
+	if err := os.MkdirAll(gitReposDir, 0755); err != nil {
+		return fmt.Errorf("failed to create git-repositories/: %w", err)
+	}
+
+	defPath := filepath.Join(gitReposDir, "system-definition.yaml")
 
 	if _, err := os.Stat(defPath); err == nil {
 		ui.Info("system-definition.yaml already exists at %s — skipping creation", defPath)
@@ -51,11 +53,6 @@ func Run() error {
 			return fmt.Errorf("failed to create %s: %w", defPath, err)
 		}
 		ui.Success("Created %s", defPath)
-	}
-
-	gitReposDir := filepath.Join(root, "git-repositories")
-	if err := os.MkdirAll(gitReposDir, 0755); err != nil {
-		return fmt.Errorf("failed to create git-repositories/: %w", err)
 	}
 
 	gitignorePath := filepath.Join(root, ".gitignore")
@@ -70,8 +67,6 @@ func Run() error {
 	makefile := filepath.Join(root, "Makefile")
 	if _, err := os.Stat(makefile); os.IsNotExist(err) {
 		content := `.PHONY: init clone pull push scaffold checkout status validate doctor ssh
-
-export WORKSPACE_ROOT ?= $(abspath .)
 
 init:
 	cd git-controller && go run . init
@@ -109,6 +104,6 @@ ssh:
 		ui.Success("Created Makefile")
 	}
 
-	ui.Success("Workspace initialised! Edit system-definition.yaml to add your repositories, then run 'make clone'.")
+	ui.Success("Workspace initialised! Edit git-repositories/system-definition.yaml to add your repositories, then run 'make clone'.")
 	return nil
 }

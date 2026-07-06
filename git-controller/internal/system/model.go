@@ -2,9 +2,7 @@ package system
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
-	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -17,11 +15,6 @@ type Workspace struct {
 }
 
 func (w *Workspace) GetCategoryDir(catName string) string {
-	envKey := strings.ToUpper(catName) + "_DIR"
-	if val, ok := os.LookupEnv(envKey); ok && val != "" {
-		return val
-	}
-
 	root := w.Root
 	if root == "" {
 		root = "."
