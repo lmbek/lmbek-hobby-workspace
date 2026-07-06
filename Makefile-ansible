@@ -1,0 +1,54 @@
+# Workspace Controller Makefile (Ansible)
+# Thin wrapper around git-controller-ansible playbooks.
+# Usage: make -f Makefile-ansible <command>
+
+.PHONY: help clone fetch pull push scaffold checkout status validate doctor update
+
+ANSIBLE_CMD = cd git-controller-ansible && ansible-playbook playbooks
+
+help:
+	@echo "Workspace Controller (Ansible) - Available commands:"
+	@echo ""
+	@echo "  Workflow:"
+	@echo "  make -f Makefile-ansible clone     - Clone all repositories (initial setup)"
+	@echo "  make -f Makefile-ansible fetch     - Fetch all remotes across all repositories"
+	@echo "  make -f Makefile-ansible pull      - Pull updates across all repositories (clone if missing)"
+	@echo "  make -f Makefile-ansible update    - Fetch, pull, and show status across all repositories"
+	@echo "  make -f Makefile-ansible push      - Push local commits across all repositories"
+	@echo "  make -f Makefile-ansible scaffold  - Initialise .git, set remote origin, fetch, and configure default branch"
+	@echo "  make -f Makefile-ansible checkout  - Switch all repos to their defined branch"
+	@echo "  make -f Makefile-ansible status    - Show dashboard overview of all repository states"
+	@echo "  make -f Makefile-ansible validate  - Validate repository consistency"
+	@echo ""
+	@echo "  Setup:"
+	@echo "  make -f Makefile-ansible doctor    - Diagnose environment (Git, Ansible, SSH, Docker)"
+
+clone:
+	$(ANSIBLE_CMD)/clone.yml
+
+fetch:
+	$(ANSIBLE_CMD)/fetch.yml
+
+pull:
+	$(ANSIBLE_CMD)/pull.yml
+
+push:
+	$(ANSIBLE_CMD)/push.yml
+
+scaffold:
+	$(ANSIBLE_CMD)/scaffold.yml
+
+checkout:
+	$(ANSIBLE_CMD)/checkout.yml
+
+status:
+	$(ANSIBLE_CMD)/status.yml
+
+validate:
+	$(ANSIBLE_CMD)/validate.yml
+
+doctor:
+	$(ANSIBLE_CMD)/doctor.yml
+
+update:
+	$(ANSIBLE_CMD)/update.yml

@@ -1,0 +1,10 @@
+---
+# Fetch + pull + status in one go.
+- name: Fetch all repositories
+  ansible.builtin.import_playbook: fetch.yml
+
+- name: Pull all repositories
+  ansible.builtin.import_playbook: pull.yml
+
+- name: Show repository status
+  ansible.builtin.import_playbook: status.yml

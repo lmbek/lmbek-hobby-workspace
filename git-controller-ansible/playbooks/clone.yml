@@ -1,0 +1,61 @@
+---
+# Clone all repositories defined in system-definition.yaml.
+# Already-cloned repos are skipped.
+- name: Clone Repositories
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    workspace_root: "{{ playbook_dir | dirname | dirname }}"
+    definition_file: "{{ workspace_root }}/git-repositories/system-definition.yaml"
+
+  tasks:
+    - name: Load system definition
+      ansible.builtin.include_vars:
+        file: "{{ definition_file }}"
+        name: sysdef
+
+    - name: Build repo list
+      ansible.builtin.set_fact:
+        repos: "{{ sysdef.repos | flatten_repos(workspace_root) }}"
+
+    - name: Ensure category directories exist
+      ansible.builtin.file:
+        path: "{{ item.target_path | dirname }}"
+        state: directory
+        mode: "0755"
+      loop: "{{ repos }}"
+      loop_control:
+        label: "{{ item.display_name }}"
+
+    - name: Check which repos are already cloned
+      ansible.builtin.stat:
+        path: "{{ item.target_path }}/.git"
+      register: git_dirs
+      loop: "{{ repos }}"
+      loop_control:
+        label: "{{ item.display_name }}"
+
+    - name: Clone missing repositories
+      ansible.builtin.command:
+        cmd: "git clone {{ item.item.repository }} {{ item.item.target_path }}"
+      when: not item.stat.exists
+      loop: "{{ git_dirs.results }}"
+      loop_control:
+        label: "{{ item.item.display_name }}"
+      register: clone_results
+      failed_when: false
+      changed_when: clone_results.rc == 0
+
+    - name: Report results
+      ansible.builtin.debug:
+        msg: >-
+          {% set cloned = clone_results.results | default([]) | selectattr('rc', 'defined') | selectattr('rc', 'eq', 0) | list | length %}
+          {% set skipped = clone_results.results | default([]) | selectattr('skipped', 'defined') | selectattr('skipped') | list | length %}
+          {% set failed = clone_results.results | default([]) | selectattr('rc', 'defined') | rejectattr('rc', 'eq', 0) | list | length %}
+          Cloned: {{ cloned }} | Already cloned: {{ skipped }} | Failed: {{ failed }}
+
+    - name: Fail if any clone errors occurred
+      ansible.builtin.fail:
+        msg: "Some repositories failed to clone. Check output above."
+      when: clone_results.results | default([]) | selectattr('rc', 'defined') | rejectattr('rc', 'eq', 0) | list | length > 0

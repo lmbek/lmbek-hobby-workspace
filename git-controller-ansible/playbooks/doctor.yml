@@ -1,0 +1,92 @@
+---
+# Diagnose environment issues (Git, Ansible, SSH, Docker).
+- name: Workspace Doctor
+  hosts: localhost
+  gather_facts: true
+
+  tasks:
+    - name: Show OS info
+      ansible.builtin.debug:
+        msg: "OS: {{ ansible_system }}/{{ ansible_architecture }}"
+
+    - name: Check Git installation
+      ansible.builtin.command:
+        cmd: git --version
+      register: git_version
+      failed_when: false
+      changed_when: false
+
+    - name: Report Git status
+      ansible.builtin.debug:
+        msg: "{{ '✓ Git installed: ' ~ git_version.stdout | trim if git_version.rc == 0 else '✖ Git is not installed or not in PATH' }}"
+
+    - name: Check Ansible version
+      ansible.builtin.command:
+        cmd: ansible --version
+      register: ansible_ver
+      failed_when: false
+      changed_when: false
+
+    - name: Report Ansible status
+      ansible.builtin.debug:
+        msg: "{{ '✓ Ansible installed: ' ~ (ansible_ver.stdout_lines[0] | default('unknown')) if ansible_ver.rc == 0 else '✖ Ansible is not installed or not in PATH' }}"
+
+    - name: Check SSH agent
+      ansible.builtin.command:
+        cmd: ssh-add -l
+      register: ssh_keys
+      failed_when: false
+      changed_when: false
+
+    - name: Report SSH agent status
+      ansible.builtin.debug:
+        msg: >-
+          {% if ssh_keys.rc == 0 and 'no identities' not in (ssh_keys.stdout | lower) %}
+          ✓ SSH agent running, keys loaded
+          {% elif ssh_keys.rc == 0 or 'no identities' in (ssh_keys.stdout | lower) %}
+          ⚠ SSH agent running but no keys loaded. Run 'ssh-add' to add your key.
+          {% else %}
+          ✖ SSH agent not running or not accessible
+          {% endif %}
+
+    - name: Test GitHub SSH connectivity
+      ansible.builtin.command:
+        cmd: ssh -T git@github.com -o StrictHostKeyChecking=accept-new -o BatchMode=yes
+      register: github_test
+      failed_when: false
+      changed_when: false
+
+    - name: Report GitHub connectivity
+      ansible.builtin.debug:
+        msg: >-
+          {% if 'successfully authenticated' in (github_test.stdout | default('') ~ github_test.stderr | default('')) | lower %}
+          ✓ GitHub SSH authentication successful
+          {% else %}
+          ✖ GitHub SSH authentication failed. Ensure your SSH key is added to your GitHub account.
+          {% endif %}
+
+    - name: Check Docker installation
+      ansible.builtin.command:
+        cmd: docker --version
+      register: docker_version
+      failed_when: false
+      changed_when: false
+
+    - name: Report Docker status
+      ansible.builtin.debug:
+        msg: "{{ '✓ Docker installed: ' ~ docker_version.stdout | trim if docker_version.rc == 0 else '✖ Docker is not installed or not in PATH' }}"
+
+    - name: Check Docker Compose
+      ansible.builtin.command:
+        cmd: docker compose version
+      register: compose_version
+      failed_when: false
+      changed_when: false
+
+    - name: Report Docker Compose status
+      ansible.builtin.debug:
+        msg: "{{ '✓ Docker Compose: ' ~ compose_version.stdout | trim if compose_version.rc == 0 else '⚠ Docker Compose not available' }}"
+
+    - name: Doctor complete
+      ansible.builtin.debug:
+        msg: "✓ Doctor report complete."

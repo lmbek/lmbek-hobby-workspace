@@ -1,0 +1,81 @@
+---
+# Show dashboard overview of all repository states.
+- name: Repository Status
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    workspace_root: "{{ playbook_dir | dirname | dirname }}"
+    definition_file: "{{ workspace_root }}/git-repositories/system-definition.yaml"
+
+  tasks:
+    - name: Load system definition
+      ansible.builtin.include_vars:
+        file: "{{ definition_file }}"
+        name: sysdef
+
+    - name: Build repo list
+      ansible.builtin.set_fact:
+        repos: "{{ sysdef.repos | flatten_repos(workspace_root) }}"
+
+    - name: Check which repos are cloned
+      ansible.builtin.stat:
+        path: "{{ item.target_path }}/.git"
+      register: git_dirs
+      loop: "{{ repos }}"
+      loop_control:
+        label: "{{ item.display_name }}"
+
+    - name: Get current branch
+      ansible.builtin.command:
+        cmd: git rev-parse --abbrev-ref HEAD
+        chdir: "{{ item.item.target_path }}"
+      when: item.stat.exists
+      loop: "{{ git_dirs.results }}"
+      loop_control:
+        label: "{{ item.item.display_name }}"
+      register: branches
+      failed_when: false
+      changed_when: false
+
+    - name: Check dirty status
+      ansible.builtin.command:
+        cmd: git status --porcelain
+        chdir: "{{ item.item.target_path }}"
+      when: item.stat.exists
+      loop: "{{ git_dirs.results }}"
+      loop_control:
+        label: "{{ item.item.display_name }}"
+      register: dirty_checks
+      failed_when: false
+      changed_when: false
+
+    - name: Check ahead/behind
+      ansible.builtin.command:
+        cmd: git rev-list --left-right --count HEAD...@{upstream}
+        chdir: "{{ item.item.target_path }}"
+      when: item.stat.exists
+      loop: "{{ git_dirs.results }}"
+      loop_control:
+        label: "{{ item.item.display_name }}"
+      register: ahead_behind
+      failed_when: false
+      changed_when: false
+
+    - name: Display status dashboard
+      ansible.builtin.debug:
+        msg: >-
+          {% for i in range(repos | length) %}
+          {% set repo = repos[i] %}
+          {% set cloned = git_dirs.results[i].stat.exists %}
+          {% if not cloned %}
+          {{ '%-30s' | format(repo.display_name) }}  ⊘ not cloned
+          {% else %}
+          {% set br = branches.results[i].stdout | default('unknown') | trim %}
+          {% set is_dirty = (dirty_checks.results[i].stdout | default('') | trim | length) > 0 %}
+          {% set ab_parts = (ahead_behind.results[i].stdout | default('0\t0') | trim).split('\t') %}
+          {% set ahead_n = ab_parts[0] | default('0') | int %}
+          {% set behind_n = ab_parts[1] | default('0') | int %}
+          {{ '%-30s' | format(repo.display_name) }}  branch:{{ br }}  {{ 'dirty' if is_dirty else 'clean' }}{{ '  ↑' ~ ahead_n if ahead_n > 0 else '' }}{{ '  ↓' ~ behind_n if behind_n > 0 else '' }}
+          {% endif %}
+          {% endfor %}
