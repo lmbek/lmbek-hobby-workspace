@@ -196,11 +196,13 @@ LMBEK-HOBBY-WORKSPACE/
 │   ├── infrastructure/      Terraform / IaC and server provisioning
 │   ├── observability/       Monitoring, dashboards, alerts, log pipelines
 │   ├── tools/               General-purpose utilities and scripts
-│   └── docs/                Architecture docs, API docs, manual runbooks
-├── system-definition.yaml   Defines which repos/branches to manage
+│   ├── docs/                Architecture docs, API docs, manual runbooks
+│   └── system-definition.yaml  Defines which repos/branches to manage
 ├── Makefile                 Convenience targets for the CLI (Go)
 ├── Makefile-php             Convenience targets for the PHP CLI
 ├── .env.example             Documented environment variables
+├── .gitignore               Git ignore rules (ignores git-repositories/, etc.)
+├── .aiignore                AI agent ignore rules
 ├── .github/                 Issue templates, PR template, CI workflows
 ├── AGENTS.md               AI agent guidelines (defers to GUIDELINES.md)
 ├── GUIDELINES.md            Master guidelines for all projects
