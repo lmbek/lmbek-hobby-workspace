@@ -82,12 +82,23 @@ install-go:
 	@bash -euc '\
 		version="$(GO_VERSION)"; \
 		dest="$(GO_INSTALL_DIR)"; \
+		os="$$(uname -s)"; \
+		case "$$os" in \
+			Linux) os_name="linux" ;; \
+			Darwin) os_name="darwin" ;; \
+			MINGW*|MSYS*|CYGWIN*) os_name="windows" ;; \
+			*) echo "Unsupported operating system: $$os" >&2; exit 1 ;; \
+		esac; \
 		case "$$(uname -m)" in \
 			x86_64|amd64) arch="amd64" ;; \
 			aarch64|arm64) arch="arm64" ;; \
 			*) echo "Unsupported architecture: $$(uname -m)" >&2; exit 1 ;; \
 		esac; \
-		tarball="go$${version}.linux-$${arch}.tar.gz"; \
+		if [ "$$os_name" = "windows" ]; then \
+			tarball="go$${version}.$${os_name}-$${arch}.zip"; \
+		else \
+			tarball="go$${version}.$${os_name}-$${arch}.tar.gz"; \
+		fi; \
 		url="https://go.dev/dl/$${tarball}"; \
 		tmp="$$(mktemp -d)"; \
 		trap "rm -rf $$tmp" EXIT; \
@@ -99,16 +110,28 @@ install-go:
 			| grep "\"sha256\"" | head -1 \
 			| sed -E "s/.*\"sha256\": \"([a-f0-9]+)\".*/\1/")"; \
 		[ -n "$$expected" ] || { echo "Could not fetch published checksum for $$tarball" >&2; exit 1; }; \
-		actual="$$(sha256sum "$$tmp/$$tarball" | cut -d" " -f1)"; \
+		if [ "$$os_name" = "windows" ]; then \
+			actual="$$(sha256sum "$$tmp/$$tarball" | cut -d" " -f1)"; \
+		else \
+			actual="$$(sha256sum "$$tmp/$$tarball" | cut -d" " -f1)"; \
+		fi; \
 		[ "$$expected" = "$$actual" ] || { echo "Checksum mismatch!" >&2; echo "  expected: $$expected" >&2; echo "  actual:   $$actual" >&2; exit 1; }; \
 		echo "Checksum OK ($$actual)"; \
 		mkdir -p "$$dest"; \
 		rm -rf "$$dest/go"; \
-		tar -C "$$dest" -xzf "$$tmp/$$tarball"; \
+		if [ "$$os_name" = "windows" ]; then \
+			unzip -q "$$tmp/$$tarball" -d "$$dest"; \
+		else \
+			tar -C "$$dest" -xzf "$$tmp/$$tarball"; \
+		fi; \
 		"$$dest/go/bin/go" version; \
 		echo ""; \
 		echo "Installed to $$dest/go"; \
-		echo "Add to your PATH (e.g. in ~/.zshrc or ~/.bashrc):"; \
-		echo "  export PATH=\"$$dest/go/bin:\$$HOME/go/bin:\$$PATH\""; \
+		if [ "$$os_name" = "windows" ]; then \
+			echo "Add to your PATH (e.g. in environment variables):"; \
+			echo "  $$dest\\go\\bin;%USERPROFILE%\\go\\bin"; \
+		else \
+			echo "Add to your PATH (e.g. in ~/.zshrc or ~/.bashrc):"; \
+			echo "  export PATH=\"$$dest/go/bin:\$$HOME/go/bin:\$$PATH\""; \
+		fi; \
 	'
-

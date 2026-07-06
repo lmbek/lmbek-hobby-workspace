@@ -141,7 +141,7 @@ final class GitUtil
         }
     }
 
-    private static function hasUncommittedChanges(string $repoDir): bool
+    public static function hasUncommittedChanges(string $repoDir): bool
     {
         $result = self::execGitInDir($repoDir, 'status', '--porcelain');
         if ($result['code'] !== 0) {
@@ -169,13 +169,13 @@ final class GitUtil
         return $result['code'] === 0;
     }
 
-    private static function hasUpstream(string $repoDir): bool
+    public static function hasUpstream(string $repoDir): bool
     {
         $result = self::execGitInDir($repoDir, 'rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}');
         return $result['code'] === 0;
     }
 
-    private static function currentBranch(string $repoDir): string
+    public static function currentBranch(string $repoDir): string
     {
         $result = self::execGitInDir($repoDir, 'symbolic-ref', '--short', 'HEAD');
         if ($result['code'] !== 0) {
