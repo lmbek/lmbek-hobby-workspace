@@ -23,6 +23,3 @@ version:
 	@echo "==> Workspace Controller version:"
 	go run main.go version
 
-build:
-	@echo "==> Building binary..."
-	go build -o ../bin/workspace-controller.exe main.go
