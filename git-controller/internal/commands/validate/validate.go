@@ -14,7 +14,7 @@ import (
 func Run() error {
 	ui.Header("Repository Validation")
 
-	sys, workspace, err := system.LoadDefinition("system-definition.yaml")
+	sys, workspace, err := system.LoadDefinition("git-repositories/system-definition.yaml")
 	if err != nil {
 		return fmt.Errorf("could not read system definition: %w", err)
 	}

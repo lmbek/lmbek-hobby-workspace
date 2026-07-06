@@ -10,27 +10,25 @@ import (
 )
 
 func LoadDefinition(path string) (*SystemDefinition, *Workspace, error) {
+	// resolveRoot returns the workspace root from a found definition file path.
+	// The definition lives inside git-repositories/, so the workspace root is
+	// two levels up from the file (git-repositories/ → workspace root).
+	resolveRoot := func(defPath string) string {
+		return filepath.Dir(filepath.Dir(defPath))
+	}
+
 	// 1. Try path as is
 	if _, err := os.Stat(path); err == nil {
-		return loadFile(path, filepath.Dir(path))
+		return loadFile(path, resolveRoot(path))
 	}
 
-	// 2. Try relative to WORKSPACE_ROOT if set
-	workspaceRoot := os.Getenv("WORKSPACE_ROOT")
-	if workspaceRoot != "" {
-		altPath := filepath.Join(workspaceRoot, path)
-		if _, err := os.Stat(altPath); err == nil {
-			return loadFile(altPath, workspaceRoot)
-		}
-	}
-
-	// 3. Try searching parent directories for the workspace folder
+	// 2. Try searching parent directories for the workspace folder
 	currentDir, err := os.Getwd()
 	if err == nil {
 		for {
 			altPath := filepath.Join(currentDir, path)
 			if _, err := os.Stat(altPath); err == nil {
-				return loadFile(altPath, currentDir)
+				return loadFile(altPath, resolveRoot(altPath))
 			}
 			parent := filepath.Dir(currentDir)
 			if parent == currentDir {
