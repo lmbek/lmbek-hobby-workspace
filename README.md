@@ -168,6 +168,16 @@ make -f Makefile-php status
 
 All the same commands are available via `make -f Makefile-php <command>`, or directly with `php git-controller-php/main.php <command>`.
 
+### Ansible Alternative
+
+An Ansible-based port is also available for teams that prefer infrastructure-as-code tooling. It requires **Ansible 2.14+** and **Python 3**. To use it:
+
+```
+make -f Makefile-ansible status
+```
+
+All the same commands are available via `make -f Makefile-ansible <command>`, or directly with `ansible-playbook` from the `git-controller-ansible/` directory.
+
 | Command          | Description                                              |
 |------------------|----------------------------------------------------------|
 | `make init`      | Scaffold a new workspace (definition, Makefile, .gitignore) |
@@ -208,6 +218,7 @@ LMBEK-HOBBY-WORKSPACE/
 │       ├── system/          YAML parser, model, workspace detection
 │       └── ui/              Coloured terminal output helpers
 ├── git-controller-php/      PHP port of the CLI (for PHP developers)
+├── git-controller-ansible/  Ansible port of the CLI (playbook-based)
 ├── git-repositories/        All managed repos live here (gitignored)
 │   ├── deployment/          Environment configs and manifests (folders per env)
 │   ├── applications/        Microservices (one repo per service)
@@ -219,6 +230,7 @@ LMBEK-HOBBY-WORKSPACE/
 │   └── system-definition.yaml  Defines which repos/branches to manage
 ├── Makefile                 Convenience targets for the CLI (Go)
 ├── Makefile-php             Convenience targets for the PHP CLI
+├── Makefile-ansible         Convenience targets for the Ansible playbooks
 ├── .env.example             Documented environment variables
 ├── .gitignore               Git ignore rules (ignores git-repositories/, etc.)
 ├── .aiignore                AI agent ignore rules
