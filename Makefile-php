@@ -2,7 +2,7 @@
 # Thin wrapper around git-controller-php commands.
 # Usage: make -f Makefile-php <command>
 
-.PHONY: help init clone fetch pull push scaffold checkout status validate doctor ssh ssh-setup update
+.PHONY: help init clone fetch pull push scaffold checkout status validate doctor ssh ssh-setup update install-php
 
 help:
 	@echo "Workspace Controller (PHP) - Available commands:"
@@ -22,6 +22,9 @@ help:
 	@echo "  Setup:"
 	@echo "  make -f Makefile-php doctor    - Diagnose environment (Git, PHP, SSH, Docker)"
 	@echo "  make -f Makefile-php ssh       - Interactive SSH setup (alias: ssh-setup)"
+	@echo ""
+	@echo "  Installation:"
+	@echo "  make -f Makefile-php install-php     - Install PHP"
 
 init:
 	php git-controller-php/main.php init
@@ -60,3 +63,7 @@ update:
 	php git-controller-php/main.php update
 
 ssh-setup: ssh
+
+install-php:
+	@echo "Install PHP from https://www.php.net/downloads"
+	@echo "After installation, verify with: php --version"
