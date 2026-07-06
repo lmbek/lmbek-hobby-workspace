@@ -24,7 +24,7 @@ help:
 	@echo "  make -f Makefile-php ssh       - Interactive SSH setup (alias: ssh-setup)"
 	@echo ""
 	@echo "  Installation:"
-	@echo "  make -f Makefile-php install-php     - Install PHP"
+	@echo "  make -f Makefile-php install-php     - Install PHP via dnf"
 
 init:
 	php git-controller-php/main.php init
@@ -65,5 +65,5 @@ update:
 ssh-setup: ssh
 
 install-php:
-	@echo "Install PHP from https://www.php.net/downloads"
-	@echo "After installation, verify with: php --version"
+	sudo dnf install -y php-cli
+	@php --version
