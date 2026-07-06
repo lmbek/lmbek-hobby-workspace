@@ -4,7 +4,7 @@
 
 .PHONY: help clone fetch pull push scaffold checkout status validate doctor update
 
-ANSIBLE_CMD = cd git-controller-ansible && ansible-playbook playbooks
+ANSIBLE_CMD = cd git-controller-ansible && ANSIBLE_FILTER_PLUGINS=filter_plugins ANSIBLE_INVENTORY=inventory.yml ansible-playbook playbooks
 
 help:
 	@echo "Workspace Controller (Ansible) - Available commands:"
