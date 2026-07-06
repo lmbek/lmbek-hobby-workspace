@@ -34,6 +34,12 @@ final class GitUtil
 
     public static function push(string $repoDir): void
     {
+        // If the branch is unborn (no commits), create an initial commit.
+        if (!self::hasCommits($repoDir) && self::hasUncommittedChanges($repoDir)) {
+            self::runGitInDir($repoDir, 'add', '.');
+            self::runGitInDir($repoDir, 'commit', '-m', 'Initial commit');
+        }
+
         try {
             self::doPush($repoDir);
         } catch (RuntimeException $e) {
@@ -100,7 +106,7 @@ final class GitUtil
     public static function hasOutgoingCommits(string $repoDir): bool
     {
         if (!self::hasCommits($repoDir)) {
-            return false;
+            return self::hasUncommittedChanges($repoDir);
         }
         if (!self::hasUpstream($repoDir)) {
             return true;
@@ -133,6 +139,15 @@ final class GitUtil
         if (!is_dir($path)) {
             mkdir($path, 0755, true);
         }
+    }
+
+    private static function hasUncommittedChanges(string $repoDir): bool
+    {
+        $result = self::execGitInDir($repoDir, 'status', '--porcelain');
+        if ($result['code'] !== 0) {
+            return false;
+        }
+        return trim($result['output']) !== '';
     }
 
     // --- Private helpers ---

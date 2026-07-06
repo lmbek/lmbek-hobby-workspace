@@ -51,8 +51,21 @@ func Checkout(repoDir, branch string) error {
 // one with "git push -u origin <branch>".
 // When the remote is ahead (push rejected with "fetch first"), it automatically
 // pulls and retries the push.
+// If the repository has no commits but contains changes, an initial commit is
+// created automatically before pushing.
 func Push(repoDir string) error {
 	slog.Debug("Pushing repository", "dir", repoDir)
+
+	// If the branch is unborn (no commits), create an initial commit.
+	if !hasCommits(repoDir) && hasUncommittedChanges(repoDir) {
+		slog.Debug("No commits yet, creating initial commit", "dir", repoDir)
+		if err := RunGitInDir(repoDir, "add", "."); err != nil {
+			return EnhanceGitError(err)
+		}
+		if err := RunGitInDir(repoDir, "commit", "-m", "Initial commit"); err != nil {
+			return EnhanceGitError(err)
+		}
+	}
 
 	err := doPush(repoDir)
 	if err == nil {
@@ -81,6 +94,20 @@ func doPush(repoDir string) error {
 		}
 	}
 	return RunGitInDir(repoDir, "push")
+}
+
+// hasUncommittedChanges returns true if the working tree has staged or unstaged
+// changes (including untracked files).
+func hasUncommittedChanges(repoDir string) bool {
+	var out strings.Builder
+	cmd := execCommand("git", "status", "--porcelain")
+	cmd.Dir = repoDir
+	cmd.Env = gitEnv()
+	cmd.Stdout = &out
+	if err := cmd.Run(); err != nil {
+		return false
+	}
+	return strings.TrimSpace(out.String()) != ""
 }
 
 // isRejectedBehindRemote returns true if the error indicates the push was
@@ -184,11 +211,13 @@ func Scaffold(targetPath, repo string) error {
 }
 
 // HasOutgoingCommits returns true if the current branch has commits that have
-// not been pushed to the remote yet, or if there is no upstream configured.
+// not been pushed to the remote yet, if there is no upstream configured, or if
+// the repository has no commits but contains uncommitted changes.
 func HasOutgoingCommits(repoDir string) bool {
-	// If there are no commits at all, there is nothing to push.
+	// If there are no commits, check whether there are staged/unstaged changes
+	// that should be committed and pushed.
 	if !hasCommits(repoDir) {
-		return false
+		return hasUncommittedChanges(repoDir)
 	}
 	// If no upstream is configured, we need to push to set one up.
 	if !hasUpstream(repoDir) {

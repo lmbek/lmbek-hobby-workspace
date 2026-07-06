@@ -53,9 +53,25 @@
       loop_control:
         label: "{{ item.display_name }}"
 
-    - name: Check for outgoing commits
-      ansible.builtin.command:
-        cmd: git rev-list --count @{upstream}..HEAD
+    - name: Check for outgoing commits or uncommitted changes
+      ansible.builtin.shell: |
+        if git rev-parse HEAD >/dev/null 2>&1; then
+          # Has commits — check for outgoing
+          if git rev-parse --abbrev-ref --symbolic-full-name @{u} >/dev/null 2>&1; then
+            count=$(git rev-list --count @{u}..HEAD)
+            echo "$count"
+          else
+            echo "1"
+          fi
+        else
+          # No commits — check for uncommitted changes
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "1"
+          else
+            echo "0"
+          fi
+        fi
+      args:
         chdir: "{{ item.item.target_path }}"
       when: item.stat.exists
       loop: "{{ git_dirs.results }}"
@@ -67,6 +83,12 @@
 
     - name: Push repositories with outgoing commits
       ansible.builtin.shell: |
+        # If no commits yet, create initial commit
+        if ! git rev-parse HEAD >/dev/null 2>&1; then
+          if [ -n "$(git status --porcelain)" ]; then
+            git add . && git commit -m "Initial commit"
+          fi
+        fi
         do_push() {
           if ! git rev-parse --abbrev-ref --symbolic-full-name @{u} >/dev/null 2>&1; then
             branch=$(git symbolic-ref --short HEAD 2>/dev/null)

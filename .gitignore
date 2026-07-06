@@ -6,4 +6,10 @@ bin/
 *.html
 vendor/
 .DS_Store
-git-repositories/
+git-repositories/deployment
+git-repositories/docs
+git-repositories/applications/**
+git-repositories/infrastructure/**
+git-repositories/observability
+git-repositories/tools
+git-repositories/orchestrations
