@@ -1,6 +1,10 @@
 # Workspace Controller Makefile
 # Thin wrapper around git-controller commands.
 
+# Go installation settings (override on the command line, e.g. `make install-go GO_VERSION=1.26.4`)
+GO_VERSION ?= 1.26.4
+GO_INSTALL_DIR ?= $(HOME)/.local
+
 .PHONY: help init clone fetch pull push scaffold checkout status validate doctor ssh ssh-setup update test cover install-go
 
 help:
@@ -27,7 +31,7 @@ help:
 	@echo "  make ssh       - Interactive SSH setup (alias: ssh-setup)"
 	@echo ""
 	@echo "  Installation:"
-	@echo "  make install-go      - Install Go (requires manual download)"
+	@echo "  make install-go      - Download, verify, and install Go $(GO_VERSION) to $(GO_INSTALL_DIR)/go"
 
 init:
 	cd git-controller && go run . init
@@ -75,6 +79,36 @@ cover:
 ssh-setup: ssh
 
 install-go:
-	@echo "Install Go from https://go.dev/dl/"
-	@echo "After installation, verify with: go version"
+	@bash -euc '\
+		version="$(GO_VERSION)"; \
+		dest="$(GO_INSTALL_DIR)"; \
+		case "$$(uname -m)" in \
+			x86_64|amd64) arch="amd64" ;; \
+			aarch64|arm64) arch="arm64" ;; \
+			*) echo "Unsupported architecture: $$(uname -m)" >&2; exit 1 ;; \
+		esac; \
+		tarball="go$${version}.linux-$${arch}.tar.gz"; \
+		url="https://go.dev/dl/$${tarball}"; \
+		tmp="$$(mktemp -d)"; \
+		trap "rm -rf $$tmp" EXIT; \
+		echo "Downloading $$url"; \
+		curl -fSL -o "$$tmp/$$tarball" "$$url"; \
+		echo "Verifying checksum..."; \
+		expected="$$(curl -fsSL "https://go.dev/dl/?mode=json&include=all" \
+			| grep -A4 "\"filename\": \"$${tarball}\"" \
+			| grep "\"sha256\"" | head -1 \
+			| sed -E "s/.*\"sha256\": \"([a-f0-9]+)\".*/\1/")"; \
+		[ -n "$$expected" ] || { echo "Could not fetch published checksum for $$tarball" >&2; exit 1; }; \
+		actual="$$(sha256sum "$$tmp/$$tarball" | cut -d" " -f1)"; \
+		[ "$$expected" = "$$actual" ] || { echo "Checksum mismatch!" >&2; echo "  expected: $$expected" >&2; echo "  actual:   $$actual" >&2; exit 1; }; \
+		echo "Checksum OK ($$actual)"; \
+		mkdir -p "$$dest"; \
+		rm -rf "$$dest/go"; \
+		tar -C "$$dest" -xzf "$$tmp/$$tarball"; \
+		"$$dest/go/bin/go" version; \
+		echo ""; \
+		echo "Installed to $$dest/go"; \
+		echo "Add to your PATH (e.g. in ~/.zshrc or ~/.bashrc):"; \
+		echo "  export PATH=\"$$dest/go/bin:\$$HOME/go/bin:\$$PATH\""; \
+	'
 
