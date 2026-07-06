@@ -49,24 +49,8 @@ func Checkout(repoDir, branch string) error {
 // Push pushes local commits to the remote in the given repository directory.
 // If no upstream is configured for the current branch it automatically sets
 // one with "git push -u origin <branch>".
-// If the branch has no commits yet, an initial empty commit is created first.
 func Push(repoDir string) error {
 	slog.Debug("Pushing repository", "dir", repoDir)
-
-	// If the branch has no commits (unborn HEAD), create an initial empty commit
-	// so there is something to push.
-	if !hasCommits(repoDir) {
-		branch := currentBranch(repoDir)
-		if branch != "" {
-			slog.Debug("No commits on branch, creating initial commit", "dir", repoDir, "branch", branch)
-			if err := ensureGitIdentity(repoDir); err != nil {
-				return err
-			}
-			if err := RunGitInDir(repoDir, "commit", "--allow-empty", "-m", "Initial commit"); err != nil {
-				return EnhanceGitError(err)
-			}
-		}
-	}
 
 	// Check whether the current branch has an upstream configured.
 	if !hasUpstream(repoDir) {
@@ -77,19 +61,6 @@ func Push(repoDir string) error {
 		}
 	}
 	return EnhanceGitError(RunGitInDir(repoDir, "push"))
-}
-
-// ensureGitIdentity checks that git can resolve an author identity for commits.
-// If no identity is configured (no global/system/local user.name), it returns
-// an error asking the user to set one instead of silently using a placeholder.
-func ensureGitIdentity(repoDir string) error {
-	cmd := execCommand("git", "config", "user.name")
-	cmd.Dir = repoDir
-	cmd.Env = gitEnv()
-	if cmd.Run() == nil {
-		return nil // identity already configured
-	}
-	return fmt.Errorf("git author identity not configured. Please run:\n\n  git config --global user.name \"Your Name\"\n  git config --global user.email \"you@example.com\"")
 }
 
 // hasCommits returns true if HEAD points to a valid commit (i.e. the branch is not unborn).
@@ -185,10 +156,9 @@ func Scaffold(targetPath, repo string) error {
 // HasOutgoingCommits returns true if the current branch has commits that have
 // not been pushed to the remote yet, or if there is no upstream configured.
 func HasOutgoingCommits(repoDir string) bool {
-	// If there are no commits at all, there's nothing to push unless we'd
-	// create an initial commit (handled by Push itself).
+	// If there are no commits at all, there is nothing to push.
 	if !hasCommits(repoDir) {
-		return true
+		return false
 	}
 	// If no upstream is configured, we need to push to set one up.
 	if !hasUpstream(repoDir) {

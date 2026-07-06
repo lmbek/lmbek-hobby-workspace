@@ -48,6 +48,9 @@ repos:
         iac:
             repository: git@github.com:lmbek/lmbek-hobby-infrastructure.git
             version: main
+        platform:
+            repository: git@github.com:lmbek/lmbek-hobby-platform.git
+            version: main
         servers:
             repository: git@github.com:lmbek/lmbek-hobby-servers.git
             version: main
