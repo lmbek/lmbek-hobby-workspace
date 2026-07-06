@@ -24,7 +24,7 @@ help:
 	@echo "  make -f Makefile-ansible doctor    - Diagnose environment (Git, Ansible, SSH, Docker)"
 	@echo ""
 	@echo "  Installation:"
-	@echo "  make -f Makefile-ansible install-ansible - Install Ansible"
+	@echo "  make -f Makefile-ansible install-ansible - Install Ansible via dnf"
 
 clone:
 	$(ANSIBLE_CMD)/clone.yml
@@ -57,5 +57,5 @@ update:
 	$(ANSIBLE_CMD)/update.yml
 
 install-ansible:
-	sudo apt install -y ansible
-	@echo "Verify with: ansible --version"
+	sudo dnf install -y ansible
+	@ansible --version
