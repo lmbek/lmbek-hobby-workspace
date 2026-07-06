@@ -1,7 +1,7 @@
 # Workspace Controller Makefile
 # Thin wrapper around git-controller commands.
 
-.PHONY: help init clone fetch pull push scaffold checkout status validate doctor ssh ssh-setup update test cover
+.PHONY: help init clone fetch pull push scaffold checkout status validate doctor ssh ssh-setup update test cover install-go
 
 help:
 	@echo "Workspace Controller - Available commands:"
@@ -25,6 +25,9 @@ help:
 	@echo "  Setup:"
 	@echo "  make doctor    - Diagnose environment (Git, Go, SSH, Docker)"
 	@echo "  make ssh       - Interactive SSH setup (alias: ssh-setup)"
+	@echo ""
+	@echo "  Installation:"
+	@echo "  make install-go      - Install Go (requires manual download)"
 
 init:
 	cd git-controller && go run . init
@@ -70,3 +73,8 @@ cover:
 	@echo "Coverage report: git-controller/cover.html"
 
 ssh-setup: ssh
+
+install-go:
+	@echo "Install Go from https://go.dev/dl/"
+	@echo "After installation, verify with: go version"
+

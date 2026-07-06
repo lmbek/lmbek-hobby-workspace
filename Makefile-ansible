@@ -2,7 +2,7 @@
 # Thin wrapper around git-controller-ansible playbooks.
 # Usage: make -f Makefile-ansible <command>
 
-.PHONY: help clone fetch pull push scaffold checkout status validate doctor update
+.PHONY: help clone fetch pull push scaffold checkout status validate doctor update install-ansible
 
 ANSIBLE_CMD = cd git-controller-ansible && ANSIBLE_FILTER_PLUGINS=filter_plugins ANSIBLE_INVENTORY=inventory.yml ansible-playbook playbooks
 
@@ -22,6 +22,9 @@ help:
 	@echo ""
 	@echo "  Setup:"
 	@echo "  make -f Makefile-ansible doctor    - Diagnose environment (Git, Ansible, SSH, Docker)"
+	@echo ""
+	@echo "  Installation:"
+	@echo "  make -f Makefile-ansible install-ansible - Install Ansible"
 
 clone:
 	$(ANSIBLE_CMD)/clone.yml
@@ -52,3 +55,7 @@ doctor:
 
 update:
 	$(ANSIBLE_CMD)/update.yml
+
+install-ansible:
+	sudo apt install -y ansible
+	@echo "Verify with: ansible --version"
