@@ -16,6 +16,7 @@ import (
 	"workspace/git-controller/internal/commands/scaffold"
 	"workspace/git-controller/internal/commands/sshsetup"
 	"workspace/git-controller/internal/commands/status"
+	"workspace/git-controller/internal/commands/update"
 	"workspace/git-controller/internal/commands/validate"
 	"workspace/git-controller/internal/commands/wsinit"
 	"workspace/git-controller/internal/system"
@@ -42,6 +43,7 @@ func main() {
 		"scaffold": scaffold.Run,
 		"checkout": checkout.Run,
 		"status":   status.Run,
+		"update":   update.Run,
 		"validate": validate.Run,
 		// Utilities
 		"doctor":    doctor.Run,
@@ -93,6 +95,7 @@ func showHelp() {
 	fmt.Println("  scaffold   Initialise .git and set remote origin (no clone/fetch needed)")
 	fmt.Println("  checkout   Switch all repositories to their defined branch")
 	fmt.Println("  status     Show dashboard overview of all repository states")
+	fmt.Println("  update     Fetch, pull, and show status across all repositories")
 	fmt.Println("  validate   Validate repository consistency against the definition")
 
 	fmt.Println("\nSetup Commands:")
