@@ -1,0 +1,62 @@
+# Workspace Controller Makefile (PHP)
+# Thin wrapper around git-controller-php commands.
+# Usage: make -f Makefile-php <command>
+
+.PHONY: help init clone fetch pull push scaffold checkout status validate doctor ssh ssh-setup update
+
+help:
+	@echo "Workspace Controller (PHP) - Available commands:"
+	@echo ""
+	@echo "  Workflow:"
+	@echo "  make -f Makefile-php init      - Scaffold a new workspace"
+	@echo "  make -f Makefile-php clone     - Clone all repositories (initial setup)"
+	@echo "  make -f Makefile-php fetch     - Fetch all remotes across all repositories"
+	@echo "  make -f Makefile-php pull      - Pull updates across all repositories (clone if missing)"
+	@echo "  make -f Makefile-php update    - Fetch, pull, and show status across all repositories"
+	@echo "  make -f Makefile-php push      - Push local commits across all repositories"
+	@echo "  make -f Makefile-php scaffold  - Initialise .git, set remote origin, fetch, and configure default branch"
+	@echo "  make -f Makefile-php checkout  - Switch all repos to their defined branch"
+	@echo "  make -f Makefile-php status    - Show dashboard overview of all repository states"
+	@echo "  make -f Makefile-php validate  - Validate repository consistency"
+	@echo ""
+	@echo "  Setup:"
+	@echo "  make -f Makefile-php doctor    - Diagnose environment (Git, PHP, SSH, Docker)"
+	@echo "  make -f Makefile-php ssh       - Interactive SSH setup (alias: ssh-setup)"
+
+init:
+	php git-controller-php/main.php init
+
+clone:
+	php git-controller-php/main.php clone
+
+fetch:
+	php git-controller-php/main.php fetch
+
+pull:
+	php git-controller-php/main.php pull
+
+push:
+	php git-controller-php/main.php push
+
+scaffold:
+	php git-controller-php/main.php scaffold
+
+checkout:
+	php git-controller-php/main.php checkout
+
+status:
+	php git-controller-php/main.php status
+
+validate:
+	php git-controller-php/main.php validate
+
+doctor:
+	php git-controller-php/main.php doctor
+
+ssh:
+	php git-controller-php/main.php ssh
+
+update:
+	php git-controller-php/main.php update
+
+ssh-setup: ssh

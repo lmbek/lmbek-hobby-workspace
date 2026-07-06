@@ -157,6 +157,17 @@ Checks that every repository matches the definition (correct branch, clean state
 
 All commands can be run via `make` from the workspace root, or directly with `go run .` from the `git-controller/` directory.
 
+### PHP Alternative
+
+A PHP port of the git-controller is also available for PHP developers. It requires **PHP 8.1+** and Composer. To use it:
+
+```
+cd git-controller-php && composer install
+make -f Makefile-php status
+```
+
+All the same commands are available via `make -f Makefile-php <command>`, or directly with `php git-controller-php/main.php <command>`.
+
 | Command          | Description                                              |
 |------------------|----------------------------------------------------------|
 | `make init`      | Scaffold a new workspace (definition, Makefile, .gitignore) |
@@ -177,6 +188,7 @@ All commands can be run via `make` from the workspace root, or directly with `go
 ```
 LMBEK-HOBBY-WORKSPACE/
 ├── git-controller/          Go CLI that manages repositories
+├── git-controller-php/      PHP port of the CLI (for PHP developers)
 ├── git-repositories/        All managed repos live here (gitignored)
 │   ├── deployment/          Environment configs and manifests (folders per env)
 │   ├── applications/        Microservices (one repo per service)
@@ -186,7 +198,8 @@ LMBEK-HOBBY-WORKSPACE/
 │   ├── tools/               General-purpose utilities and scripts
 │   └── docs/                Architecture docs, API docs, manual runbooks
 ├── system-definition.yaml   Defines which repos/branches to manage
-├── Makefile                 Convenience targets for the CLI
+├── Makefile                 Convenience targets for the CLI (Go)
+├── Makefile-php             Convenience targets for the PHP CLI
 ├── .env.example             Documented environment variables
 ├── .github/                 Issue templates, PR template, CI workflows
 ├── AGENTS.md               AI agent guidelines (defers to GUIDELINES.md)
