@@ -19,8 +19,27 @@
         repos: "{{ sysdef.repos | flatten_repos(workspace_root) }}"
 
     - name: Push workspace repository
-      ansible.builtin.command:
-        cmd: git push
+      ansible.builtin.shell: |
+        do_push() {
+          if ! git rev-parse --abbrev-ref --symbolic-full-name @{u} >/dev/null 2>&1; then
+            branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+            if [ -n "$branch" ]; then
+              git push -u origin "$branch" 2>&1
+              return $?
+            fi
+          fi
+          git push 2>&1
+          return $?
+        }
+        output=$(do_push)
+        rc=$?
+        if [ $rc -ne 0 ] && echo "$output" | grep -qE 'fetch first|non-fast-forward'; then
+          git fetch --all && git pull && do_push
+          exit $?
+        fi
+        echo "$output"
+        exit $rc
+      args:
         chdir: "{{ workspace_root }}"
       register: ws_push
       failed_when: false
@@ -47,8 +66,27 @@
       changed_when: false
 
     - name: Push repositories with outgoing commits
-      ansible.builtin.command:
-        cmd: git push
+      ansible.builtin.shell: |
+        do_push() {
+          if ! git rev-parse --abbrev-ref --symbolic-full-name @{u} >/dev/null 2>&1; then
+            branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+            if [ -n "$branch" ]; then
+              git push -u origin "$branch" 2>&1
+              return $?
+            fi
+          fi
+          git push 2>&1
+          return $?
+        }
+        output=$(do_push)
+        rc=$?
+        if [ $rc -ne 0 ] && echo "$output" | grep -qE 'fetch first|non-fast-forward'; then
+          git fetch --all && git pull && do_push
+          exit $?
+        fi
+        echo "$output"
+        exit $rc
+      args:
         chdir: "{{ item.item.item.target_path }}"
       when: >-
         item.item.stat.exists and

@@ -49,18 +49,48 @@ func Checkout(repoDir, branch string) error {
 // Push pushes local commits to the remote in the given repository directory.
 // If no upstream is configured for the current branch it automatically sets
 // one with "git push -u origin <branch>".
+// When the remote is ahead (push rejected with "fetch first"), it automatically
+// pulls and retries the push.
 func Push(repoDir string) error {
 	slog.Debug("Pushing repository", "dir", repoDir)
 
-	// Check whether the current branch has an upstream configured.
+	err := doPush(repoDir)
+	if err == nil {
+		return nil
+	}
+
+	// If the push was rejected because the remote is ahead, pull and retry.
+	if isRejectedBehindRemote(err) {
+		slog.Debug("Remote is ahead, pulling before retry", "dir", repoDir)
+		if pullErr := Pull(repoDir); pullErr != nil {
+			return EnhanceGitError(pullErr)
+		}
+		return EnhanceGitError(doPush(repoDir))
+	}
+
+	return EnhanceGitError(err)
+}
+
+// doPush performs the actual git push, setting upstream if needed.
+func doPush(repoDir string) error {
 	if !hasUpstream(repoDir) {
 		branch := currentBranch(repoDir)
 		if branch != "" {
 			slog.Debug("No upstream configured, pushing with -u", "dir", repoDir, "branch", branch)
-			return EnhanceGitError(RunGitInDir(repoDir, "push", "-u", "origin", branch))
+			return RunGitInDir(repoDir, "push", "-u", "origin", branch)
 		}
 	}
-	return EnhanceGitError(RunGitInDir(repoDir, "push"))
+	return RunGitInDir(repoDir, "push")
+}
+
+// isRejectedBehindRemote returns true if the error indicates the push was
+// rejected because the remote contains commits not present locally.
+func isRejectedBehindRemote(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "fetch first") || strings.Contains(msg, "non-fast-forward")
 }
 
 // hasCommits returns true if HEAD points to a valid commit (i.e. the branch is not unborn).

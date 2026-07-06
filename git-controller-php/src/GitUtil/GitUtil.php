@@ -34,14 +34,21 @@ final class GitUtil
 
     public static function push(string $repoDir): void
     {
-        if (!self::hasCommits($repoDir)) {
-            $branch = self::currentBranch($repoDir);
-            if ($branch !== '') {
-                self::ensureGitIdentity($repoDir);
-                self::runGitInDir($repoDir, 'commit', '--allow-empty', '-m', 'Initial commit');
+        try {
+            self::doPush($repoDir);
+        } catch (RuntimeException $e) {
+            // If rejected because remote is ahead, pull and retry.
+            if (self::isRejectedBehindRemote($e)) {
+                self::pull($repoDir);
+                self::doPush($repoDir);
+                return;
             }
+            throw $e;
         }
+    }
 
+    private static function doPush(string $repoDir): void
+    {
         if (!self::hasUpstream($repoDir)) {
             $branch = self::currentBranch($repoDir);
             if ($branch !== '') {
@@ -50,6 +57,12 @@ final class GitUtil
             }
         }
         self::runGitInDir($repoDir, 'push');
+    }
+
+    private static function isRejectedBehindRemote(RuntimeException $e): bool
+    {
+        $msg = $e->getMessage();
+        return str_contains($msg, 'fetch first') || str_contains($msg, 'non-fast-forward');
     }
 
     public static function initAndLink(string $targetPath, string $repo): void
@@ -87,7 +100,7 @@ final class GitUtil
     public static function hasOutgoingCommits(string $repoDir): bool
     {
         if (!self::hasCommits($repoDir)) {
-            return true;
+            return false;
         }
         if (!self::hasUpstream($repoDir)) {
             return true;
@@ -134,17 +147,6 @@ final class GitUtil
         }
     }
 
-    private static function ensureGitIdentity(string $repoDir): void
-    {
-        $result = self::execGitInDir($repoDir, 'config', 'user.name');
-        if ($result['code'] !== 0) {
-            throw new RuntimeException(
-                "git author identity not configured. Please run:\n\n"
-                . "  git config --global user.name \"Your Name\"\n"
-                . "  git config --global user.email \"you@example.com\""
-            );
-        }
-    }
 
     private static function hasCommits(string $repoDir): bool
     {
