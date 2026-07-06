@@ -1,7 +1,7 @@
 # Workspace Controller Makefile
 # Thin wrapper around git-controller commands.
 
-.PHONY: help init clone fetch pull push scaffold checkout status validate doctor ssh ssh-setup update
+.PHONY: help init clone fetch pull push scaffold checkout status validate doctor ssh ssh-setup update test cover
 
 help:
 	@echo "Workspace Controller - Available commands:"
@@ -17,6 +17,10 @@ help:
 	@echo "  make checkout  - Switch all repos to their defined branch"
 	@echo "  make status    - Show dashboard overview of all repository states"
 	@echo "  make validate  - Validate repository consistency"
+	@echo ""
+	@echo "  Testing:"
+	@echo "  make test      - Run all tests"
+	@echo "  make cover     - Run tests with HTML coverage report"
 	@echo ""
 	@echo "  Setup:"
 	@echo "  make doctor    - Diagnose environment (Git, Go, SSH, Docker)"
@@ -57,5 +61,12 @@ ssh:
 
 update:
 	cd git-controller && go run . update
+
+test:
+	cd git-controller && go test ./...
+
+cover:
+	cd git-controller && go test -coverprofile=cover.out ./... && go tool cover -html=cover.out -o cover.html
+	@echo "Coverage report: git-controller/cover.html"
 
 ssh-setup: ssh

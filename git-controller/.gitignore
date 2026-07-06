@@ -2,4 +2,5 @@
 *.exe
 *.test
 *.out
+*.html
 cover

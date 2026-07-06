@@ -188,6 +188,25 @@ All the same commands are available via `make -f Makefile-php <command>`, or dir
 ```
 LMBEK-HOBBY-WORKSPACE/
 ├── git-controller/          Go CLI that manages repositories
+│   ├── main.go              Entry point – parses args and dispatches commands
+│   └── internal/
+│       ├── commands/        One package per command
+│       │   ├── checkout/    Switch repos to their defined branch
+│       │   ├── clone/       Clone all repositories
+│       │   ├── doctor/      Diagnose environment (Git, Go, SSH, Docker)
+│       │   ├── fetch/       Fetch all remotes
+│       │   ├── pull/        Pull updates (clone if missing)
+│       │   ├── push/        Push local commits
+│       │   ├── scaffold/    Init .git and set remote origin
+│       │   ├── sshsetup/    Interactive SSH key setup
+│       │   ├── status/      Dashboard overview of repo states
+│       │   ├── update/      Fetch + pull + status in one go
+│       │   ├── validate/    Verify repos match system definition
+│       │   └── wsinit/      Scaffold a new workspace
+│       ├── gitutil/         Git shell helpers (clone, fetch, branch, etc.)
+│       ├── sshutil/         SSH key detection and configuration
+│       ├── system/          YAML parser, model, workspace detection
+│       └── ui/              Coloured terminal output helpers
 ├── git-controller-php/      PHP port of the CLI (for PHP developers)
 ├── git-repositories/        All managed repos live here (gitignored)
 │   ├── deployment/          Environment configs and manifests (folders per env)
