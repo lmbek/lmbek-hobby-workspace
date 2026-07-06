@@ -19,12 +19,14 @@ final class CloneCommand
 
         $hasErrors = false;
 
+        $catNum = 0;
         foreach ($sys->repos as $catName => $repos) {
             if (count($repos) === 0) {
                 continue;
             }
+            $catNum++;
 
-            UI::step(2, "Category: $catName");
+            UI::step($catNum, "Category: $catName");
             $catDir = realpath($workspace->getCategoryDir($catName)) ?: $workspace->getCategoryDir($catName);
             GitUtil::ensureDir($catDir);
 

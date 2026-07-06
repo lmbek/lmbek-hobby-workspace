@@ -12,4 +12,4 @@ git-repositories/applications/**
 git-repositories/infrastructure/**
 git-repositories/observability
 git-repositories/tools
-git-repositories/orchestrations
+git-repositories/orchestrators

@@ -22,14 +22,16 @@ final class StatusCommand
         $ahead = 0;
         $behind = 0;
 
+        $catNum = 0;
         foreach ($sys->repos as $catName => $repos) {
             if (count($repos) === 0) {
                 continue;
             }
+            $catNum++;
 
-            $catDir = realpath($workspace->getCategoryDir($catName)) ?: $workspace->getCategoryDir($catName);
+            $catDir = $workspace->getCategoryDir($catName);
 
-            UI::step(0, "Category: $catName");
+            UI::step($catNum, "Category: $catName");
 
             foreach ($repos as $name => $comp) {
                 $totalRepos++;
@@ -49,9 +51,14 @@ final class StatusCommand
                 }
                 $cloned++;
 
-                $branch = self::getBranch($targetPath);
-                $isDirty = self::hasDirtyFiles($targetPath);
-                [$aheadN, $behindN] = self::getAheadBehind($targetPath);
+                $branch = GitUtil::currentBranch($targetPath);
+                $isDirty = GitUtil::hasUncommittedChanges($targetPath);
+                
+                $aheadN = 0;
+                $behindN = 0;
+                if (GitUtil::hasUpstream($targetPath)) {
+                    [$aheadN, $behindN] = self::getAheadBehind($targetPath);
+                }
 
                 if ($isDirty) {
                     $dirty++;
@@ -88,29 +95,11 @@ final class StatusCommand
             UI::warn('Some repositories have uncommitted changes.');
         }
         if ($behind > 0) {
-            UI::warn("Some repositories are behind remote. Run 'make pull' to update.");
+            UI::warn("Some repositories are behind remote. Run 'make -f Makefile-php pull' to update.");
         }
         if ($cloned < $totalRepos) {
-            UI::warn("Some repositories are not cloned. Run 'make clone' to set up.");
+            UI::warn("Some repositories are not cloned. Run 'make -f Makefile-php clone' to set up.");
         }
-    }
-
-    private static function getBranch(string $dir): string
-    {
-        exec('git -C ' . escapeshellarg($dir) . ' rev-parse --abbrev-ref HEAD 2>&1', $lines, $code);
-        if ($code !== 0) {
-            return 'unknown';
-        }
-        return trim(implode("\n", $lines));
-    }
-
-    private static function hasDirtyFiles(string $dir): bool
-    {
-        exec('git -C ' . escapeshellarg($dir) . ' status --porcelain 2>&1', $lines, $code);
-        if ($code !== 0) {
-            return false;
-        }
-        return trim(implode("\n", $lines)) !== '';
     }
 
     /**

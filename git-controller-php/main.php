@@ -2,7 +2,13 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/vendor/autoload.php';
+if (file_exists(__DIR__ . '/vendor/autoload.php')) {
+    require_once __DIR__ . '/vendor/autoload.php';
+} else {
+    // Fallback to internal autoloader if Composer is not used
+    require_once __DIR__ . '/src/System/Autoloader.php';
+    \GitController\System\Autoloader::register('GitController\\', __DIR__ . '/src');
+}
 
 use GitController\Commands\CheckoutCommand;
 use GitController\Commands\CloneCommand;

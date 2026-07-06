@@ -24,7 +24,7 @@ help:
 	@echo "  make -f Makefile-php ssh       - Interactive SSH setup (alias: ssh-setup)"
 	@echo ""
 	@echo "  Installation:"
-	@echo "  make -f Makefile-php install-php     - Install PHP via dnf"
+	@echo "  make -f Makefile-php install-php     - Install PHP"
 
 init:
 	php git-controller-php/main.php init
@@ -65,5 +65,39 @@ update:
 ssh-setup: ssh
 
 install-php:
-	sudo dnf install -y php-cli
+	@echo "Detecting operating system..."
+	@if [ "$$(uname)" = "Darwin" ]; then \
+		echo "macOS detected - using Homebrew"; \
+		brew install php; \
+	elif [ -f /etc/debian_version ]; then \
+		echo "Debian/Ubuntu detected - using apt"; \
+		sudo apt update && sudo apt install -y php-cli; \
+	elif [ -f /etc/redhat-release ] || [ -f /etc/fedora-release ]; then \
+		echo "RHEL/Fedora detected - using dnf"; \
+		sudo dnf install -y php-cli; \
+	elif [ -f /etc/arch-release ]; then \
+		echo "Arch Linux detected - using pacman"; \
+		sudo pacman -S --noconfirm php; \
+	elif [ -f /etc/alpine-release ]; then \
+		echo "Alpine Linux detected - using apk"; \
+		sudo apk add --no-cache php-cli; \
+	elif command -v pacman >/dev/null 2>&1; then \
+		echo "Using pacman"; \
+		sudo pacman -S --noconfirm php; \
+	elif command -v zypper >/dev/null 2>&1; then \
+		echo "openSUSE detected - using zypper"; \
+		sudo zypper install -y php-cli; \
+	elif command -v apt-get >/dev/null 2>&1; then \
+		echo "Using apt-get"; \
+		sudo apt-get update && sudo apt-get install -y php-cli; \
+	elif command -v yum >/dev/null 2>&1; then \
+		echo "Using yum"; \
+		sudo yum install -y php-cli; \
+	elif command -v brew >/dev/null 2>&1; then \
+		echo "Using Homebrew"; \
+		brew install php; \
+	else \
+		echo "Unsupported operating system. Please install PHP manually." >&2; \
+		exit 1; \
+	fi
 	@php --version

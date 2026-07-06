@@ -8,10 +8,13 @@ This is a direct port of the Go-based `git-controller` for PHP developers.
 
 - PHP 8.1+
 - Git
-- Composer (for autoloading)
+- Composer (Optional - for autoloading if you prefer it over the built-in autoloader)
 
 ## Setup
 
+No setup is required if you have PHP and Git installed.
+
+If you want to use Composer (optional):
 ```bash
 cd git-controller-php
 composer install
@@ -53,7 +56,7 @@ The PHP version mirrors the Go version's structure:
 ```
 git-controller-php/
 ├── main.php                    # Entry point (equivalent to main.go)
-├── composer.json               # Autoloading & dependencies
+├── composer.json               # Autoloading & dependencies (optional)
 ├── src/
 │   ├── Commands/               # One class per command
 │   │   ├── CheckoutCommand.php
@@ -73,6 +76,7 @@ git-controller-php/
 │   ├── SshUtil/
 │   │   └── SshUtil.php         # SSH agent, connectivity, config parsing
 │   ├── System/
+│   │   ├── Autoloader.php      # Built-in PSR-4 autoloader
 │   │   ├── Component.php       # Repository component model
 │   │   ├── Parser.php          # YAML parser for system-definition.yaml
 │   │   ├── SystemDefinition.php # System definition model
@@ -83,6 +87,7 @@ git-controller-php/
 
 ## Notes
 
+- The built-in PSR-4 autoloader (`Autoloader.php`) removes the hard dependency on Composer, making onboarding easier.
 - The built-in YAML parser handles the `system-definition.yaml` format without external dependencies. If the `yaml` PHP extension is available, it will be used instead.
 - SSH enforcement is identical to the Go version — HTTP(S) repository URLs are rejected.
 - All commands produce the same coloured terminal output as the Go version.
