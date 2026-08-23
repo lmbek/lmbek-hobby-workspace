@@ -88,7 +88,7 @@ Open `terraform.tfvars` and paste your token:
 ```hcl
 hcloud_token   = "YOUR_HETZNER_API_TOKEN_HERE"
 ssh_public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5..." # (Optional) Your public SSH key
-server_type    = "cx22"                               # 2 vCPU, 4 GB RAM (~€3.79/mo)
+server_type    = "cx23"                               # 2 vCPU, 4 GB RAM (~€3.79/mo)
 server_location = "fsn1"                              # Falkenstein (or nbg1, hel1)
 ```
 *(Alternatively, you can simply run `export HCLOUD_TOKEN="your-token"` in your terminal.)*
@@ -109,6 +109,21 @@ terraform apply
 - **Server 1 (`k3s-master` / `10.0.1.10`)**: Installs K3s control plane, Traefik Ingress, and ArgoCD GitOps operator.
 - **Server 2 (`k3s-worker` / `10.0.1.11`)**: Automatically connects to Server 1 over the private cloud network (`10.0.1.0/24`).
 - **Cloud Firewall**: Pre-configured for SSH (22), HTTP (80), HTTPS (443), and intra-cluster communication.
+
+### Step 4: Updating Server Provisioning
+Whenever you modify variables, firewall rules, or domain settings:
+```bash
+cd git-repositories/infrastructure/iac
+terraform plan
+terraform apply
+```
+
+### Step 5: Shutting Down / Destroying Cloud Servers
+When you want to stop billing or tear down the cloud servers completely:
+```bash
+cd git-repositories/infrastructure/iac
+terraform destroy
+```
 
 ---
 
