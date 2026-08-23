@@ -12,6 +12,6 @@ networks:
     name: hobby-internal
     internal: true
   hobby-public:
-    name: hobby-external
+    name: hobby-public
     driver: bridge
     internal: false

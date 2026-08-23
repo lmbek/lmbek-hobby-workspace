@@ -11,7 +11,7 @@ services:
     restart: unless-stopped
     networks:
       - hobby-internal
-      - hobby-external
+      - hobby-public
 
   proxy-homepage:
     image: nginx:alpine
