@@ -220,7 +220,7 @@ graph TD
 - `.github/workflows/ci-cd.yml`: GitHub Actions pipeline building and publishing `ghcr.io/lmbek/lmbek-hobby-web-frontend:${{ github.sha }}` and `:latest`.
 
 #### 4. Local Orchestrator (`local-orchestrator/`)
-- `compose/websites.yml`: Defines the `web-frontend` container service connected to `hobby-internal` and `hobby-external` networks.
+- `compose/websites.yml`: Defines the `web-frontend` container service connected to `hobby-internal` and `hobby-public` networks.
 - `docker-compose.yml`: Includes `compose/websites.yml`.
 - `hotreload/mounts/websites.yml`: Mounts `./git-repositories/services/web-frontend` for instant live reload.
 

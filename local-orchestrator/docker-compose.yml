@@ -10,7 +10,8 @@ include:
 networks:
   hobby-internal:
     name: hobby-internal
-    driver: bridge
-  hobby-external:
+    internal: true
+  hobby-public:
     name: hobby-external
     driver: bridge
+    internal: false
