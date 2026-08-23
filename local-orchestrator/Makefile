@@ -15,9 +15,9 @@ RESET := \033[0m
 # ═══════════════════════════════════════════════════════════════
 
 .PHONY: up
-up: ## Start all services in the background (standard mode)
+up: ## Start all services in the background (standard mode with auto-build)
 	@printf "$(CYAN)▶ Starting local stack …$(RESET)\n"
-	@docker compose -f $(COMPOSE_FILE) up -d --remove-orphans
+	@docker compose -f $(COMPOSE_FILE) up -d --build --remove-orphans
 
 .PHONY: down
 down: ## Stop all services
@@ -32,6 +32,11 @@ down-v: ## Stop all services and remove volumes
 
 .PHONY: restart
 restart: down up ## Restart all services
+
+.PHONY: build
+build: ## Rebuild all service images
+	@printf "$(CYAN)▶ Building service images …$(RESET)\n"
+	@docker compose -f $(COMPOSE_FILE) build
 
 .PHONY: hotreload up-hotreload dev
 hotreload up-hotreload dev: ## Start all services with live source mounting & hot reload

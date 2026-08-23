@@ -1,4 +1,4 @@
-.PHONY: default help clone fetch sync checkout init-repo-envs envs doctor ssh-helper ssh status up down restart hotreload ps logs down-v
+.PHONY: default help clone fetch sync checkout init-repo-envs envs doctor ssh-helper ssh status up down restart build hotreload ps logs down-v
 
 default: help
 
@@ -19,6 +19,9 @@ down:
 
 restart:
 	@$(MAKE) -C local-orchestrator restart
+
+build:
+	@$(MAKE) -C local-orchestrator build
 
 hotreload:
 	@$(MAKE) -C local-orchestrator hotreload
