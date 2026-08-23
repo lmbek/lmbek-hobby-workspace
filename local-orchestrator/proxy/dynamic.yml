@@ -13,6 +13,13 @@ http:
         service: proxy-homepage
         query: "/{status}.html"
 
+    no-cache:
+      headers:
+        customResponseHeaders:
+          Cache-Control: "no-cache, no-store, must-revalidate, max-age=0"
+          Pragma: "no-cache"
+          Expires: "0"
+
   routers:
     placeholder1:
       rule: "Host(`placeholder1.localhost`) || Host(`placeholder1-service.localhost`)"
@@ -21,6 +28,7 @@ http:
         - web
       middlewares:
         - error-pages
+        - no-cache
 
     placeholder2:
       rule: "Host(`placeholder2.localhost`) || Host(`placeholder2-service.localhost`)"
@@ -29,6 +37,7 @@ http:
         - web
       middlewares:
         - error-pages
+        - no-cache
 
     docs:
       rule: "Host(`docs.localhost`) || Host(`doc.localhost`)"
@@ -37,18 +46,20 @@ http:
         - web
       middlewares:
         - error-pages
+        - no-cache
 
     web-frontend:
-      rule: "Host(`web.localhost`) || Host(`frontend.localhost`) || Host(`localhost`)"
+      rule: "Host(`web.localhost`) || Host(`frontend.localhost`)"
       service: web-frontend
       entryPoints:
         - web
       priority: 2
       middlewares:
         - error-pages
+        - no-cache
 
     infra:
-      rule: "Host(`infra.localhost`) || Host(`controlplane.localhost`) || Host(`control-plane.localhost`) || Host(`proxy.localhost`) || Host(`traefik.localhost`)"
+      rule: "Host(`infra.localhost`) || Host(`controlplane.localhost`) || Host(`control-plane.localhost`) || Host(`traefik.localhost`)"
       service: api@internal
       entryPoints:
         - web
@@ -60,6 +71,7 @@ http:
         - web
       middlewares:
         - error-pages
+        - no-cache
 
     prometheus:
       rule: "Host(`prometheus.localhost`)"
@@ -68,6 +80,7 @@ http:
         - web
       middlewares:
         - error-pages
+        - no-cache
 
     alloy:
       rule: "Host(`alloy.localhost`)"
@@ -76,6 +89,7 @@ http:
         - web
       middlewares:
         - error-pages
+        - no-cache
 
     loki:
       rule: "Host(`loki.localhost`)"
@@ -84,6 +98,7 @@ http:
         - web
       middlewares:
         - error-pages
+        - no-cache
 
     cadvisor:
       rule: "Host(`cadvisor.localhost`)"
@@ -92,13 +107,16 @@ http:
         - web
       middlewares:
         - error-pages
+        - no-cache
 
     proxy-homepage:
-      rule: "Host(`proxy-home.localhost`)"
+      rule: "Host(`localhost`) || Host(`proxy.localhost`) || Host(`gateway.localhost`) || Host(`home.localhost`) || Host(`proxy-home.localhost`)"
       service: proxy-homepage
       entryPoints:
         - web
       priority: 1
+      middlewares:
+        - no-cache
 
   services:
     placeholder1:

@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LMBEK Local Gateway · http://localhost</title>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: #131b2e;
+      --card-hover-bg: #1a253f;
+      --border: #1e293b;
+      --border-hover: #38bdf8;
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.15);
+      --purple: #a855f7;
+      --purple-glow: rgba(168, 85, 247, 0.15);
+      --green: #22c55e;
+      --green-glow: rgba(34, 197, 94, 0.15);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --code-bg: #090d16;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, var(--bg) 60%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2.5rem 1rem;
+    }
+    .container {
+      max-width: 960px;
+      width: 100%;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--purple-glow);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      padding: 0.35rem 1rem;
+      border-radius: 9999px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      margin-bottom: 1rem;
+    }
+    .header h1 {
+      font-size: 2.6rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #ffffff 30%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.02em;
+    }
+    .header p {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      max-width: 600px;
+      margin: 0 auto 1.25rem auto;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      padding: 0.4rem 1.1rem;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #86efac;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 10px var(--green);
+      animation: pulse 2s infinite ease-in-out;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+    .section-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin: 2rem 0 1rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .section-title::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+      background: var(--card-hover-bg);
+      border-color: var(--border-hover);
+      box-shadow: 0 10px 25px -5px var(--accent-glow);
+    }
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+    .card-icon {
+      font-size: 1.6rem;
+      line-height: 1;
+      padding: 0.5rem;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+    }
+    .card-title {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #fff;
+    }
+    .card-url {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.8rem;
+      color: var(--accent);
+      margin-top: 0.15rem;
+    }
+    .card-desc {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+      margin-bottom: 1rem;
+    }
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 0.75rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 0.78rem;
+      color: #64748b;
+    }
+    .tag {
+      background: rgba(56, 189, 248, 0.1);
+      color: #7dd3fc;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .status-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      color: #86efac;
+      font-weight: 500;
+    }
+    .status-tag .mini-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+    
+    /* Topology Box */
+    .topology-container {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-top: 1rem;
+    }
+    .topology-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.25rem;
+      margin-top: 1rem;
+    }
+    .node-item {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+    .node-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.4rem;
+    }
+    .node-ip {
+      font-family: monospace;
+      color: var(--accent);
+      font-size: 0.85rem;
+      margin-bottom: 0.5rem;
+    }
+    .node-roles {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* CLI Commands */
+    .cli-box {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      margin-top: 1rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.75rem;
+    }
+    .cli-item span {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .footer {
+      margin-top: 3rem;
+      text-align: center;
+      color: #64748b;
+      font-size: 0.85rem;
+    }
+    .footer code {
+      background: var(--card-bg);
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      color: #cbd5e1;
+    }
+    .clock {
+      margin-top: 0.5rem;
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: #475569;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="badge">🚀 LMBEK Hobby Workspace · Developer Gateway</div>
+      <h1>LMBEK Local Gateway</h1>
+      <p>Local reverse proxy gateway routing clean <code>*.localhost</code> microservices, websites, docs, and telemetry.</p>
+      
+      <div class="status-pill">
+        <span class="dot"></span>
+        <span>Traefik Proxy Online · Port 80 Active</span>
+      </div>
+    </header>
+
+    <!-- Websites & Applications -->
+    <div class="section-title">🌐 Websites & Frontend</div>
+    <div class="grid">
+      <a href="http://web.localhost" class="card">
+        <div class="card-top">
+          <div class="card-icon">💻</div>
+          <div>
+            <div class="card-title">Web Frontend</div>
+            <div class="card-url">http://web.localhost</div>
+          </div>
+        </div>
+        <p class="card-desc">Main responsive website landing page with live cluster telemetry and links.</p>
+        <div class="card-footer">
+          <span class="tag">HTML5 / Go 1.26</span>
+          <span class="status-tag"><span class="mini-dot"></span> Port 8080</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- Microservices -->
+    <div class="section-title">⚡ Backend Microservices</div>
+    <div class="grid">
+      <a href="http://placeholder1.localhost" class="card">
+        <div class="card-top">
+          <div class="card-icon">⚡</div>
+          <div>
+            <div class="card-title">Placeholder 1 Service</div>
+            <div class="card-url">http://placeholder1.localhost</div>
+          </div>
+        </div>
+        <p class="card-desc">Go 1.26 HTTP microservice API handling core backend workloads.</p>
+        <div class="card-footer">
+          <span class="tag">Go Microservice</span>
+          <span class="status-tag"><span class="mini-dot"></span> Port 8082</span>
+        </div>
+      </a>
+
+      <a href="http://placeholder2.localhost" class="card">
+        <div class="card-top">
+          <div class="card-icon">📦</div>
+          <div>
+            <div class="card-title">Placeholder 2 Service</div>
+            <div class="card-url">http://placeholder2.localhost</div>
+          </div>
+        </div>
+        <p class="card-desc">Secondary Go microservice for async task processing and data dispatching.</p>
+        <div class="card-footer">
+          <span class="tag">Go Microservice</span>
+          <span class="status-tag"><span class="mini-dot"></span> Port 8081</span>
+        </div>
+      </a>
+
+      <a href="http://docs.localhost" class="card">
+        <div class="card-top">
+          <div class="card-icon">📚</div>
+          <div>
+            <div class="card-title">Architecture Docs</div>
+            <div class="card-url">http://docs.localhost</div>
+          </div>
+        </div>
+        <p class="card-desc">LikeC4 architecture documentation portal and interactive system models.</p>
+        <div class="card-footer">
+          <span class="tag">LikeC4 Portal</span>
+          <span class="status-tag"><span class="mini-dot"></span> Port 80</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- Infrastructure & Observability -->
+    <div class="section-title">☁️ Infrastructure & Observability</div>
+    <div class="grid">
+      <a href="http://infra.localhost" class="card">
+        <div class="card-top">
+          <div class="card-icon">⚙️</div>
+          <div>
+            <div class="card-title">Traefik Control Plane</div>
+            <div class="card-url">http://infra.localhost</div>
+          </div>
+        </div>
+        <p class="card-desc">Traefik reverse proxy dashboard, router telemetry, and middleware health.</p>
+        <div class="card-footer">
+          <span class="tag">Traefik v3.6</span>
+          <span class="status-tag"><span class="mini-dot"></span> Control Plane</span>
+        </div>
+      </a>
+
+      <a href="http://grafana.localhost" class="card">
+        <div class="card-top">
+          <div class="card-icon">📊</div>
+          <div>
+            <div class="card-title">Grafana Dashboards</div>
+            <div class="card-url">http://grafana.localhost</div>
+          </div>
+        </div>
+        <p class="card-desc">Unified visualization dashboards for real-time cluster metrics and logs.</p>
+        <div class="card-footer">
+          <span class="tag">Observability</span>
+          <span class="status-tag"><span class="mini-dot"></span> Port 3000</span>
+        </div>
+      </a>
+
+      <a href="http://prometheus.localhost" class="card">
+        <div class="card-top">
+          <div class="card-icon">🔥</div>
+          <div>
+            <div class="card-title">Prometheus TSDB</div>
+            <div class="card-url">http://prometheus.localhost</div>
+          </div>
+        </div>
+        <p class="card-desc">Time-series metric storage, scraper targets, and Prometheus query engine.</p>
+        <div class="card-footer">
+          <span class="tag">Metrics TSDB</span>
+          <span class="status-tag"><span class="mini-dot"></span> Port 9090</span>
+        </div>
+      </a>
+
+      <a href="http://alloy.localhost" class="card">
+        <div class="card-top">
+          <div class="card-icon">🔄</div>
+          <div>
+            <div class="card-title">Grafana Alloy</div>
+            <div class="card-url">http://alloy.localhost</div>
+          </div>
+        </div>
+        <p class="card-desc">OpenTelemetry collector forwarding logs and cluster metrics pipelines.</p>
+        <div class="card-footer">
+          <span class="tag">OTel Collector</span>
+          <span class="status-tag"><span class="mini-dot"></span> Port 12345</span>
+        </div>
+      </a>
+
+      <a href="http://loki.localhost" class="card">
+        <div class="card-top">
+          <div class="card-icon">📜</div>
+          <div>
+            <div class="card-title">Grafana Loki</div>
+            <div class="card-url">http://loki.localhost</div>
+          </div>
+        </div>
+        <p class="card-desc">High-efficiency centralized log aggregation and stream query backend.</p>
+        <div class="card-footer">
+          <span class="tag">Log Engine</span>
+          <span class="status-tag"><span class="mini-dot"></span> Port 3100</span>
+        </div>
+      </a>
+
+      <a href="http://cadvisor.localhost" class="card">
+        <div class="card-top">
+          <div class="card-icon">📈</div>
+          <div>
+            <div class="card-title">cAdvisor</div>
+            <div class="card-url">http://cadvisor.localhost</div>
+          </div>
+        </div>
+        <p class="card-desc">Container resource utilization, memory limits, and CPU performance daemon.</p>
+        <div class="card-footer">
+          <span class="tag">Daemon</span>
+          <span class="status-tag"><span class="mini-dot"></span> Port 8080</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- Hetzner Cluster Topology -->
+    <div class="section-title">🖥️ Hetzner Cloud 2-Node Topology</div>
+    <div class="topology-container">
+      <div style="color: var(--text-muted); font-size: 0.9rem;">
+        Declarative Hetzner Cloud infrastructure with private network isolation (<code>10.0.1.0/24</code>):
+      </div>
+      <div class="topology-grid">
+        <div class="node-item">
+          <div class="node-title">🖥️ Server 1: Control Plane</div>
+          <div class="node-ip">10.0.1.10 · k3s-master</div>
+          <div class="node-roles">Runs K3s control plane, Traefik ingress, Cert-Manager, and ArgoCD GitOps operator.</div>
+        </div>
+        <div class="node-item">
+          <div class="node-title">🖥️ Server 2: Worker Node</div>
+          <div class="node-ip">10.0.1.11 · k3s-worker</div>
+          <div class="node-roles">Runs distributed application workloads, microservices, and background jobs.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Commands -->
+    <div class="section-title">⌨️ Workspace Quick Commands</div>
+    <div class="cli-box">
+      <div class="cli-item"><span>make up</span> &rarr; Start all containers</div>
+      <div class="cli-item"><span>make hotreload</span> &rarr; Start with live reload</div>
+      <div class="cli-item"><span>make status</span> &rarr; Multi-repo status check</div>
+      <div class="cli-item"><span>make sync</span> &rarr; Fast-forward all git repos</div>
+      <div class="cli-item"><span>make down-v</span> &rarr; Teardown stack & volumes</div>
+    </div>
+
+    <footer class="footer">
+      <p>LMBEK Hobby Workspace · GitOps State Owned by <code>git-repositories/infrastructure/platform</code></p>
+      <div class="clock" id="live-clock">--:--:-- UTC</div>
+    </footer>
+  </div>
+
+  <script>
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('live-clock').textContent = now.toUTCString();
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+  </script>
+</body>
+</html>

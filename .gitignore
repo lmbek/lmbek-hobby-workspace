@@ -3,7 +3,8 @@ bin/
 *.exe
 *.test
 *.out
-*.html
+cover.html
+*.coverage.html
 vendor/
 .DS_Store
 git-repositories/
