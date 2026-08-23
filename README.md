@@ -20,11 +20,14 @@ All web traffic passes through hardened reverse proxies with automatic SSL/TLS e
 
 | URL Endpoint | Service Routed | Environment | Ingress / Proxy Layer | TLS Security |
 |---|---|---|---|---|
-| `https://example.com` | Web Frontend Website | `production` | Traefik + Hetzner LB (optional) | Let's Encrypt Prod SSL (Auto-renew) |
-| `https://example.com/service1` | Microservice 1 API | `production` | Traefik Ingress | Let's Encrypt Prod SSL (Auto-renew) |
-| `https://example.com/service2` | Microservice 2 API | `production` | Traefik Ingress | Let's Encrypt Prod SSL (Auto-renew) |
+| `https://example.com` (or `https://web.example.com`) | Web Frontend Website | `production` | Traefik + Hetzner LB (optional) | Let's Encrypt Prod SSL (Auto-renew) |
+| `https://placeholder1.example.com` | Microservice 1 API | `production` | Traefik Ingress | Let's Encrypt Prod SSL (Auto-renew) |
+| `https://placeholder2.example.com` | Microservice 2 API | `production` | Traefik Ingress | Let's Encrypt Prod SSL (Auto-renew) |
 | `https://docs.example.com` | Docs Portal | `production` | Traefik Ingress | Let's Encrypt Prod SSL (Auto-renew) |
 | `https://staging.example.com` | Web Frontend Website | `staging` | Traefik Ingress | Automated Staging TLS Certificate |
+| `https://placeholder1.staging.example.com` | Microservice 1 API | `staging` | Traefik Ingress | Automated Staging TLS Certificate |
+| `https://placeholder2.staging.example.com` | Microservice 2 API | `staging` | Traefik Ingress | Automated Staging TLS Certificate |
+| `https://docs.staging.example.com` | Docs Portal | `staging` | Traefik Ingress | Automated Staging TLS Certificate |
 
 ### 🔒 Security & Private Network Architecture:
 - **Zero Kubernetes API Exposure**: Port 6443 (K3s API) is strictly bound to the private network (`10.0.1.0/24`) and blocked from the public internet by cloud firewall rules.
@@ -155,6 +158,7 @@ All commands can be executed directly from the workspace root:
 | `make up` | | Starts the entire local stack (web, services, docs, proxy) |
 | `make hotreload` | | Starts local stack with live volume mounts for instant hot reloading |
 | `make down` | | Stops all running local containers |
+| `make down-v` | | Stops local containers and removes persistent volumes |
 | `make status` | | Shows Git branch and status dashboard for all repositories |
 | `make sync` | | Safely pulls upstream changes across all repositories (`--ff-only`) |
 | `make fetch` | | Fetches all remotes across all repositories |

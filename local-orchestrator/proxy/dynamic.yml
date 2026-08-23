@@ -48,7 +48,7 @@ http:
         - error-pages
 
     infra:
-      rule: "Host(`infra.localhost`) || Host(`proxy.localhost`) || Host(`traefik.localhost`)"
+      rule: "Host(`infra.localhost`) || Host(`controlplane.localhost`) || Host(`control-plane.localhost`) || Host(`proxy.localhost`) || Host(`traefik.localhost`)"
       service: api@internal
       entryPoints:
         - web

@@ -24,6 +24,12 @@ down: ## Stop all services
 	@printf "$(CYAN)▶ Stopping local stack …$(RESET)\n"
 	@docker compose -f $(COMPOSE_FILE) down
 
+.PHONY: down-v
+down-v: ## Stop all services and remove volumes
+	@printf "$(CYAN)▶ Stopping local stack and removing volumes …$(RESET)\n"
+	@docker compose -f $(COMPOSE_FILE) down -v --remove-orphans
+	@docker compose -f $(HOTRELOAD_FILE) down -v --remove-orphans 2>/dev/null || true
+
 .PHONY: restart
 restart: down up ## Restart all services
 
