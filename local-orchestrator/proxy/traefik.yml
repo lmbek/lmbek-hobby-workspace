@@ -1,0 +1,28 @@
+# Traefik static configuration
+entryPoints:
+  web:
+    address: ":80"
+    transport:
+      respondingTimeouts:
+        readTimeout: 2s
+        writeTimeout: 2s
+        idleTimeout: 30s
+  metrics:
+    address: ":8082"
+
+api:
+  dashboard: true
+  insecure: true
+
+providers:
+  docker:
+    exposedByDefault: false
+    network: hobby-internal
+  file:
+    filename: /etc/traefik/dynamic.yml
+
+metrics:
+  prometheus:
+    entryPoint: metrics
+
+accessLog: {}

@@ -1,0 +1,2 @@
+include:
+  - ../../git-repositories/observability/docker-compose.yml

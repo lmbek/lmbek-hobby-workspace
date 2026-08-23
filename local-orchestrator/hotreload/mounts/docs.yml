@@ -1,0 +1,11 @@
+services:
+  docs:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ../../../git-repositories/docs:/app
+      - docs-node-modules:/app/node_modules
+    command: sh -c "npm install && npx likec4 start --hostname 0.0.0.0 --port 80"
+
+volumes:
+  docs-node-modules:

@@ -1,0 +1,135 @@
+# Traefik dynamic configuration — file-based routes
+http:
+  serversTransports:
+    fast-timeout:
+      forwardingTimeouts:
+        dialTimeout: 500ms
+        responseHeaderTimeout: 1500ms
+  middlewares:
+    error-pages:
+      errors:
+        status:
+          - "502-504"
+        service: proxy-homepage
+        query: "/{status}.html"
+
+  routers:
+    placeholder1:
+      rule: "Host(`placeholder1-service.localhost`)"
+      service: placeholder1
+      entryPoints:
+        - web
+      middlewares:
+        - error-pages
+
+    placeholder2:
+      rule: "Host(`placeholder2-service.localhost`)"
+      service: placeholder2
+      entryPoints:
+        - web
+      middlewares:
+        - error-pages
+
+    docs:
+      rule: "Host(`docs.localhost`)"
+      service: docs
+      entryPoints:
+        - web
+      middlewares:
+        - error-pages
+
+    web-frontend:
+      rule: "Host(`web.localhost`) || Host(`localhost`)"
+      service: web-frontend
+      entryPoints:
+        - web
+      priority: 2
+      middlewares:
+        - error-pages
+
+    proxy-homepage:
+      rule: "Host(`localhost`)"
+      service: proxy-homepage
+      entryPoints:
+        - web
+      priority: 1
+
+    traefik-dashboard:
+      rule: "Host(`proxy.localhost`)"
+      service: api@internal
+      entryPoints:
+        - web
+
+    grafana:
+      rule: "Host(`grafana.localhost`)"
+      service: grafana
+      entryPoints:
+        - web
+      middlewares:
+        - error-pages
+
+    prometheus:
+      rule: "Host(`prometheus.localhost`)"
+      service: prometheus
+      entryPoints:
+        - web
+      middlewares:
+        - error-pages
+
+    alloy:
+      rule: "Host(`alloy.localhost`)"
+      service: alloy
+      entryPoints:
+        - web
+      middlewares:
+        - error-pages
+
+
+  services:
+    placeholder1:
+      loadBalancer:
+        serversTransport: fast-timeout
+        servers:
+          - url: "http://placeholder1-service:8082"
+
+    placeholder2:
+      loadBalancer:
+        serversTransport: fast-timeout
+        servers:
+          - url: "http://placeholder2-service:8081"
+
+    docs:
+      loadBalancer:
+        serversTransport: fast-timeout
+        servers:
+          - url: "http://docs:80"
+
+    web-frontend:
+      loadBalancer:
+        serversTransport: fast-timeout
+        servers:
+          - url: "http://web-frontend:8080"
+
+    proxy-homepage:
+      loadBalancer:
+        servers:
+          - url: "http://proxy-homepage:80"
+
+    grafana:
+      loadBalancer:
+        serversTransport: fast-timeout
+        servers:
+          - url: "http://grafana:3000"
+
+    prometheus:
+      loadBalancer:
+        serversTransport: fast-timeout
+        servers:
+          - url: "http://prometheus:9090"
+
+    alloy:
+      loadBalancer:
+        serversTransport: fast-timeout
+        servers:
+          - url: "http://alloy:12345"
+

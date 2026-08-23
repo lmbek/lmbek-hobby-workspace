@@ -1,0 +1,9 @@
+services:
+  docs:
+    build:
+      context: ../../git-repositories/docs
+      dockerfile: Dockerfile
+    image: docs:latest
+    restart: unless-stopped
+    networks:
+      - hobby-internal

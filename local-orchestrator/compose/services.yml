@@ -1,0 +1,22 @@
+services:
+  placeholder1-service:
+    build:
+      context: ../../git-repositories/services/placeholder1-service
+      dockerfile: Dockerfile
+    image: placeholder1-service:latest
+    environment:
+      - ENABLE_TRAFFIC_SIMULATOR=${ENABLE_TRAFFIC_SIMULATOR:-false}
+    restart: unless-stopped
+    networks:
+      - hobby-internal
+
+  placeholder2-service:
+    build:
+      context: ../../git-repositories/services/placeholder2-service
+      dockerfile: Dockerfile
+    image: placeholder2-service:latest
+    environment:
+      - ENABLE_TRAFFIC_SIMULATOR=${ENABLE_TRAFFIC_SIMULATOR:-false}
+    restart: unless-stopped
+    networks:
+      - hobby-internal

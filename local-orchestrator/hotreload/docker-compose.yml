@@ -1,0 +1,7 @@
+name: hobby-orchestrators-hotreload
+
+include:
+  - ../docker-compose.yml
+  - mounts/websites.yml
+  - mounts/services.yml
+  - mounts/docs.yml

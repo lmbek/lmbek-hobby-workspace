@@ -1,0 +1,4 @@
+services:
+  web-frontend:
+    volumes:
+      - ../../git-repositories/services/web-frontend/static:/app/static:ro

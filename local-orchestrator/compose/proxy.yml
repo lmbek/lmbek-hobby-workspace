@@ -1,0 +1,22 @@
+services:
+  proxy:
+    image: traefik:v3.6
+    ports:
+      - "80:80"
+      - "8082:8082"
+    volumes:
+      - ../proxy/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ../proxy/dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+    networks:
+      - hobby-internal
+      - hobby-external
+
+  proxy-homepage:
+    image: nginx:alpine
+    volumes:
+      - ../proxy/homepage:/usr/share/nginx/html:ro
+    restart: unless-stopped
+    networks:
+      - hobby-internal

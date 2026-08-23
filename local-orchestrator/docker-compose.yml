@@ -1,0 +1,16 @@
+name: hobby-orchestrators
+
+include:
+  - compose/proxy.yml
+  - compose/websites.yml
+  - compose/services.yml
+  - compose/docs.yml
+  - compose/observability.yml
+
+networks:
+  hobby-internal:
+    name: hobby-internal
+    driver: bridge
+  hobby-external:
+    name: hobby-external
+    driver: bridge

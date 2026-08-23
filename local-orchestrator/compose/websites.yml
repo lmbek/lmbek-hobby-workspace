@@ -1,0 +1,12 @@
+services:
+  web-frontend:
+    build:
+      context: ../../git-repositories/services/web-frontend
+      dockerfile: Dockerfile
+    image: web-frontend:latest
+    environment:
+      - PORT=8080
+      - ENVIRONMENT=local
+    restart: unless-stopped
+    networks:
+      - hobby-internal

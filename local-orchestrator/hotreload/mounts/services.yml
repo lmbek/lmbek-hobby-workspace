@@ -1,0 +1,14 @@
+services:
+  placeholder1-service:
+    image: golang:1.26-alpine
+    working_dir: /app
+    volumes:
+      - ../../../git-repositories/services/placeholder1-service:/app
+    command: go run .
+
+  placeholder2-service:
+    image: golang:1.26-alpine
+    working_dir: /app
+    volumes:
+      - ../../../git-repositories/services/placeholder2-service:/app
+    command: go run .
