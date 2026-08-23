@@ -1,4 +1,4 @@
-name: hobby-orchestrators-hotreload
+name: hobby-orchestrators
 
 include:
   - ../docker-compose.yml

@@ -69,7 +69,7 @@ local-orchestrator/
 | `make down` | Stop full local stack |
 | `make restart` | Restart all services |
 | `make hotreload` | Start full stack with live volume mounts & hot reload (`make dev`) |
-| `make down-hotreload` | Stop hotreload stack |
+| `make hotreload-down` | Stop hotreload stack (`make down-hotreload`) |
 | `make ps` | Show container statuses |
 | `make logs` | Tail logs for all services |
 | `make service-up S=<name>` | Start a specific service |

@@ -41,7 +41,11 @@ make status
 ### 4. Stop Local Environment
 
 ```bash
+# Stop standard environment
 make down
+
+# (Or stop hotreload environment)
+make hotreload-down
 ```
 
 ---

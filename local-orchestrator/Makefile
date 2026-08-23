@@ -41,10 +41,10 @@ build: ## Rebuild all service images
 .PHONY: hotreload up-hotreload dev
 hotreload up-hotreload dev: ## Start all services with live source mounting & hot reload
 	@printf "$(CYAN)▶ Starting local stack in hotreload mode …$(RESET)\n"
-	@docker compose -f $(HOTRELOAD_FILE) up -d --remove-orphans
+	@docker compose -f $(HOTRELOAD_FILE) up -d --build --remove-orphans
 
-.PHONY: down-hotreload
-down-hotreload: ## Stop hotreload stack
+.PHONY: hotreload-down down-hotreload
+hotreload-down down-hotreload: ## Stop hotreload stack
 	@printf "$(CYAN)▶ Stopping hotreload stack …$(RESET)\n"
 	@docker compose -f $(HOTRELOAD_FILE) down
 

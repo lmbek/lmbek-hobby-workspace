@@ -1,10 +1,12 @@
 services:
   web-frontend:
-    image: golang:1.26-alpine
+    build:
+      context: ../../../git-repositories/services/web-frontend
+      target: builder
     working_dir: /app
     volumes:
       - ../../../git-repositories/services/web-frontend:/app
-    command: go run .
+    entrypoint: ["go", "run", "."]
     environment:
       - PORT=8080
       - STATIC_DIR=/app/static
