@@ -28,7 +28,7 @@ repos:
   # Microservices and service workloads, each with independent CI/CD & Dockerfile.
   services:
     web-frontend:
-      repository: git@github.com:lmbek/lmbek-hobby-web-frontend.git
+      repository: git@github.com:lmbek/lmbek-web-frontend-placeholder.git
       version: main
     placeholder1-service:
       repository: git@github.com:lmbek/lmbek-hobby-placeholder1-service.git
