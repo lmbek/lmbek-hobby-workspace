@@ -15,7 +15,7 @@ http:
 
   routers:
     placeholder1:
-      rule: "Host(`placeholder1-service.localhost`)"
+      rule: "Host(`placeholder1.localhost`) || Host(`placeholder1-service.localhost`)"
       service: placeholder1
       entryPoints:
         - web
@@ -23,7 +23,7 @@ http:
         - error-pages
 
     placeholder2:
-      rule: "Host(`placeholder2-service.localhost`)"
+      rule: "Host(`placeholder2.localhost`) || Host(`placeholder2-service.localhost`)"
       service: placeholder2
       entryPoints:
         - web
@@ -31,7 +31,7 @@ http:
         - error-pages
 
     docs:
-      rule: "Host(`docs.localhost`)"
+      rule: "Host(`docs.localhost`) || Host(`doc.localhost`)"
       service: docs
       entryPoints:
         - web
@@ -39,7 +39,7 @@ http:
         - error-pages
 
     web-frontend:
-      rule: "Host(`web.localhost`) || Host(`localhost`)"
+      rule: "Host(`web.localhost`) || Host(`frontend.localhost`) || Host(`localhost`)"
       service: web-frontend
       entryPoints:
         - web
@@ -47,15 +47,8 @@ http:
       middlewares:
         - error-pages
 
-    proxy-homepage:
-      rule: "Host(`localhost`)"
-      service: proxy-homepage
-      entryPoints:
-        - web
-      priority: 1
-
-    traefik-dashboard:
-      rule: "Host(`proxy.localhost`)"
+    infra:
+      rule: "Host(`infra.localhost`) || Host(`proxy.localhost`) || Host(`traefik.localhost`)"
       service: api@internal
       entryPoints:
         - web
@@ -84,6 +77,28 @@ http:
       middlewares:
         - error-pages
 
+    loki:
+      rule: "Host(`loki.localhost`)"
+      service: loki
+      entryPoints:
+        - web
+      middlewares:
+        - error-pages
+
+    cadvisor:
+      rule: "Host(`cadvisor.localhost`)"
+      service: cadvisor
+      entryPoints:
+        - web
+      middlewares:
+        - error-pages
+
+    proxy-homepage:
+      rule: "Host(`proxy-home.localhost`)"
+      service: proxy-homepage
+      entryPoints:
+        - web
+      priority: 1
 
   services:
     placeholder1:
@@ -132,4 +147,16 @@ http:
         serversTransport: fast-timeout
         servers:
           - url: "http://alloy:12345"
+
+    loki:
+      loadBalancer:
+        serversTransport: fast-timeout
+        servers:
+          - url: "http://loki:3100"
+
+    cadvisor:
+      loadBalancer:
+        serversTransport: fast-timeout
+        servers:
+          - url: "http://cadvisor:8080"
 

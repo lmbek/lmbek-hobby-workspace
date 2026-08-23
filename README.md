@@ -53,11 +53,11 @@ make hotreload
 ```
 
 Open in your browser:
-- **Web Frontend**: [http://localhost](http://localhost) (or [http://web.localhost](http://web.localhost))
-- **Service 1 API**: [http://placeholder1-service.localhost](http://placeholder1-service.localhost) (or `http://localhost/service1`)
-- **Service 2 API**: [http://placeholder2-service.localhost](http://placeholder2-service.localhost) (or `http://localhost/service2`)
+- **Web Frontend**: [http://web.localhost](http://web.localhost) (or [http://localhost](http://localhost))
+- **Service 1 API**: [http://placeholder1.localhost](http://placeholder1.localhost) (or `http://localhost/service1`)
+- **Service 2 API**: [http://placeholder2.localhost](http://placeholder2.localhost) (or `http://localhost/service2`)
 - **Documentation**: [http://docs.localhost](http://docs.localhost) (or `http://localhost/docs`)
-- **Traefik Proxy Dashboard**: [http://proxy.localhost](http://proxy.localhost)
+- **Traefik Proxy / Infra**: [http://infra.localhost](http://infra.localhost) (or [http://proxy.localhost](http://proxy.localhost))
 
 To stop the local stack:
 ```bash

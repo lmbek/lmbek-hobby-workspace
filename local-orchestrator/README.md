@@ -2,6 +2,23 @@
 
 Docker Compose orchestrator wiring together all workspace services for local development and live reload.
 
+## Local Subdomains & Endpoints
+
+When running `make up` or `make hotreload`, Traefik automatically routes requests across all services:
+
+| Subdomain / URL | Service | Description |
+|---|---|---|
+| `http://web.localhost` / `http://localhost` | Web Frontend | Responsive HTML5/Go landing page |
+| `http://placeholder1.localhost` / `.../service1` | Placeholder 1 Service | Microservice 1 API (Port 8082) |
+| `http://placeholder2.localhost` / `.../service2` | Placeholder 2 Service | Microservice 2 API (Port 8081) |
+| `http://docs.localhost` / `.../docs` | Docs Portal | LikeC4 Architecture Documentation |
+| `http://infra.localhost` / `http://proxy.localhost` | Traefik Proxy | Traefik reverse proxy dashboard & API |
+| `http://grafana.localhost` | Grafana | Observability metrics & log dashboards |
+| `http://prometheus.localhost` | Prometheus | Metrics scraper & TSDB |
+| `http://alloy.localhost` | Grafana Alloy | OpenTelemetry / telemetry collector |
+| `http://loki.localhost` | Grafana Loki | Centralized log aggregation |
+| `http://cadvisor.localhost` | cAdvisor | Container resource metrics |
+
 ## Quick Start
 
 ```bash
