@@ -96,7 +96,12 @@ server_location = "fsn1"                              # Falkenstein (or nbg1, he
 > **Security Guarantee:** `terraform.tfvars` is listed in `.gitignore` and will **never** be committed to Git.
 
 ### Step 3: Run Terraform Apply
+*(Make sure Terraform is installed: `sudo snap install --classic terraform` on Ubuntu, or `brew install terraform` on macOS).*
+
+> ⚠️ **Directory Requirement:** Run `terraform init` and `terraform apply` directly inside `git-repositories/infrastructure/iac`:
+
 ```bash
+cd git-repositories/infrastructure/iac
 terraform init
 terraform apply
 ```

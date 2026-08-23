@@ -33,6 +33,7 @@ func runCheck() bool {
 	checkGo()
 	sshIssues := checkSSH()
 	checkDocker()
+	checkTerraform()
 
 	// 4. Check for conflicting GIT_SSH variables
 	if val := os.Getenv("GIT_SSH"); val != "" {
@@ -208,6 +209,35 @@ func checkDocker() {
 		ui.Warn("docker-compose is not installed or not in PATH")
 	} else {
 		ui.Success("Docker Compose installed (%s)", strings.TrimSpace(string(output)))
+	}
+}
+
+func checkTerraform() {
+	ui.Info("Checking Terraform installation...")
+	cmd := exec.Command("terraform", "version")
+	output, err := cmd.Output()
+	if err != nil {
+		// Also check opentofu fallback
+		cmdTofu := exec.Command("tofu", "version")
+		outputTofu, errTofu := cmdTofu.Output()
+		if errTofu == nil {
+			firstLine := strings.Split(strings.TrimSpace(string(outputTofu)), "\n")[0]
+			ui.Success("OpenTofu installed (%s)", firstLine)
+			return
+		}
+
+		ui.Warn("Terraform is not installed (needed for cloud deployments in git-repositories/infrastructure/iac)")
+		if runtime.GOOS == "linux" {
+			ui.Info("Install via Snap (Ubuntu): sudo snap install --classic terraform")
+			ui.Info("Install via APT (Debian/Ubuntu): https://developer.hashicorp.com/terraform/install")
+		} else if runtime.GOOS == "darwin" {
+			ui.Info("Install via Homebrew (macOS): brew install terraform")
+		} else if runtime.GOOS == "windows" {
+			ui.Info("Install via Chocolatey (Windows): choco install terraform")
+		}
+	} else {
+		firstLine := strings.Split(strings.TrimSpace(string(output)), "\n")[0]
+		ui.Success("Terraform installed (%s)", firstLine)
 	}
 }
 

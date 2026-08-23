@@ -52,16 +52,24 @@ make hotreload-down
 
 ### 5. Deploy to Hetzner Cloud (When Ready)
 
+> ⚠️ **Important Directory Requirement:** You **must** navigate to the `git-repositories/infrastructure/iac` directory before running any Terraform commands.
+
 ```bash
+# 0. Install Terraform (if not already installed)
+# Ubuntu / Linux (Snap): sudo snap install --classic terraform
+# macOS (Homebrew):       brew install terraform
+# Windows (Chocolatey):   choco install terraform
+
+# 1. Navigate to the IaC directory (REQUIRED)
 cd git-repositories/infrastructure/iac
 
-# Copy configuration template
+# 2. Copy configuration template
 cp terraform.tfvars.example terraform.tfvars
 
-# Open terraform.tfvars and paste your Hetzner Cloud API token:
+# 3. Open terraform.tfvars and paste your Hetzner Cloud API token:
 # hcloud_token = "YOUR_HETZNER_API_TOKEN"
 
-# Provision the 2-node K3s Kubernetes cluster
+# 4. Initialize and apply (must be run from inside git-repositories/infrastructure/iac)
 terraform init
 terraform apply
 ```
