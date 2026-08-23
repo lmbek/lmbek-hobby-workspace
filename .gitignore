@@ -6,10 +6,13 @@ bin/
 *.html
 vendor/
 .DS_Store
-git-repositories/deployment
-git-repositories/docs
-git-repositories/applications/**
-git-repositories/infrastructure/**
-git-repositories/observability
-git-repositories/tools
-git-repositories/orchestrators
+git-repositories/
+!git-repositories/repo-definition.yaml
+
+# Terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+.terraform/
+.terraform.lock.hcl

@@ -1,0 +1,63 @@
+# ==============================================================================
+# Workspace Repository Definition Manifest
+# ==============================================================================
+# Defines all repositories and directories managed by git-controller.
+#
+# Categories:
+#   - Flat / Singleton : Directly maps to git-repositories/<category>/
+#   - Nested / Multi   : Maps to git-repositories/<category>/<repo-name>/
+#   - Local / Non-Git  : Directory is created without cloning (omit repository or use local/none)
+# ==============================================================================
+
+hooks:
+  post-clone:
+    - echo "Clone complete! To start all services:"
+    - echo "  make up"
+    - echo "Run 'make status' to see the state of all repositories."
+
+# ── Managed Repositories & Directories ─────────────────────────────────────────
+repos:
+  # ── Deployment & Environments ───────────────────────────────────────────────
+  # Environment-specific configuration, value overrides, and release manifests.
+  # Structured by subdirectories (dev/, staging/, prod/) in a single repository.
+  deployment:
+    repository: git@github.com:lmbek/lmbek-hobby-deployment.git
+    version: main
+
+  # ── Services ───────────────────────────────────────────────────────────────
+  # Microservices and service workloads, each with independent CI/CD & Dockerfile.
+  services:
+    web-frontend:
+      repository: git@github.com:lmbek/lmbek-hobby-web-frontend.git
+      version: main
+    placeholder1-service:
+      repository: git@github.com:lmbek/lmbek-hobby-placeholder1-service.git
+      version: main
+    placeholder2-service:
+      repository: git@github.com:lmbek/lmbek-hobby-placeholder2-service.git
+      version: main
+
+  # ── Infrastructure as Code (IaC) ────────────────────────────────────────────
+  # Cloud provisioning (Terraform), platform services, and server configurations.
+  infrastructure:
+    iac:
+      repository: git@github.com:lmbek/lmbek-hobby-infrastructure.git
+      version: main
+    platform:
+      repository: git@github.com:lmbek/lmbek-hobby-platform.git
+      version: main
+    servers:
+      repository: git@github.com:lmbek/lmbek-hobby-servers.git
+      version: main
+
+  # ── Observability & Monitoring ──────────────────────────────────────────────
+  # Monitoring dashboards, metrics, logging, and alert configurations.
+  observability:
+    repository: git@github.com:lmbek/lmbek-hobby-observability.git
+    version: main
+
+  # ── Documentation & Architecture ────────────────────────────────────────────
+  # Architecture Decision Records (ADRs), API specifications, and runbooks.
+  docs:
+    repository: git@github.com:lmbek/lmbek-hobby-docs.git
+    version: main

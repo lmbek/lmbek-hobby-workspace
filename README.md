@@ -1,357 +1,197 @@
 # LMBEK Hobby Workspace
 
-A multi-repo workspace that uses a single CLI to manage all your Git repositories in one place. Instead of cloning and updating each repo manually, the **git-controller** reads a central config file (`system-definition.yaml`) and handles everything for you.
-
-## Table of Contents
-
-- [What Is This?](#what-is-this)
-- [Architecture Overview](#architecture-overview)
-- [Prerequisites](#prerequisites)
-- [Getting Started](#getting-started)
-- [Available Commands](#available-commands)
-- [Project Structure](#project-structure)
-- [Troubleshooting](#troubleshooting)
-- [Registering Git Repos in Your IDE / Editor](#registering-git-repos-in-your-ide--editor)
-- [Contributing](#contributing)
-- [Security](#security)
-- [Guidelines](#guidelines)
+A simple, robust multi-repo cloud platform and developer workspace. Manage all microservices and websites locally with Docker Compose hot-reloading (`make up`), provision 2 cheap Hetzner Cloud servers with Terraform in minutes, and let ArgoCD GitOps automatically deploy every push to `main` to **Staging** and every GitHub Release to **Production**.
 
 ---
 
-## What Is This?
+## 🧭 3-Tier Lifecycle Overview
 
-This repository is a **workspace root**. It doesn't contain application code itself — instead, it contains:
-
-1. A CLI tool (`git-controller/`) that clones, pulls, and pushes all your project repositories.
-2. A definition file (`system-definition.yaml`) that lists which repos to manage and where they go.
-3. A `git-repositories/` directory (gitignored) where all managed repos live on disk.
-
-When you run the CLI, it reads the definition file and ensures every listed repository is cloned, up to date, and on the correct branch.
+| Environment | Deploy / Up Command | Teardown / Down Command | Target URL & Ingress | Description |
+|---|---|---|---|---|
+| **1. Local** | `make up` or `make hotreload` | `make down` | `http://localhost` | Zero-cloud-cost local development with Traefik routing matching production |
+| **2. Staging** | `git push origin main` | `kubectl delete -k git-repositories/infrastructure/platform/overlays/staging` | `https://staging.<domain>` | Continuous pre-production environment auto-deployed on push to `main` with automated TLS |
+| **3. Production** | Create GitHub Release (`v*.*.*`) | `cd git-repositories/infrastructure/iac && terraform destroy` | `https://<domain>` | Live stable production workloads with automated Let's Encrypt SSL and edge proxying |
 
 ---
 
-## Architecture Overview
+## 🌐 Proxies, Load Balancers & Best Practice URLs
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     Workspace Root                              │
-│  system-definition.yaml ──► git-controller (CLI)                │
-│                                  │                              │
-│                    ┌─────────────┼─────────────┐                │
-│                    ▼             ▼             ▼                │
-│              applications   orchestrators  infrastructure       │
-│              ┌──────────┐   ┌──────────┐   ┌──────────┐        │
-│              │ service1  │   │ compose  │   │ terraform│        │
-│              │ service2  │   │ manifests│   │ servers  │        │
-│              └──────────┘   └──────────┘   └──────────┘        │
-│                    │             │             │                │
-│                    ▼             ▼             ▼                │
-│              deployment    observability     tools              │
-│              ┌──────────┐  ┌──────────┐   ┌──────────┐        │
-│              │ dev/      │  │ grafana  │   │ scripts  │        │
-│              │ staging/  │  │ prometheus│  │ utilities│        │
-│              │ prod/     │  │ alerts   │   └──────────┘        │
-│              └──────────┘  └──────────┘                        │
-│                    │             │                              │
-│                    ▼             ▼                              │
-│                        docs                                    │
-│              ┌─────────────────────────┐                       │
-│              │ ADRs, runbooks          │                       │
-│              └─────────────────────────┘                       │
-└─────────────────────────────────────────────────────────────────┘
-```
+All web traffic passes through hardened reverse proxies with automatic SSL/TLS encryption:
 
-**Key principles:**
+| URL Endpoint | Service Routed | Environment | Ingress / Proxy Layer | TLS Security |
+|---|---|---|---|---|
+| `https://example.com` | Web Frontend Website | `production` | Traefik + Hetzner LB (optional) | Let's Encrypt Prod SSL (Auto-renew) |
+| `https://example.com/service1` | Microservice 1 API | `production` | Traefik Ingress | Let's Encrypt Prod SSL (Auto-renew) |
+| `https://example.com/service2` | Microservice 2 API | `production` | Traefik Ingress | Let's Encrypt Prod SSL (Auto-renew) |
+| `https://docs.example.com` | Docs Portal | `production` | Traefik Ingress | Let's Encrypt Prod SSL (Auto-renew) |
+| `https://staging.example.com` | Web Frontend Website | `staging` | Traefik Ingress | Automated Staging TLS Certificate |
 
-- **One repo per service** — each microservice has its own repository, Dockerfile, and CI/CD pipeline.
-- **Orchestrators wire services** — per-grouping compose files with local/stage/prod variants.
-- **Deployment is environment config** — folder-per-environment (dev/staging/prod) in a single repo.
-- **Observability is separate** — dashboards, alerts, and log pipelines live outside application code.
-- **Everything is YAML-driven** — `system-definition.yaml` is the single source of truth.
+### 🔒 Security & Private Network Architecture:
+- **Zero Kubernetes API Exposure**: Port 6443 (K3s API) is strictly bound to the private network (`10.0.1.0/24`) and blocked from the public internet by cloud firewall rules.
+- **Edge Security Headers**: Traefik enforces HTTP-to-HTTPS redirect, HSTS (HTTP Strict Transport Security), XSS filters, and rate limiting out-of-the-box.
+- **Automated Certificate Lifecycle**: cert-manager continuously manages and renews Let's Encrypt SSL certificates via ACME HTTP-01 solvers.
+- **High Availability Edge Proxy**: Optional Hetzner Load Balancer (`lb11`) distributes incoming HTTP (80) and HTTPS (443) traffic across master and worker nodes.
 
 ---
 
-## Prerequisites
+## ⚡ Quick Start (Local Environment)
 
-Before you begin, make sure you have:
+Get the entire platform running on your local machine in 4 simple commands:
 
-- **Git** — any recent version
-- **Go 1.26+** — needed to build and run the git-controller CLI
-- **SSH access** — your SSH key must be authorized for the repositories listed in `system-definition.yaml`
-
-### Setting up Go on Windows (PowerShell)
-
-If you have multiple Go versions installed, make sure the correct one is first in PATH:
-
-```powershell
-$env:GOTOOLCHAIN = "local"
-$env:PATH = "C:\Users\larsz\sdk\go1.26.4\bin;" + $env:PATH
-go version   # should print go1.26.4
-```
-
----
-
-## Getting Started
-
-Open a terminal at the workspace root and run these commands in order:
-
-### 1. Check your environment
-
-```
-make doctor
-```
-
-This checks that Git, Go, SSH, and Docker are available and correctly configured. Fix anything it reports before continuing.
-
-### 2. Set up SSH (if needed)
-
-```
-make ssh
-```
-
-An interactive wizard that helps you generate an SSH key and add it to your Git host.
-
-### 3. Clone all repositories
-
-```
+```bash
+# 1. Clone all repositories and create local workspaces
 make clone
+
+# 2. Automatically initialize all .env files from .env.example across all directories
+make init-repo-envs
+
+# 3. Start all services, websites, proxy, and docs locally
+make up
+
+# (Optional) Run with live hot-reloading and source mounting instead
+make hotreload
 ```
 
-This reads `system-definition.yaml` and clones every listed repository into `git-repositories/`.
+Open in your browser:
+- **Web Frontend**: [http://localhost](http://localhost) (or [http://web.localhost](http://web.localhost))
+- **Service 1 API**: [http://placeholder1-service.localhost](http://placeholder1-service.localhost) (or `http://localhost/service1`)
+- **Service 2 API**: [http://placeholder2-service.localhost](http://placeholder2-service.localhost) (or `http://localhost/service2`)
+- **Documentation**: [http://docs.localhost](http://docs.localhost) (or `http://localhost/docs`)
+- **Traefik Proxy Dashboard**: [http://proxy.localhost](http://proxy.localhost)
 
-### 4. Keep everything up to date
-
+To stop the local stack:
+```bash
+make down
 ```
-make pull
-```
-
-Pulls the latest changes across all repositories. If any repo is missing, it clones it first.
-
-### 5. Push local changes
-
-```
-make push
-```
-
-Pushes local commits across all cloned repositories.
-
-### 6. Switch branches
-
-```
-make checkout
-```
-
-Switches all repositories to the branch defined in `system-definition.yaml`. Override with `BRANCH=feature-x make checkout`.
-
-### 7. Verify everything is correct
-
-```
-make validate
-```
-
-Checks that every repository matches the definition (correct branch, clean state).
 
 ---
 
-## Available Commands
+## 🔑 Where to Put Your Hetzner API Key (One-Time Server Setup)
 
-All commands can be run via `make` from the workspace root, or directly with `go run .` from the `git-controller/` directory.
+To spin up your 2 cheap cloud servers (~€3.79/mo each) on Hetzner Cloud:
 
-### PHP Alternative
+### Step 1: Obtain Your Hetzner API Token
+1. Go to [Hetzner Cloud Console](https://console.hetzner.cloud).
+2. Select your Project &rarr; **Security** &rarr; **API Tokens** &rarr; click **Generate API Token** (Read & Write permissions).
 
-A PHP port of the git-controller is also available for PHP developers. It requires **PHP 8.1+** and Composer. To use it:
-
+### Step 2: Configure Your API Key
+Navigate to `git-repositories/infrastructure/iac`:
+```bash
+cd git-repositories/infrastructure/iac
+cp terraform.tfvars.example terraform.tfvars
 ```
-cd git-controller-php && composer install
-make -f Makefile-php status
+Open `terraform.tfvars` and paste your token:
+```hcl
+hcloud_token   = "YOUR_HETZNER_API_TOKEN_HERE"
+ssh_public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5..." # (Optional) Your public SSH key
+server_type    = "cx22"                               # 2 vCPU, 4 GB RAM (~€3.79/mo)
+server_location = "fsn1"                              # Falkenstein (or nbg1, hel1)
 ```
+*(Alternatively, you can simply run `export HCLOUD_TOKEN="your-token"` in your terminal.)*
 
-All the same commands are available via `make -f Makefile-php <command>`, or directly with `php git-controller-php/main.php <command>`.
+> **Security Guarantee:** `terraform.tfvars` is listed in `.gitignore` and will **never** be committed to Git.
 
-### Ansible Alternative
-
-An Ansible-based port is also available for teams that prefer infrastructure-as-code tooling. It requires **Ansible 2.14+** and **Python 3**. To use it:
-
+### Step 3: Run Terraform Apply
+```bash
+terraform init
+terraform apply
 ```
-make -f Makefile-ansible status
-```
-
-All the same commands are available via `make -f Makefile-ansible <command>`, or directly with `ansible-playbook` from the `git-controller-ansible/` directory.
-
-| Command          | Description                                              |
-|------------------|----------------------------------------------------------|
-| `make init`      | Scaffold a new workspace (definition, Makefile, .gitignore) |
-| `make clone`     | Clone all repositories (first-time setup)                |
-| `make pull`      | Pull updates across all repositories (clone if missing)  |
-| `make push`      | Push local commits across all repositories               |
-| `make scaffold`  | Initialise `.git` and set remote origin (no clone/fetch needed) |
-| `make checkout`  | Switch all repos to their defined branch                 |
-| `make status`    | Show dashboard overview of all repository states         |
-| `make validate`  | Verify repos match the system definition                 |
-| `make doctor`    | Diagnose environment issues (Git, Go, SSH, Docker)       |
-| `make ssh`       | Interactive SSH key setup wizard                         |
+*That's it!* Terraform automatically provisions:
+- **Server 1 (`k3s-master` / `10.0.1.10`)**: Installs K3s control plane, Traefik Ingress, and ArgoCD GitOps operator.
+- **Server 2 (`k3s-worker` / `10.0.1.11`)**: Automatically connects to Server 1 over the private cloud network (`10.0.1.0/24`).
+- **Cloud Firewall**: Pre-configured for SSH (22), HTTP (80), HTTPS (443), and intra-cluster communication.
 
 ---
 
-## Project Structure
+## 🚀 How Releases Work (Pure GitOps — No SSH Needed)
 
+After bootstrapping the servers once with Terraform, **code takes over completely**:
+
+### 1. Staging Release Flow (Automated on push to `main`):
 ```
-LMBEK-HOBBY-WORKSPACE/
-├── git-controller/          Go CLI that manages repositories
-│   ├── main.go              Entry point – parses args and dispatches commands
-│   └── internal/
-│       ├── commands/        One package per command
-│       │   ├── checkout/    Switch repos to their defined branch
-│       │   ├── clone/       Clone all repositories
-│       │   ├── doctor/      Diagnose environment (Git, Go, SSH, Docker)
-│       │   ├── fetch/       Fetch all remotes
-│       │   ├── pull/        Pull updates (clone if missing)
-│       │   ├── push/        Push local commits
-│       │   ├── scaffold/    Init .git and set remote origin
-│       │   ├── sshsetup/    Interactive SSH key setup
-│       │   ├── status/      Dashboard overview of repo states
-│       │   ├── update/      Fetch + pull + status in one go
-│       │   ├── validate/    Verify repos match system definition
-│       │   └── wsinit/      Scaffold a new workspace
-│       ├── gitutil/         Git shell helpers (clone, fetch, branch, etc.)
-│       ├── sshutil/         SSH key detection and configuration
-│       ├── system/          YAML parser, model, workspace detection
-│       └── ui/              Coloured terminal output helpers
-├── git-controller-php/      PHP port of the CLI (for PHP developers)
-├── git-controller-ansible/  Ansible port of the CLI (playbook-based)
-├── git-repositories/        All managed repos live here (gitignored)
-│   ├── deployment/          Environment configs and manifests (folders per env)
-│   ├── applications/        Microservices (one repo per service)
-│   ├── orchestrators/       Per-grouping Docker Compose files (local/stage/prod)
-│   ├── infrastructure/      Terraform / IaC and server provisioning
-│   ├── observability/       Monitoring, dashboards, alerts, log pipelines
-│   ├── tools/               General-purpose utilities and scripts
-│   ├── docs/                Architecture docs, API docs, manual runbooks
-│   └── system-definition.yaml  Defines which repos/branches to manage
-├── Makefile                 Convenience targets for the CLI (Go)
-├── Makefile-php             Convenience targets for the PHP CLI
-├── Makefile-ansible         Convenience targets for the Ansible playbooks
-├── .env.example             Documented environment variables
-├── .gitignore               Git ignore rules (ignores git-repositories/, etc.)
-├── .aiignore                AI agent ignore rules
-├── .github/                 Issue templates, PR template, CI workflows
-├── AGENTS.md               AI agent guidelines (defers to GUIDELINES.md)
-├── GUIDELINES.md            Master guidelines for all projects
-├── CONTRIBUTING.md          How to contribute (workflow, PR process, commits)
-├── GIT-REPOS.md             Guide to all git repository categories and why they exist
-├── SECURITY.md              Vulnerability reporting policy
-└── README.md                You are here
+Developer pushes code to main
+        │
+        ▼
+GitHub Actions builds container image & tags staging-latest / staging-<sha>
+        │
+        ▼
+ArgoCD detects new image & auto-syncs to Staging namespace (https://staging.<your-ip>)
 ```
 
-### Enterprise Repository Layout
-
-| Category         | Purpose                                                    | Example Repo                        |
-|------------------|------------------------------------------------------------|-------------------------------------|
-| `deployment`     | Per-environment values, secrets templates, and promotion config (folder-per-env) | `lmbek-hobby-deployment` |
-| `applications`   | Independent microservices, each with its own Dockerfile and CI/CD | `lmbek-hobby-placeholder1-service`  |
-| `orchestrators`  | Per-grouping Docker Compose files with local/stage/prod variants | `lmbek-hobby-orchestrators`         |
-| `infrastructure` | Terraform modules for cloud resources and server provisioning (Ansible, Packer, cloud-init) | `lmbek-hobby-infrastructure`, `lmbek-hobby-servers` |
-| `observability`  | Grafana dashboards, Prometheus rules, alert definitions, log pipelines | `lmbek-hobby-observability` |
-| `tools`          | General-purpose utilities, scripts, and helper tooling     | `lmbek-hobby-tools`                 |
-| `docs`           | Architecture Decision Records, API docs, manual runbooks | `lmbek-hobby-docs` |
-
-After cloning, start all services via the **orchestrators** repo:
-
+### 2. Production Release Flow (Automated on GitHub Release):
 ```
-cd git-repositories/orchestrators
-docker compose -f docker-compose.proxy.local.yml up -d
-docker compose -f docker-compose.applications.local.yml up -d --build
-docker compose -f docker-compose.docs.local.yml up -d --build
+Developer creates a GitHub Release (e.g. v1.0.0)
+        │
+        ▼
+GitHub Actions builds container image & tags latest, v1.0.0, <sha>
+        │
+        ▼
+ArgoCD detects new release & auto-syncs to Production namespace (https://<your-ip>)
 ```
 
-### Where Do Compose Files Live?
+### Day-to-Day Development Workflow:
+1. **Local Development**: Edit website HTML/CSS/JS or backend services and test instantly with `make up` or `make hotreload`.
+2. **Deploy to Staging**: Push your changes to the `main` branch:
+   ```bash
+   git add .
+   git commit -m "Update homepage UI and features"
+   git push origin main
+   ```
+   *GitHub Actions automatically builds the `staging-latest` image and ArgoCD deploys it to the Staging namespace.*
+3. **Promote to Production**: When staging validation passes, create a release on GitHub (e.g. `v1.0.0`):
+   - GitHub Actions automatically builds the release container image (`latest` + `v1.0.0`).
+   - ArgoCD auto-syncs the release into the live Production namespace with zero downtime!
 
-| Compose file | Location | Purpose |
+---
+
+## 🛠️ Available Workspace Commands
+
+All commands can be executed directly from the workspace root:
+
+| Command | Alias | Description |
 |---|---|---|
-| Per-service `docker-compose.yml` | Each application repo | Run that single service in isolation during development (with its own DB, cache, etc.) |
-| Per-grouping compose files | Orchestrators repo | Wire services together per grouping (proxy, applications, docs) with local/stage/prod variants |
-| Environment overrides | Deployment repo | Per-environment values (dev/staging/prod folders) consumed by CI/CD or GitOps tooling |
-
-Each service repo owns its own `Dockerfile`. The orchestrators repo references images built from those Dockerfiles — local composes build from source, stage/prod use pre-built registry images.
-
----
-
-## Troubleshooting
-
-- **Files from `git-repositories/` showing in git status?**
-  They were committed before the ignore rule existed. Untrack them once:
-  ```
-  git rm -r --cached git-repositories
-  git commit -m "Stop tracking git-repositories"
-  ```
-
-- **Wrong Go version?**
-  Place the correct Go bin directory first in PATH and set `GOTOOLCHAIN=local`. See [Setting up Go on Windows](#setting-up-go-on-windows-powershell).
-
-- **SSH permission errors?**
-  Run `make doctor` to see what's wrong, then `make ssh` to fix it.
+| `make clone` | | Clones all repositories and initializes workspace directories |
+| `make init-repo-envs` | `make envs` | Automatically creates `.env` from `.env.example` across all repos |
+| `make up` | | Starts the entire local stack (web, services, docs, proxy) |
+| `make hotreload` | | Starts local stack with live volume mounts for instant hot reloading |
+| `make down` | | Stops all running local containers |
+| `make status` | | Shows Git branch and status dashboard for all repositories |
+| `make sync` | | Safely pulls upstream changes across all repositories (`--ff-only`) |
+| `make fetch` | | Fetches all remotes across all repositories |
+| `make checkout` | | Switches branches (`make checkout BRANCH=main` or `go run . checkout main`) |
+| `make doctor` | | Verifies local development prerequisites (Git, Go, Docker, SSH) |
+| `make ssh-helper` | `make ssh` | Interactive SSH key configuration helper |
+| `make ps` | | Lists active container statuses and exposed ports |
+| `make logs` | | Tails unified container logs |
+| `make help` | | Shows available commands and quick help |
 
 ---
 
-## Registering Git Repos in Your IDE / Editor
+## 📁 Project Structure
 
-After cloning or scaffolding, your IDE only knows about the workspace root's `.git`. To get full Git integration (blame, diff, log, branch switching) for each managed repo, you need to register their `.git` directories.
-
-### JetBrains IDEs (GoLand, IntelliJ IDEA, PhpStorm, WebStorm, Rider, etc.)
-
-1. Open the workspace root folder as a project.
-2. Go to **Settings** → **Version Control** → **Directory Mappings** (or press `Ctrl+Alt+S` and search for "Directory Mappings").
-3. Click the **+** button to add a new mapping.
-4. Set **Directory** to the repo path, e.g. `git-repositories/applications/placeholder1-service`.
-5. Set **VCS** to **Git**.
-6. Repeat for every repo you want to track.
-7. Click **Apply** → **OK**.
-
-All registered repos will now appear in the **Git** tool window (`Alt+9`), and you can commit, push, pull, view log, and switch branches per repo.
-
-> **Tip:** JetBrains IDEs auto-detect `.git` directories in subdirectories and may prompt you to add them. Click **Add roots** when prompted to register them all at once.
-
-### Visual Studio Code
-
-VS Code automatically detects `.git` directories up to a configurable depth. If your repos are not showing up:
-
-1. Open the workspace root folder.
-2. Open **Settings** (`Ctrl+,`) and search for `git.repositoryScanMaxDepth`.
-3. Set it to at least **3** (default is 1), since repos live at `git-repositories/<category>/<repo>/.git`.
-4. Optionally, confirm `git.autoRepositoryDetection` is set to **true** (the default).
-5. Reload the window (`Ctrl+Shift+P` → **Developer: Reload Window**).
-
-All detected repos will appear in the **Source Control** panel (`Ctrl+Shift+G`). You can switch between them using the repository dropdown at the top of the panel.
-
-Alternatively, add repos manually by opening the Command Palette (`Ctrl+Shift+P`) → **Git: Open Repository** and selecting the repo folder.
-
-### Vim / Neovim (with fugitive or similar)
-
-Git plugins like [vim-fugitive](https://github.com/tpope/vim-fugitive) operate on the repo of the currently open file. No special configuration is needed — just open a file inside a managed repo and fugitive will detect its `.git` automatically.
-
-For multi-repo workflows, use `:cd` to switch to the repo directory, or use a session manager / workspace plugin to jump between repos.
-
-### General Advice
-
-- After running `make clone` or `make scaffold`, every repo under `git-repositories/` has its own `.git` directory.
-- Most modern editors detect `.git` directories automatically — you may just need to increase the scan depth.
-- If your editor does not support multi-root Git, open each repo as a separate project/window.
-
----
-
-## Contributing
-
-We welcome contributions! Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for development workflow, PR process, and commit message conventions.
-
----
-
-## Security
-
-For reporting vulnerabilities, see [SECURITY.md](./SECURITY.md). Do not open public issues for security concerns.
-
----
-
-## Guidelines
-
-All projects in this workspace follow the master guidelines first, then any project-specific guidelines after.
-See [GUIDELINES.md](./GUIDELINES.md).
+```text
+.
+├── git-controller/              # Go CLI managing multi-repo workflows & operations
+├── local-orchestrator/          # Unified Docker Compose & live hot-reload setup
+│   ├── docker-compose.yml       # Root compose definition with modular includes
+│   ├── compose/                 # Stack modules (websites, services, docs, proxy, observability)
+│   ├── hotreload/               # Live source mounting overlays for instant UI/code feedback
+│   └── proxy/                   # Traefik routing configuration mirroring production paths
+├── tools/                       # Workspace development tools and helper scripts
+├── git-repositories/            # Managed workspace repositories (gitignored)
+│   ├── services/
+│   │   ├── web-frontend/        # Responsive website frontend (Go + HTML5/CSS)
+│   │   ├── placeholder1-service/# Microservice 1 (Port 8082)
+│   │   └── placeholder2-service/# Microservice 2 (Port 8081)
+│   ├── infrastructure/
+│   │   ├── iac/                 # Terraform modules for Hetzner Cloud 2-node cluster
+│   │   ├── servers/             # K3s master/worker cloud-init & Go platform CLI
+│   │   └── platform/            # Kubernetes base manifests, overlays, and ArgoCD CRDs
+│   ├── deployment/              # Environment release configurations
+│   ├── observability/           # Grafana dashboards & Prometheus alerts
+│   ├── docs/                    # Architecture records (ADRs) & documentation portal
+│   └── repo-definition.yaml     # Single source of truth for managed repositories
+├── Makefile                     # Root developer interface
+├── .gitignore                   # Workspace gitignore rules (safeguards secrets & keys)
+└── README.md                    # This guide
+```
