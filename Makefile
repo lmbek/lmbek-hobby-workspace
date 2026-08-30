@@ -1,4 +1,4 @@
-.PHONY: default help clone fetch sync checkout init-repo-envs envs doctor ssh-helper ssh status up down restart build hotreload hotreload-down down-hotreload ps logs down-v
+.PHONY: default help clone fetch sync checkout init-repo-envs envs doctor ssh-helper ssh status github-setup github-runner-token up down restart build hotreload hotreload-down down-hotreload ps logs down-v
 
 default: help
 
@@ -10,6 +10,12 @@ clone fetch sync checkout init-repo-envs doctor ssh-helper status:
 
 envs: init-repo-envs
 ssh: ssh-helper
+
+github-setup:
+	@./tools/setup-github.sh bootstrap
+
+github-runner-token:
+	@./tools/setup-github.sh runner-token
 
 up:
 	@$(MAKE) -C local-orchestrator up

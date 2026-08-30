@@ -11,31 +11,26 @@ Open `http://web.localhost`, `http://placeholder1.localhost`, `http://placeholde
 
 ## One-time GitHub preparation
 
-1. In every service and docs repository, enable GitHub Actions and set **Settings -> Actions -> General -> Workflow permissions** to read repository contents. The workflow's explicit `packages: write` permission publishes to GHCR.
-2. In the platform repository, permit the workflow's explicit `contents: write` and `packages: read` permissions. If `main` is protected, allow the GitHub Actions app to bypass only for the automated digest commit.
-3. Create a `production` environment in the platform repository and restrict deployment branches to `main`. Required reviewers are optional; enabling them intentionally pauses every scheduled deployment for approval.
-4. Make all four GHCR packages public, or grant the platform repository Actions read access under each package's **Manage Actions access** page.
-5. Require each repository's CI workflow in the `main` branch ruleset. Never route pull-request jobs to the self-hosted runner.
-
-Authenticate GitHub CLI and create the short-lived runner registration token immediately before provisioning:
-
 ```bash
-gh auth login
-gh api --method POST \
-  repos/lmbek/lmbek-hobby-platform/actions/runners/registration-token \
-  --jq .token
+make github-setup
 ```
 
-The token is single-use and expires after one hour. Put it only in your local `terraform.tfvars`; no Kubernetes credential, PAT, cloud token, or SSH key is stored in GitHub Actions.
+This idempotent command installs GitHub CLI from its official Debian/Ubuntu repository when needed. Unless `GH_TOKEN` is already set, it opens GitHub's browser authorization once; authentication cannot be delegated safely.
+
+The command then enables Actions with read-only defaults in every repository, creates the platform's `production` environment restricted to `main`, runs and waits for any missing initial image builds, makes all four GHCR packages public, and installs required-CI `main` rulesets. The platform ruleset allows only the GitHub Actions integration to bypass it for the automated digest commit. Run it as a GitHub account with administration access to all repositories; the account must have a plan that supports repository rulesets.
+
+The defaults target the `lmbek` account. Set `GITHUB_OWNER=another-owner` on both GitHub commands if the repositories were forked or transferred. Pull requests always use GitHub-hosted runners; only the trusted platform deployment job uses the production self-hosted runner.
 
 ## Provision production
 
 ```bash
+cp git-repositories/infrastructure/iac/terraform.tfvars.example \
+  git-repositories/infrastructure/iac/terraform.tfvars
+# Set hcloud_token, ssh_public_key, allowed_ssh_ips, domain, and letsencrypt_email.
+# Leave github_runner_token alone; the next command writes it without printing it.
+chmod 600 git-repositories/infrastructure/iac/terraform.tfvars
+make github-runner-token
 cd git-repositories/infrastructure/iac
-cp terraform.tfvars.example terraform.tfvars
-# Set hcloud_token, ssh_public_key, allowed_ssh_ips, domain,
-# letsencrypt_email, and github_runner_token.
-chmod 600 terraform.tfvars
 terraform init
 terraform fmt -check -recursive
 terraform validate
@@ -44,11 +39,13 @@ terraform apply tfplan
 terraform output -raw ingress_target_ip
 ```
 
+`make github-runner-token` installs/authenticates GitHub CLI if necessary, requests the short-lived registration token, and updates only the ignored local `terraform.tfvars`. The token is single-use, expires after one hour, and must be regenerated immediately before any Terraform operation that replaces the server. No Kubernetes credential, PAT, cloud token, or SSH key is stored in GitHub Actions.
+
 Create one DNS `A` record for the configured domain pointing to `ingress_target_ip`. Do not create a record for the Kubernetes API and do not open TCP 6443.
 
 ## First and subsequent deployments
 
-Push `main` in the three service repositories and docs repository. Each hosted CI workflow runs tests/build checks, dependency scanning, a container build, Trivy, and then publishes `sha-<full-git-sha>` plus the moving `production` discovery tag.
+Merge to `main` in the three service repositories and docs repository. Each hosted CI workflow runs tests/build checks, dependency scanning, a container build, Trivy, and then publishes `sha-<full-git-sha>` plus the moving `production` discovery tag.
 
 The platform `Deploy production` workflow runs every five minutes or from **Actions -> Deploy production -> Run workflow**. It resolves each discovery tag to a digest, updates Git, applies the production Kustomization using namespace-only RBAC, waits for every rollout, and verifies HTTPS.
 
