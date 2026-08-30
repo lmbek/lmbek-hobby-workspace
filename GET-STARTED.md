@@ -144,24 +144,26 @@ of truth.
 
 ### 8. Deploying an application change
 
-Each service repository has GitHub Actions CI/CD. Use this workflow from your local
-machine:
+Each service repository has GitHub Actions CI/CD. After the one-time setup below,
+the complete staging-to-production release is automatic:
 
-1. Run the service tests locally, then commit and push the service change to `main`.
-2. Wait for GitHub Actions to test and publish the image to GHCR.
-3. Read the published image's immutable `sha256` digest. For example:
-   ```bash
-   docker buildx imagetools inspect ghcr.io/lmbek/lmbek-hobby-web-frontend:staging-latest
-   ```
-   Update the matching image digest in
-   `git-repositories/infrastructure/platform/overlays/staging/kustomization.yml`.
-4. Open and merge the platform pull request. Argo CD deploys staging automatically.
-5. Verify `https://staging.lmbek.dk`, then copy that exact digest to the production
-   overlay, open and merge a second platform pull request.
+1. Create a GitHub fine-grained token with access to `lmbek/lmbek-hobby-platform`:
+   `Actions: read and write`, `Contents: read and write`, and `Pull requests: read
+   and write`. Enable repository auto-merge and add the token as the
+   `PLATFORM_REPOSITORY_TOKEN` Actions secret in each service repository and in the
+   platform repository.
+2. Run the service tests locally, then commit and push the service change to `main`.
+3. GitHub Actions tests and publishes the image, sends its immutable digest to the
+   platform repository, and creates/auto-merges the staging platform pull request.
+4. The platform workflow waits for `https://staging.lmbek.dk/healthz`, then creates
+   and auto-merges a production pull request with that exact tested digest.
+5. Argo CD deploys both merged platform changes. No digest lookup, platform edit,
+   pull request, SSH connection, or manual server/Kubernetes command is required.
 
 Platform pull requests run Kustomize validation. Terraform pull requests run format
-and configuration validation. Neither workflow applies Terraform or connects to
-production.
+and configuration validation. The release workflows only use GitHub and the public
+staging health endpoint; they never apply Terraform, connect to production, or read
+cluster credentials.
 
 ---
 

@@ -11,8 +11,8 @@ the Kubernetes workloads.
 | Environment | Deploy / Up Command | Teardown / Down Command | Target URL & Ingress | Description |
 |---|---|---|---|---|
 | **1. Local** | `make up` or `make hotreload` | `make down` | `http://localhost` | Zero-cloud-cost local development with Traefik routing matching production |
-| **2. Staging** | Record a staging digest in Git | Git revert | `https://staging.lmbek.dk` | Pre-production frontend with trusted automatic TLS |
-| **3. Production** | Promote image digests in Git | Git revert | `https://lmbek.dk` | Immutable images with trusted automatic TLS |
+| **2. Staging** | Push service `main` | Git revert | `https://staging.lmbek.dk` | Automatic immutable image deployment with trusted TLS |
+| **3. Production** | Automatic promotion after staging health check | Git revert | `https://lmbek.dk` | Immutable images with trusted automatic TLS |
 
 ---
 
@@ -143,17 +143,14 @@ Developer pushes code to main
 GitHub Actions builds container image & tags staging-latest / staging-<sha>
         │
         ▼
-Developer records the immutable image digest in the staging overlay and merges it
+GitHub Actions records the immutable digest and auto-merges the staging platform PR
+        │
+        ▼
+GitHub Actions waits for staging health, then auto-merges the production promotion PR
 ```
 
 ### 2. Production Promotion Flow:
 ```
-Developer verifies a staging image digest
-        │
-        ▼
-Developer tests staging, then updates the digest in overlays/production/kustomization.yml
-        │
-        ▼
 ArgoCD detects the Git change and syncs the Production namespace
 ```
 
@@ -165,12 +162,9 @@ ArgoCD detects the Git change and syncs the Production namespace
    git commit -m "Update homepage UI and features"
    git push origin main
    ```
-   Wait for GitHub Actions to pass and publish the GHCR image. Copy its `sha256` digest
-   into `git-repositories/infrastructure/platform/overlays/staging/kustomization.yml`,
-   then open and merge a platform pull request.
-3. **Promote to Production**: Verify `https://staging.lmbek.dk`, copy the same tested
-   digest into `overlays/production/kustomization.yml`, and merge that platform change.
-   Argo CD deploys both merged changes automatically; no SSH or server-side command is needed.
+   GitHub Actions automatically publishes the image, updates and merges the staging
+   platform pull request, waits for `https://staging.lmbek.dk/healthz`, and promotes
+   the exact tested digest to production. No manual platform change is needed.
 
 ---
 
