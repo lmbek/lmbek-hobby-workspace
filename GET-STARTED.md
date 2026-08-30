@@ -15,11 +15,11 @@ Open `http://web.localhost`, `http://placeholder1.localhost`, `http://placeholde
 make github-setup
 ```
 
-This idempotent command installs GitHub CLI from its official Debian/Ubuntu repository when needed. Unless `GH_TOKEN` is already set, it opens GitHub's browser authorization once; authentication cannot be delegated safely.
+This idempotent command installs GitHub CLI from its official Debian/Ubuntu repository when needed. Unless `GH_TOKEN` is already set, it opens GitHub's browser authorization once; authentication cannot be delegated safely. On the first run it also prompts, without echoing, for a classic personal access token with only `read:packages`; create one under **GitHub Settings -> Developer settings -> Personal access tokens (classic)** using the `lmbek` account. GitHub does not expose an API for creating this credential. Set `GHCR_PULL_TOKEN` when running the command later only when rotating it.
 
-The command then enables Actions with read-only defaults in every repository, creates the platform's `production` environment restricted to `main`, runs and waits for any missing initial image builds, makes all four GHCR packages public, and installs required-CI `main` rulesets. The platform ruleset allows only the GitHub Actions integration to bypass it for the automated digest commit. Run it as a GitHub account with administration access to all repositories; the account must have a plan that supports repository rulesets.
+The command then enables Actions with read-only defaults in every repository, creates the platform's `production` environment restricted to `main`, stores the package token as the encrypted `GHCR_PULL_TOKEN` platform secret, runs and waits for any missing initial image builds, and installs required-CI `main` rulesets. All four GHCR packages remain private. The platform ruleset allows only the GitHub Actions integration to bypass it for the automated digest commit. Run it as a GitHub account with administration access to all repositories; the account must have a plan that supports repository rulesets.
 
-The defaults target the `lmbek` account. Set `GITHUB_OWNER=another-owner` on both GitHub commands if the repositories were forked or transferred. Pull requests always use GitHub-hosted runners; only the trusted platform deployment job uses the production self-hosted runner.
+The repository and image names target the `lmbek` account. Pull requests always use GitHub-hosted runners; only the trusted platform deployment job uses the production self-hosted runner.
 
 ## Provision production
 
@@ -39,7 +39,7 @@ terraform apply tfplan
 terraform output -raw ingress_target_ip
 ```
 
-`make github-runner-token` installs/authenticates GitHub CLI if necessary, requests the short-lived registration token, and updates only the ignored local `terraform.tfvars`. The token is single-use, expires after one hour, and must be regenerated immediately before any Terraform operation that replaces the server. No Kubernetes credential, PAT, cloud token, or SSH key is stored in GitHub Actions.
+`make github-runner-token` installs/authenticates GitHub CLI if necessary, requests the short-lived registration token, and updates only the ignored local `terraform.tfvars`. The token is single-use, expires after one hour, and must be regenerated immediately before any Terraform operation that replaces the server. No Kubernetes credential, cloud token, or SSH key is stored in GitHub Actions; the selected private-package design stores only the read-only GHCR token there and in the encrypted Kubernetes `ghcr-pull` Secret.
 
 Create one DNS `A` record for the configured domain pointing to `ingress_target_ip`. Do not create a record for the Kubernetes API and do not open TCP 6443.
 
