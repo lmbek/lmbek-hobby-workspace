@@ -73,7 +73,9 @@ authenticate_github_cli() {
   install_github_cli
   if gh auth status --hostname github.com >/dev/null 2>&1; then
     local scopes=""
-    scopes=",$(gh auth status --hostname github.com --json scopes --jq .scopes | tr -d ' '),"
+    scopes=",$(gh api --include user 2>/dev/null |
+      awk '!found && tolower($1) == "x-oauth-scopes:" { $1 = ""; sub(/^ /, ""); print; found = 1 }' |
+      tr -d '\r '),"
     if [[ -z "${GH_TOKEN:-}" && ("$scopes" != *",repo,"* || "$scopes" != *",read:packages,"*) ]]; then
       printf '==> Expanding GitHub CLI authorization for repository and package administration...\n'
       gh auth refresh --hostname github.com --scopes repo,workflow,read:packages
@@ -110,7 +112,7 @@ configure_production_environment() {
   printf '==> Restricting the platform production environment to main...\n'
   gh api --method PUT "repos/${PLATFORM_REPOSITORY}/environments/production" \
     --input - >/dev/null <<'JSON'
-{"wait_timer":0,"prevent_self_review":false,"deployment_branch_policy":{"protected_branches":false,"custom_branch_policies":true}}
+{"wait_timer":0,"reviewers":[],"deployment_branch_policy":{"protected_branches":false,"custom_branch_policies":true}}
 JSON
 
   if ! gh api "repos/${PLATFORM_REPOSITORY}/environments/production/deployment-branch-policies" \
@@ -272,7 +274,12 @@ write_runner_token() {
       next
     }
     { print }
-    END { if (!replaced) exit 1 }
+    END {
+      if (!replaced) {
+        print ""
+        print "github_runner_token = \"" token "\""
+      }
+    }
   ' "$TFVARS_PATH" > "$temporary_file"
   chmod 600 "$temporary_file"
   mv "$temporary_file" "$TFVARS_PATH"
