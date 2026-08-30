@@ -147,11 +147,26 @@ of truth.
 Each service repository has GitHub Actions CI/CD. After the one-time setup below,
 the complete staging-to-production release is automatic:
 
-1. Create a GitHub fine-grained token with access to `lmbek/lmbek-hobby-platform`:
-   `Actions: read and write`, `Contents: read and write`, and `Pull requests: read
-   and write`. Enable repository auto-merge and add the token as the
-   `PLATFORM_REPOSITORY_TOKEN` Actions secret in each service repository and in the
-   platform repository.
+1. Create a GitHub fine-grained token with access to `lmbek/lmbek-hobby-platform`.
+   Grant `Contents: read and write` and `Pull requests: read and write` (the token
+   does not need Actions access). Enable repository auto-merge, then add the token as
+   the `PLATFORM_REPOSITORY_TOKEN` Actions secret in all five repositories. From a
+   local terminal with GitHub CLI authentication, this can be done without putting the
+   token in shell history:
+   ```bash
+   read -rsp 'Platform token: ' PLATFORM_TOKEN; printf '\n'
+   for repository in \
+     lmbek/lmbek-hobby-web-frontend \
+     lmbek/lmbek-hobby-placeholder1-service \
+     lmbek/lmbek-hobby-placeholder2-service \
+     lmbek/lmbek-hobby-docs \
+     lmbek/lmbek-hobby-platform; do
+     gh secret set PLATFORM_REPOSITORY_TOKEN --repo "$repository" --body "$PLATFORM_TOKEN"
+   done
+   unset PLATFORM_TOKEN
+   ```
+   Verify each repository has the secret with `gh secret list --repo OWNER/REPOSITORY`;
+   GitHub never displays the secret value.
 2. Run the service tests locally, then commit and push the service change to `main`.
 3. GitHub Actions tests and publishes the image, sends its immutable digest to the
    platform repository, and creates/auto-merges the staging platform pull request.
