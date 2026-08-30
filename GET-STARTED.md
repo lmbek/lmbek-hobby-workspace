@@ -149,8 +149,12 @@ machine:
 
 1. Run the service tests locally, then commit and push the service change to `main`.
 2. Wait for GitHub Actions to test and publish the image to GHCR.
-3. Read the published image's immutable `sha256` digest and update the matching image
-   in `git-repositories/infrastructure/platform/overlays/staging/kustomization.yml`.
+3. Read the published image's immutable `sha256` digest. For example:
+   ```bash
+   docker buildx imagetools inspect ghcr.io/lmbek/lmbek-hobby-web-frontend:staging-latest
+   ```
+   Update the matching image digest in
+   `git-repositories/infrastructure/platform/overlays/staging/kustomization.yml`.
 4. Open and merge the platform pull request. Argo CD deploys staging automatically.
 5. Verify `https://staging.lmbek.dk`, then copy that exact digest to the production
    overlay, open and merge a second platform pull request.
