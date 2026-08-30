@@ -79,25 +79,29 @@ terraform apply
 
 ---
 
-### 6. Verify Cluster & SSH to Master Node
+### 6. Configure DNS & Verify from Your Local Environment
 
-When you SSH into the master node (`ssh root@<master_ip>`):
+After `terraform apply`, get the public ingress address locally:
 
 ```bash
-# 1. Wait for cloud-init background bootstrap to finish (1-2 minutes on first boot)
-cloud-init status --wait
+cd git-repositories/infrastructure/iac
+terraform output -raw ingress_target_ip
+```
 
-# (Optional) Watch live bootstrap logs if you want to follow the progress:
-# tail -f /var/log/cloud-init-output.log
+Create this DNS `A` record at your DNS provider:
 
-# 2. Verify cluster nodes
-kubectl get nodes
+```text
+@            A  <ingress_target_ip>
+```
 
-# 3. Check cluster security and running pods
-kubectl get pods -A
+DNS providers usually use `@` as the record name; providers that require a fully
+qualified name should use `lmbek.dk` instead. Do not add wildcard records: only
+the web frontend is public.
 
-# Troubleshooting: If kubectl ever says "connection refused to localhost:8080", run:
-export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+Once DNS has propagated, verify the public routes from your local environment:
+
+```bash
+curl --fail --show-error --head https://lmbek.dk
 ```
 
 ---
@@ -116,6 +120,9 @@ terraform plan
 terraform apply
 ```
 
+Always review the plan before applying it. Changes to immutable server bootstrap
+configuration, such as cloud-init, can require server replacement and new public IPs.
+
 ---
 
 ### 8. How to Shut Down / Destroy Cloud Servers
@@ -125,6 +132,6 @@ When you want to stop billing or completely decommission the cloud servers:
 ```bash
 cd git-repositories/infrastructure/iac
 
-# Permanently destroy servers, private network, and firewall
+# Permanently destroy the server and firewall
 terraform destroy
 ```

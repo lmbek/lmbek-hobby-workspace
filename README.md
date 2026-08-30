@@ -1,6 +1,8 @@
 # LMBEK Hobby Workspace
 
-A simple, robust multi-repo cloud platform and developer workspace. Manage all microservices and websites locally with Docker Compose hot-reloading (`make up`), provision 2 cheap Hetzner Cloud servers with Terraform in minutes, and let ArgoCD GitOps automatically deploy every push to `main` to **Staging** and every GitHub Release to **Production**.
+A multi-repository developer workspace with Docker Compose locally and a small GitOps
+deployment on one Hetzner server. Terraform owns the server and firewall; Argo CD owns
+the Kubernetes workloads.
 
 ---
 
@@ -9,31 +11,27 @@ A simple, robust multi-repo cloud platform and developer workspace. Manage all m
 | Environment | Deploy / Up Command | Teardown / Down Command | Target URL & Ingress | Description |
 |---|---|---|---|---|
 | **1. Local** | `make up` or `make hotreload` | `make down` | `http://localhost` | Zero-cloud-cost local development with Traefik routing matching production |
-| **2. Staging** | `git push origin main` | `kubectl delete -k git-repositories/infrastructure/platform/overlays/staging` | `https://staging.<domain>` | Continuous pre-production environment auto-deployed on push to `main` with automated TLS |
-| **3. Production** | Create GitHub Release (`v*.*.*`) | `cd git-repositories/infrastructure/iac && terraform destroy` | `https://<domain>` | Live stable production workloads with automated Let's Encrypt SSL and edge proxying |
+| **2. Staging** | Record a staging digest in Git | Git revert | Internal only | Pre-production environment without public ingress |
+| **3. Production** | Promote image digests in Git | Git revert | `https://lmbek.dk` | Immutable images with trusted automatic TLS |
 
 ---
 
-## 🌐 Proxies, Load Balancers & Best Practice URLs
+## 🌐 Public URLs
 
-All web traffic passes through hardened reverse proxies with automatic SSL/TLS encryption:
+Only the production web frontend is publicly exposed. Its traffic passes through
+Traefik with automatic SSL/TLS encryption:
 
 | URL Endpoint | Service Routed | Environment | Ingress / Proxy Layer | TLS Security |
 |---|---|---|---|---|
-| `https://example.com` (or `https://web.example.com`) | Web Frontend Website | `production` | Traefik + Hetzner LB (optional) | Let's Encrypt Prod SSL (Auto-renew) |
-| `https://placeholder1.example.com` | Microservice 1 API | `production` | Traefik Ingress | Let's Encrypt Prod SSL (Auto-renew) |
-| `https://placeholder2.example.com` | Microservice 2 API | `production` | Traefik Ingress | Let's Encrypt Prod SSL (Auto-renew) |
-| `https://docs.example.com` | Docs Portal | `production` | Traefik Ingress | Let's Encrypt Prod SSL (Auto-renew) |
-| `https://staging.example.com` | Web Frontend Website | `staging` | Traefik Ingress | Automated Staging TLS Certificate |
-| `https://placeholder1.staging.example.com` | Microservice 1 API | `staging` | Traefik Ingress | Automated Staging TLS Certificate |
-| `https://placeholder2.staging.example.com` | Microservice 2 API | `staging` | Traefik Ingress | Automated Staging TLS Certificate |
-| `https://docs.staging.example.com` | Docs Portal | `staging` | Traefik Ingress | Automated Staging TLS Certificate |
+| `https://lmbek.dk` | Web Frontend Website | `production` | Traefik | Let's Encrypt SSL (Auto-renew) |
 
-### 🔒 Security & Private Network Architecture:
-- **Zero Kubernetes API Exposure**: Port 6443 (K3s API) is strictly bound to the private network (`10.0.1.0/24`) and blocked from the public internet by cloud firewall rules.
+The placeholder services, documentation, and staging workloads remain internal
+Kubernetes services and have no public Ingress routes.
+
+### 🔒 Security:
+- **No public Kubernetes API**: The Hetzner firewall only exposes ports 22, 80, and 443.
 - **Edge Security Headers**: Traefik enforces HTTP-to-HTTPS redirect, HSTS (HTTP Strict Transport Security), XSS filters, and rate limiting out-of-the-box.
 - **Automated Certificate Lifecycle**: cert-manager continuously manages and renews Let's Encrypt SSL certificates via ACME HTTP-01 solvers.
-- **High Availability Edge Proxy**: Optional Hetzner Load Balancer (`lb11`) distributes incoming HTTP (80) and HTTPS (443) traffic across master and worker nodes.
 
 ---
 
@@ -72,7 +70,7 @@ make down
 
 ## 🔑 Where to Put Your Hetzner API Key (One-Time Server Setup)
 
-To spin up your 2 cheap cloud servers (~€3.79/mo each) on Hetzner Cloud:
+To provision the single K3s server on Hetzner Cloud:
 
 ### Step 1: Obtain Your Hetzner API Token
 1. Go to [Hetzner Cloud Console](https://console.hetzner.cloud).
@@ -87,7 +85,7 @@ cp terraform.tfvars.example terraform.tfvars
 Open `terraform.tfvars` and paste your token:
 ```hcl
 hcloud_token   = "YOUR_HETZNER_API_TOKEN_HERE"
-ssh_public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5..." # (Optional) Your public SSH key
+ssh_public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5..." # Required emergency access key
 server_type    = "cx23"                               # 2 vCPU, 4 GB RAM (~€3.79/mo)
 server_location = "fsn1"                              # Falkenstein (or nbg1, hel1)
 ```
@@ -105,10 +103,8 @@ cd git-repositories/infrastructure/iac
 terraform init
 terraform apply
 ```
-*That's it!* Terraform automatically provisions:
-- **Server 1 (`k3s-master` / `10.0.1.10`)**: Installs K3s control plane, Traefik Ingress, and ArgoCD GitOps operator.
-- **Server 2 (`k3s-worker` / `10.0.1.11`)**: Automatically connects to Server 1 over the private cloud network (`10.0.1.0/24`).
-- **Cloud Firewall**: Pre-configured for SSH (22), HTTP (80), HTTPS (443), and intra-cluster communication.
+Terraform provisions one K3s server and one cloud firewall. Immutable cloud-init installs
+K3s, cert-manager, and Argo CD; no server-side setup commands are required.
 
 ### Step 4: Updating Server Provisioning
 Whenever you modify variables, firewall rules, or domain settings:
@@ -129,9 +125,9 @@ terraform destroy
 
 ## 🚀 How Releases Work (Pure GitOps — No SSH Needed)
 
-After bootstrapping the servers once with Terraform, **code takes over completely**:
+After bootstrapping the server once with Terraform, **Git takes over completely**:
 
-### 1. Staging Release Flow (Automated on push to `main`):
+### 1. Staging Release Flow:
 ```
 Developer pushes code to main
         │
@@ -139,18 +135,18 @@ Developer pushes code to main
 GitHub Actions builds container image & tags staging-latest / staging-<sha>
         │
         ▼
-ArgoCD detects new image & auto-syncs to Staging namespace (https://staging.<your-ip>)
+Developer records the image digest in the staging overlay
 ```
 
-### 2. Production Release Flow (Automated on GitHub Release):
+### 2. Production Promotion Flow:
 ```
-Developer creates a GitHub Release (e.g. v1.0.0)
+Developer verifies a staging image digest
         │
         ▼
-GitHub Actions builds container image & tags latest, v1.0.0, <sha>
+Developer updates the digest in overlays/production/kustomization.yml
         │
         ▼
-ArgoCD detects new release & auto-syncs to Production namespace (https://<your-ip>)
+ArgoCD detects the Git change and syncs the Production namespace
 ```
 
 ### Day-to-Day Development Workflow:
@@ -161,10 +157,9 @@ ArgoCD detects new release & auto-syncs to Production namespace (https://<your-i
    git commit -m "Update homepage UI and features"
    git push origin main
    ```
-   *GitHub Actions automatically builds the `staging-latest` image and ArgoCD deploys it to the Staging namespace.*
-3. **Promote to Production**: When staging validation passes, create a release on GitHub (e.g. `v1.0.0`):
-   - GitHub Actions automatically builds the release container image (`latest` + `v1.0.0`).
-   - ArgoCD auto-syncs the release into the live Production namespace with zero downtime!
+   Record the built image digest in the staging overlay so Argo CD can deploy it reproducibly.
+3. **Promote to Production**: Update the tested immutable image digest in
+   `infrastructure/platform/overlays/production/kustomization.yml` and merge it.
 
 ---
 
@@ -209,8 +204,8 @@ All commands can be executed directly from the workspace root:
 │   │   ├── placeholder1-service/# Microservice 1 (Port 8082)
 │   │   └── placeholder2-service/# Microservice 2 (Port 8081)
 │   ├── infrastructure/
-│   │   ├── iac/                 # Terraform modules for Hetzner Cloud 2-node cluster
-│   │   ├── servers/             # K3s master/worker cloud-init & Go platform CLI
+│   │   ├── iac/                 # Terraform for one Hetzner server and firewall
+│   │   ├── servers/             # Immutable K3s cloud-init
 │   │   └── platform/            # Kubernetes base manifests, overlays, and ArgoCD CRDs
 │   ├── deployment/              # Environment release configurations
 │   ├── observability/           # Grafana dashboards & Prometheus alerts
