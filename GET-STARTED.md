@@ -74,6 +74,10 @@ cp terraform.tfvars.example terraform.tfvars
 
 # 4. Initialize and apply (must be run from inside git-repositories/infrastructure/iac)
 terraform init
+terraform fmt -check
+terraform validate
+terraform plan
+# Review the plan carefully, then apply only when ready.
 terraform apply
 ```
 
@@ -102,30 +106,62 @@ Once DNS has propagated, verify the public routes from your local environment:
 
 ```bash
 curl --fail --show-error --head https://lmbek.dk
+curl --fail --show-error --head https://staging.lmbek.dk
 ```
+
+The first certificates may take several minutes. Both public routes use trusted
+Let's Encrypt certificates; local development remains HTTP-only. Do not test with
+the server IP because HTTPS routing requires the hostname.
 
 ---
 
 ### 7. How to Update Infrastructure Provisioning
 
-Whenever you edit `terraform.tfvars`, firewall rules, server locations, or domain names:
+Whenever you edit `terraform.tfvars`, firewall rules, server locations, domain names,
+or cloud-init:
 
 ```bash
 cd git-repositories/infrastructure/iac
 
+# Validate before creating a plan
+terraform fmt -check
+terraform validate
+
 # Check what will change
 terraform plan
 
-# Apply changes to your live servers
+# Apply only after reviewing the plan
 terraform apply
 ```
 
 Always review the plan before applying it. Changes to immutable server bootstrap
 configuration, such as cloud-init, can require server replacement and new public IPs.
+If the IP changes, update the single `@` DNS `A` record. Never SSH to production or
+run manual server/Kubernetes commands; the repositories and Argo CD are the source
+of truth.
 
 ---
 
-### 8. How to Shut Down / Destroy Cloud Servers
+### 8. Deploying an application change
+
+Each service repository has GitHub Actions CI/CD. Use this workflow from your local
+machine:
+
+1. Run the service tests locally, then commit and push the service change to `main`.
+2. Wait for GitHub Actions to test and publish the image to GHCR.
+3. Read the published image's immutable `sha256` digest and update the matching image
+   in `git-repositories/infrastructure/platform/overlays/staging/kustomization.yml`.
+4. Open and merge the platform pull request. Argo CD deploys staging automatically.
+5. Verify `https://staging.lmbek.dk`, then copy that exact digest to the production
+   overlay, open and merge a second platform pull request.
+
+Platform pull requests run Kustomize validation. Terraform pull requests run format
+and configuration validation. Neither workflow applies Terraform or connects to
+production.
+
+---
+
+### 9. How to Shut Down / Destroy Cloud Servers
 
 When you want to stop billing or completely decommission the cloud servers:
 

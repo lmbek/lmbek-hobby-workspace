@@ -11,22 +11,23 @@ the Kubernetes workloads.
 | Environment | Deploy / Up Command | Teardown / Down Command | Target URL & Ingress | Description |
 |---|---|---|---|---|
 | **1. Local** | `make up` or `make hotreload` | `make down` | `http://localhost` | Zero-cloud-cost local development with Traefik routing matching production |
-| **2. Staging** | Record a staging digest in Git | Git revert | Internal only | Pre-production environment without public ingress |
+| **2. Staging** | Record a staging digest in Git | Git revert | `https://staging.lmbek.dk` | Pre-production frontend with trusted automatic TLS |
 | **3. Production** | Promote image digests in Git | Git revert | `https://lmbek.dk` | Immutable images with trusted automatic TLS |
 
 ---
 
 ## 🌐 Public URLs
 
-Only the production web frontend is publicly exposed. Its traffic passes through
-Traefik with automatic SSL/TLS encryption:
+Only the web frontend is publicly exposed in staging and production. Traffic passes
+through Traefik with automatic SSL/TLS encryption:
 
 | URL Endpoint | Service Routed | Environment | Ingress / Proxy Layer | TLS Security |
 |---|---|---|---|---|
 | `https://lmbek.dk` | Web Frontend Website | `production` | Traefik | Let's Encrypt SSL (Auto-renew) |
+| `https://staging.lmbek.dk` | Web Frontend Website | `staging` | Traefik | Let's Encrypt SSL (Auto-renew) |
 
-The placeholder services, documentation, and staging workloads remain internal
-Kubernetes services and have no public Ingress routes.
+The placeholder services and documentation remain internal Kubernetes services and
+have no public Ingress routes.
 
 ### 🔒 Security:
 - **No public Kubernetes API**: The Hetzner firewall only exposes ports 22, 80, and 443.
@@ -107,12 +108,19 @@ Terraform provisions one K3s server and one cloud firewall. Immutable cloud-init
 K3s, cert-manager, and Argo CD; no server-side setup commands are required.
 
 ### Step 4: Updating Server Provisioning
-Whenever you modify variables, firewall rules, or domain settings:
+Whenever you modify variables, firewall rules, domain settings, or cloud-init:
 ```bash
 cd git-repositories/infrastructure/iac
+terraform fmt -check
+terraform validate
 terraform plan
+# Apply only after reviewing the plan.
 terraform apply
 ```
+
+Cloud-init changes can replace the server and change its public IP. Update the DNS
+record after such a replacement. Do not SSH to production or run manual `kubectl`
+commands; all operational changes belong in these repositories.
 
 ### Step 5: Shutting Down / Destroying Cloud Servers
 When you want to stop billing or tear down the cloud servers completely:
@@ -135,7 +143,7 @@ Developer pushes code to main
 GitHub Actions builds container image & tags staging-latest / staging-<sha>
         │
         ▼
-Developer records the image digest in the staging overlay
+Developer records the immutable image digest in the staging overlay and merges it
 ```
 
 ### 2. Production Promotion Flow:
@@ -143,7 +151,7 @@ Developer records the image digest in the staging overlay
 Developer verifies a staging image digest
         │
         ▼
-Developer updates the digest in overlays/production/kustomization.yml
+Developer tests staging, then updates the digest in overlays/production/kustomization.yml
         │
         ▼
 ArgoCD detects the Git change and syncs the Production namespace
@@ -151,15 +159,18 @@ ArgoCD detects the Git change and syncs the Production namespace
 
 ### Day-to-Day Development Workflow:
 1. **Local Development**: Edit website HTML/CSS/JS or backend services and test instantly with `make up` or `make hotreload`.
-2. **Deploy to Staging**: Push your changes to the `main` branch:
+2. **Deploy to Staging**: Push service changes to the service repository `main` branch:
    ```bash
    git add .
    git commit -m "Update homepage UI and features"
    git push origin main
    ```
-   Record the built image digest in the staging overlay so Argo CD can deploy it reproducibly.
-3. **Promote to Production**: Update the tested immutable image digest in
-   `infrastructure/platform/overlays/production/kustomization.yml` and merge it.
+   Wait for GitHub Actions to pass and publish the GHCR image. Copy its `sha256` digest
+   into `git-repositories/infrastructure/platform/overlays/staging/kustomization.yml`,
+   then open and merge a platform pull request.
+3. **Promote to Production**: Verify `https://staging.lmbek.dk`, copy the same tested
+   digest into `overlays/production/kustomization.yml`, and merge that platform change.
+   Argo CD deploys both merged changes automatically; no SSH or server-side command is needed.
 
 ---
 
